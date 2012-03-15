@@ -96,7 +96,7 @@ namespace Anonymity {
       /**
        * Returns the list of bad nodes discovered in the round
        */
-      inline virtual const QVector<int> GetBadMembers() const
+      inline virtual const QVector<int> &GetBadMembers() const
       {
         return _empty_list;
       }

@@ -389,7 +389,7 @@ namespace Tolerant {
 
       inline bool IsServer() const { return _is_server; }
 
-      inline virtual const QVector<int> GetBadMembers() const { return _bad_members; }
+      inline virtual const QVector<int> &GetBadMembers() const { return _bad_members; }
 
       /**
        * Change the round state and process logged messages
