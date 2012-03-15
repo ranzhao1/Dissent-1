@@ -159,7 +159,7 @@ namespace Anonymity {
       /**
        * Returns a list of members who have been blamed in the round
        */
-      inline virtual const QVector<int> &GetBadMembers() const { return _bad_members; }
+      inline virtual const QVector<int> GetBadMembers() const { return _bad_members; }
 
       /**
        * Returns the shufflers group

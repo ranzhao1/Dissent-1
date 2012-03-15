@@ -41,6 +41,7 @@ namespace Tolerant {
     _anon_signing_key(_crypto_lib->CreatePrivateKey()),
     _phase(0),
     _server_messages(GetGroup().GetSubgroup().Count()),
+    _server_client_lists(GetGroup().GetSubgroup().Count()),
     _server_message_digests(GetGroup().GetSubgroup().Count()),
     _message_randomizer(ident.GetDhKey()->GetPrivateComponent()),
     _user_idx(GetGroup().GetIndex(GetLocalId()))
@@ -81,7 +82,6 @@ namespace Tolerant {
           _my_users.append(GetGroup().GetId(user_idx));
         }
       }
-      _user_messages.resize(_my_users.count());
     }
 
     // Set up signing key shuffle
@@ -97,6 +97,10 @@ namespace Tolerant {
 
     QObject::connect(_key_shuffle_round.data(), SIGNAL(Finished()),
         this, SLOT(KeyShuffleFinished()));
+  }
+
+  TolerantTreeRound::~TolerantTreeRound() {
+    _slot_signing_keys.clear();
   }
 
   void TolerantTreeRound::OnStart()
@@ -211,6 +215,9 @@ namespace Tolerant {
       case MessageType_UserBulkData:
         HandleUserBulkData(stream, from);
         break;
+      case MessageType_ServerClientListData:
+        HandleServerClientListData(stream, from);
+        break;
       case MessageType_ServerCommitData:
         HandleServerCommitData(stream, from);
         break;
@@ -277,8 +284,8 @@ namespace Tolerant {
       throw QRunTimeError("Server received a UserBulkData message from non-user");
     }
 
-    const int user_idx = _my_users.indexOf(from);
-    if(!_user_messages[user_idx].isEmpty()) {
+    const int user_idx = GetGroup().GetIndex(from);
+    if(_user_messages.contains(user_idx)) {
       throw QRunTimeError("Already have bulk user data.");
     }
 
@@ -292,16 +299,77 @@ namespace Tolerant {
     }
 
     _user_messages[user_idx] = payload;
-    _received_user_messages++;
     if(HasAllUserDataMessages()) {
-      //qDebug() << _my_idx << "Sending server commit";
-      SendServerCommit();
+      SendServerClientList();
     }
   }
 
   bool TolerantTreeRound::HasAllUserDataMessages() 
   {
-    return (_received_user_messages == static_cast<uint>(_my_users.count()));
+    return (_user_messages.count() == static_cast<uint>(_my_users.count()));
+  }
+
+  void TolerantTreeRound::SendServerClientList()
+  {
+    if(!_is_server) {
+      qFatal("Non-server cannot send server client list");
+    }
+
+    // Stop accepting new messages 
+    ChangeState(State_ServerClientListSharing);
+
+    // Commit to next data packet
+    QByteArray packet;
+    QDataStream stream(&packet, QIODevice::WriteOnly);
+    stream << MessageType_ServerClientListData << GetRoundId() << _phase << _user_messages.keys();
+
+    VerifiableSendToServers(packet);
+  }
+
+  void TolerantTreeRound::HandleServerClientListData(QDataStream &stream, const Id &from)
+  {
+    qDebug() << _user_idx << GetLocalId().ToString() <<
+      ": received server client list data from " << GetGroup().GetSubgroup().GetIndex(from) << from.ToString();
+
+    if(_state != State_ServerClientListSharing) {
+      throw QRunTimeError("Received a misordered ServerClientListData message");
+    }
+
+    if(!GetGroup().GetSubgroup().Contains(from)) {
+      throw QRunTimeError("Receiving ServerClientListData message from a non-server");
+    }
+
+    uint idx = GetGroup().GetSubgroup().GetIndex(from);
+    if(!_server_client_lists[idx].isEmpty()) {
+      throw QRunTimeError("Already have server client list data.");
+    }
+
+    QList<uint> client_list;
+    stream >> client_list;
+    
+    for(int user_idx=0; user_idx<client_list.count(); user_idx++) {
+      Id client_id = GetGroup().GetId(client_list[user_idx]);
+      if(!GetGroup().Contains(client_id)) {
+        throw QRunTimeError("Client list contains invalid user index " 
+            + QString::number(client_list[user_idx]));
+      }
+    }
+
+    qDebug() << "Client list" << client_list;
+
+    _server_client_lists[idx] = client_list;
+    _received_server_client_lists++;
+
+    if(HasAllServerClientLists()) {
+      //qDebug() << _my_idx << "Sending server messages";
+      ChangeState(State_ServerCommitSharing);
+      SendServerCommit();
+    }
+  }
+
+  bool TolerantTreeRound::HasAllServerClientLists()
+  {
+    return (_received_server_client_lists == static_cast<uint>(GetGroup().GetSubgroup().Count()));
   }
 
   void TolerantTreeRound::SendServerCommit()
@@ -310,8 +378,15 @@ namespace Tolerant {
       qFatal("Non-server cannot send server commits");
     }
 
+    _active_clients_set.clear();
+    for(int idx=0; idx<GetGroup().GetSubgroup().Count(); idx++) {
+      _active_clients_set += _server_client_lists[idx].toSet();
+    }
+
+    qDebug() << "XORING for clients" << _active_clients_set;
+
     // Get the next data packet
-    QByteArray server_xor_msg = GenerateServerXorMessage();
+    QByteArray server_xor_msg = GenerateServerXorMessage(_active_clients_set.toList());
     QDataStream server_data_stream(&_server_next_packet, QIODevice::WriteOnly);
     server_data_stream << MessageType_ServerBulkData << GetRoundId() << _phase << server_xor_msg;
 
@@ -325,7 +400,7 @@ namespace Tolerant {
     VerifiableSendToServers(server_commit_packet);
   }
 
-  QByteArray TolerantTreeRound::GenerateServerXorMessage()
+  QByteArray TolerantTreeRound::GenerateServerXorMessage(const QList<uint>& active_clients)
   {
     QByteArray msg;
     uint size = static_cast<uint>(_slot_signing_keys.size());
@@ -336,8 +411,8 @@ namespace Tolerant {
       
       QByteArray slot_msg(length, 0);
       // For each user, XOR that users pad with the empty message
-      for(int user_idx = 0; user_idx < _rngs_with_users.count(); user_idx++) {
-        QByteArray user_pad = GeneratePadWithUser(user_idx, length);
+      for(int active_idx = 0; active_idx < active_clients.count(); active_idx++) {
+        QByteArray user_pad = GeneratePadWithUser(active_clients[active_idx], length);
         Xor(slot_msg, slot_msg, user_pad);
       }
       
@@ -346,8 +421,10 @@ namespace Tolerant {
     }
 
     // XOR messages received from my users
-    for(int client_idx = 0; client_idx < _my_users.count(); client_idx++) {
-      Xor(msg, msg, _user_messages[client_idx]);
+  
+    for(QHash<uint, QByteArray>::const_iterator i=_user_messages.begin();
+        i!=_user_messages.end(); i++) {
+      Xor(msg, msg, _user_messages[i.key()]);
     }
 
     return msg;
@@ -506,6 +583,7 @@ namespace Tolerant {
     _phase++;
     SendUserBulkData();
   }
+
   void TolerantTreeRound::ProcessMessages(const QByteArray &input)
   {
     const uint size = GetGroup().Count();
@@ -572,10 +650,15 @@ namespace Tolerant {
       return base.mid(8);
     } 
 
-    // What to do if sig doesn't verify
-    qWarning() << "Verification failed for message of length" << (base.size()-8) << "for slot owner" << member_idx;
-    SetSuccessful(false);
-    Stop("Round failed");
+    if(_active_clients_set.contains(member_idx)) {
+      // What to do if sig doesn't verify
+      qWarning() << "Verification failed for message of length" << (base.size()-8) << "for ACTIVE slot owner" << member_idx;
+    } else {
+      qDebug() << "Ignoring bad signature on slot of non-active member" << member_idx;
+    }
+
+    // Round should still go ahead even if verification
+    // fails b/c of blame process
     return QByteArray();
   }
 
@@ -671,11 +754,13 @@ namespace Tolerant {
     _received_server_commits = 0;
 
     _user_messages.clear();
-    _user_messages.resize(_my_users.count());
-    _received_user_messages = 0;
 
     _server_messages.clear();
     _server_messages.resize(GetGroup().GetSubgroup().Count());
+
+    _server_client_lists.clear();
+    _server_client_lists.resize(GetGroup().GetSubgroup().Count());
+    _received_server_client_lists = 0;
 
     _server_message_digests.clear();
     _server_message_digests.resize(GetGroup().GetSubgroup().Count());
@@ -731,6 +816,7 @@ namespace Tolerant {
       // Everyone starts out with a zero-length message
       _message_lengths.append(0);
 
+      qDebug() << "MSGLEN" << idx;
       if(_key_shuffle_data == pair.second) {
         _my_idx = idx;
       }
@@ -767,6 +853,8 @@ namespace Tolerant {
         return false;
       case State_ServerUserDataReceiving:
         return (mtype == MessageType_UserBulkData);
+      case State_ServerClientListSharing:  
+        return (mtype == MessageType_ServerClientListData);
       case State_ServerCommitSharing:  
         return (mtype == MessageType_ServerCommitData);
       case State_ServerDataSharing:

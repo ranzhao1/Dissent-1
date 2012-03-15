@@ -57,6 +57,7 @@ namespace Tolerant {
         State_Offline,
         State_SigningKeyShuffling,     
         State_ServerUserDataReceiving, // Servers waiting for user data streams
+        State_ServerClientListSharing, // Servers waiting for other servers' client lists
         State_ServerCommitSharing,     // Servers waiting for other server commits
         State_ServerDataSharing,       // Servers waiting for other server data streams
         State_UserFinalDataReceiving,  // Users waiting for final data from their server
@@ -87,8 +88,9 @@ namespace Tolerant {
       enum MessageType {
         MessageType_UserBulkData = 0,
         MessageType_ServerCommitData = 1,
-        MessageType_ServerBulkData = 2,
-        MessageType_ServerFinalData = 3
+        MessageType_ServerClientListData = 2,
+        MessageType_ServerBulkData = 3,
+        MessageType_ServerFinalData = 4
       };
 
       /**
@@ -119,7 +121,7 @@ namespace Tolerant {
       /**
        * Destructor
        */
-      virtual ~TolerantTreeRound() {}
+      virtual ~TolerantTreeRound();
 
       /**
        * Notifies the round that a new peer has joined the session.
@@ -227,6 +229,21 @@ namespace Tolerant {
        */
       bool HasAllUserDataMessages();
 
+      /*******************************************
+       * Server Client List Methods
+       * @param an ignored pointer
+       */
+      void SendServerClientList();
+
+      /**
+       * Handle commit data from servers
+       */
+      void HandleServerClientListData(QDataStream &stream, const Id &from);
+
+      /**
+       * True when a node has all client lists for a phase
+       */
+      bool HasAllServerClientLists();
 
       /*******************************************
        * Server Commit Methods
@@ -236,7 +253,7 @@ namespace Tolerant {
       /**
        * Generates the server's entire xor message
        */
-      virtual QByteArray GenerateServerXorMessage();
+      virtual QByteArray GenerateServerXorMessage(const QList<uint>& active_clients);
 
       /**
        * Handle commit data from servers
@@ -372,7 +389,7 @@ namespace Tolerant {
 
       inline bool IsServer() const { return _is_server; }
 
-      inline virtual const QVector<int> &GetBadMembers() const { return _bad_members; }
+      inline virtual const QVector<int> GetBadMembers() const { return _bad_members; }
 
       /**
        * Change the round state and process logged messages
@@ -407,6 +424,12 @@ namespace Tolerant {
        * @param message to send
        */
       inline void VerifiableSendToServer(const QByteArray &msg) { return VerifiableSend(GetMyServerId(), msg); }
+
+      /**
+       * How long to wait each phase before rejecting
+       * user ciphertexts (milliseconds)
+       */
+      inline int GetUserCutoffInterval() { return 10000; }
 
       /**
        * Send messages to a server's assigned users
@@ -538,11 +561,22 @@ namespace Tolerant {
       /**
        * received bulk user and server messages
        */
-      QVector<QByteArray> _user_messages;
+      QHash<uint, QByteArray> _user_messages;
       QVector<QByteArray> _server_messages;
 
       /**
-       * received bulk user and server message packet hashes
+       * received server client lists
+       */
+      uint _received_server_client_lists;
+      QVector<QList<uint> > _server_client_lists;
+
+      /**
+       * Union of all server client lists
+       */
+      QSet<uint> _active_clients_set;
+
+      /**
+       * received server message packet hashes
        */
       uint _received_server_commits;
       QVector<QByteArray> _server_message_digests;
@@ -550,7 +584,6 @@ namespace Tolerant {
       /**
        * Count of received messages
        */
-      uint _received_user_messages;
       uint _received_server_messages;
 
       /**
