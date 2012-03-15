@@ -100,6 +100,7 @@ namespace Tolerant {
   }
 
   TolerantTreeRound::~TolerantTreeRound() {
+    _timer_user_cutoff.Stop();
     _slot_signing_keys.clear();
   }
 
@@ -263,6 +264,13 @@ namespace Tolerant {
     QDataStream user_data_stream(&packet, QIODevice::WriteOnly);
     user_data_stream << MessageType_UserBulkData << GetRoundId() << _phase << user_xor_msg;
 
+    if(_is_server) {
+      // Set timeout clock running on finish, clock calls SendServerClientList()
+      Utils::TimerCallback *timer_cb = new Dissent::Utils::TimerMethod<TolerantTreeRound, int>(this, 
+          &TolerantTreeRound::SendServerClientList, 1);
+      _timer_user_cutoff = Dissent::Utils::Timer::GetInstance().QueueCallback(timer_cb, GetUserCutoffInterval());
+    }
+
     ChangeState(_is_server ? State_ServerUserDataReceiving : State_UserFinalDataReceiving);
     VerifiableSendToServer(packet);
   }
@@ -300,7 +308,7 @@ namespace Tolerant {
 
     _user_messages[user_idx] = payload;
     if(HasAllUserDataMessages()) {
-      SendServerClientList();
+      SendServerClientList(0);
     }
   }
 
@@ -309,8 +317,15 @@ namespace Tolerant {
     return (_user_messages.count() == static_cast<uint>(_my_users.count()));
   }
 
-  void TolerantTreeRound::SendServerClientList()
+  void TolerantTreeRound::SendServerClientList(const int& code)
   {
+    if(code) {
+      qDebug() << "Callback triggered!";
+    }
+
+    // Clear timer
+    _timer_user_cutoff.Stop();
+
     if(!_is_server) {
       qFatal("Non-server cannot send server client list");
     }

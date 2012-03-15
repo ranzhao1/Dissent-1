@@ -9,6 +9,7 @@
 #include "Anonymity/Round.hpp"
 #include "Messaging/BufferSink.hpp"
 #include "Messaging/GetDataCallback.hpp"
+#include "Utils/Timer.hpp"
 #include "Utils/Triple.hpp"
 #include "Utils/Random.hpp"
 
@@ -229,11 +230,13 @@ namespace Tolerant {
        */
       bool HasAllUserDataMessages();
 
+
       /*******************************************
        * Server Client List Methods
-       * @param an ignored pointer
+       * @param phase for which to send the list -- used to determine
+       *        if this call was triggered by the timer object
        */
-      void SendServerClientList();
+      void SendServerClientList(const int&);
 
       /**
        * Handle commit data from servers
@@ -633,11 +636,19 @@ namespace Tolerant {
       uint _server_idx;
 
       /**
-       *
+       * Known bad users
        */
       QVector<int> _bad_members;
 
+      /**
+       * List of potential clients of this server
+       */
       QList<Id> _my_users;
+
+      /**
+       * Timer for receiving user ciphertexts
+       */
+      Utils::TimerEvent _timer_user_cutoff;
 
     private slots:
       /**
