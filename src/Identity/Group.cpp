@@ -30,7 +30,8 @@ namespace Identity {
       case FixedSubgroup:
       {
         QVector<PublicIdentity> roster = GetRoster();
-        int size = std::min(roster.size(), 10);
+        // XXX Test
+        int size = std::min(roster.size(), 1);
         QVector<PublicIdentity> sg_roster(size);
         for(int idx = 0; idx < size; idx++) {
           sg_roster[idx] = roster[idx];
