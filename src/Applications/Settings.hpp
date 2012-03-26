@@ -5,12 +5,14 @@
 #include <QDebug>
 #include <QHostAddress>
 #include <QSettings>
+#include <QStringList>
 
 #include "Connections/Id.hpp"
 #include "Identity/Group.hpp"
 
 namespace Dissent {
 namespace Applications {
+
   /**
    * Abstracts interaction with a configuration file
    */
@@ -20,13 +22,67 @@ namespace Applications {
       typedef Identity::Group Group;
 
       /**
-       * Load configuration from disk
-       * @param file the file with the settings contained therein
+       * Setting parameter name strings
+       */
+      static const char* ParamNameMode;
+      static const char* ParamNameRemotePeers;
+      static const char* ParamNameEndpoints;
+      static const char* ParamNameDemoMode;
+      static const char* ParamNameLocalNodes;
+      static const char* ParamNameSessionType;
+      static const char* ParamNameSubgroupPolicy;
+      static const char* ParamNameLog;
+      static const char* ParamNameMultithreading;
+      static const char* ParamNameLocalId;
+      static const char* ParamNameLeaderId;
+      static const char* ParamNameWebServerUrl;
+      static const char* ParamNameEntryTunnelUrl;
+      static const char* ParamNameSuperPeer;
+
+      static const char* StringMode_Null;
+      static const char* StringMode_Console;
+      static const char* StringMode_WebServer;
+      static const char* StringMode_EntryTunnel;
+      static const char* StringMode_ExitTunnel;
+
+      /**
+       * Node operation mode
+       */
+      typedef enum {
+        Mode_Null,
+        Mode_Console,
+        Mode_WebServer,
+        Mode_EntryTunnel,
+        Mode_ExitTunnel
+      } ApplicationMode;
+
+
+      /**
+       * Mode strings
+       */
+      static const char* ParamNameMode_Console;
+      static const char* ParamNameMode_WebServer;
+      static const char* ParamNameMode_EntryTunnel;
+      static const char* ParamNameMode_ExitTunnel;
+
+      /**
+       * Load configuration from disk and command line args.
+       * The argument list should look like this:
+       *    ./dissent-binary [flags] config_file
+       * Or for example:
+       *    ./dissent --console=true --web_server=false conf/myconfig.conf
+       *
+       * Command line arguments override settings given in the config
+       * file to allow for easier scripting. Command line arguments
+       * can be repeated, with the last argument taking precedence.
+       * There must be a configuration file specified.
+       *
+       * @param command line arguments
        * @param actions whether or not the settings file should change system
        * configuration values or just be a container for configuration data,
        * the default (true) is the latter.
        */
-      explicit Settings(const QString &file, bool actions = true);
+      explicit Settings(const QStringList &arguments, bool actions = true);
 
       /**
        * Create configuration in memory
@@ -84,15 +140,10 @@ namespace Applications {
       QString Log;
 
       /**
-       * Provide a Console UI
+       * What type of interface to run
        */
-      bool Console;
+      ApplicationMode Mode;
 
-      /**
-       * Provide a WebServer interface
-       */
-      bool WebServer;
-      
       /**
        * IP:Port on which the HTTP server should listen
        */
@@ -119,6 +170,11 @@ namespace Applications {
       bool Multithreading;
 
       /**
+       * Is a super peer
+       */
+      bool SuperPeer;
+
+      /**
        * The id for the (first) local node, other nodes will be random
        */
       Id LocalId;
@@ -133,19 +189,21 @@ namespace Applications {
        */
       Group::SubgroupPolicy SubgroupPolicy;
 
-      /**
-       * SuperPeer capable?
-       */
-      bool SuperPeer;
 
     private:
       void Init();
+      void ApplySettings(const QSettings &settings);
+      void ParseUrlType(const QSettings &settings, 
+          const QString &param_name, const QString &scheme, QUrl &target);
       void ParseUrlList(const QString &name, const QVariant &values, QList<QUrl> &list);
       void ParseUrl(const QString &name, const QVariant &value, QList<QUrl> &list);
       QUrl TryParseUrl(const QString &string_rep, const QString &scheme);
 
+      bool _actions;
       bool _use_file;
+      bool _args_valid;
       QSettings _settings;
+      QSettings _settings_flags;
       QString _reason;
   };
 }
