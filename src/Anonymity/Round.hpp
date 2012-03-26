@@ -193,11 +193,7 @@ namespace Anonymity {
       virtual inline void VerifiableSend(const Id &to, const QByteArray &data)
       {
         QByteArray msg = data + GetSigningKey()->Sign(data);
-        if(GetNetwork()->GetConnection(to)) {
-          GetNetwork()->Send(to, msg);
-        } else {
-          qWarning() << "Discarding message for offline peer";
-        }
+        GetNetwork()->Send(to, msg);
       }
 
       /**
