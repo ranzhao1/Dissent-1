@@ -804,7 +804,7 @@ namespace Tolerant {
   QByteArray TolerantTreeRound::GeneratePadWithServer(uint server_idx, uint length)
   {
     QByteArray server_pad(length, 0);
-    qDebug() << "User bytes generated with server" << server_idx << "-- user" << _user_idx << "=" << _rngs_with_servers[server_idx]->BytesGenerated();
+    //qDebug() << "User bytes generated with server" << server_idx << "-- user" << _user_idx << "=" << _rngs_with_servers[server_idx]->BytesGenerated();
     _rngs_with_servers[server_idx]->GenerateBlock(server_pad);
     return server_pad;
   }
@@ -812,7 +812,7 @@ namespace Tolerant {
   QByteArray TolerantTreeRound::GeneratePadWithUser(uint user_idx, uint length)
   {
     QByteArray user_pad(length, 0);
-    qDebug() << "Server bytes generated with user" << user_idx << "-- server" << _server_idx << "=" << _rngs_with_users[user_idx]->BytesGenerated();
+    //qDebug() << "Server bytes generated with user" << user_idx << "-- server" << _server_idx << "=" << _rngs_with_users[user_idx]->BytesGenerated();
     _rngs_with_users[user_idx]->GenerateBlock(user_pad);
     return user_pad;
   }
