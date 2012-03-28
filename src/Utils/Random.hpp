@@ -49,18 +49,18 @@ namespace Utils {
        */
       inline uint BytesGenerated() { return _byte_count; }
 
+      /**
+       * Moves the rng to specified position
+       * @param index the position
+       */
+      void MoveRngPosition(uint index);
+
     protected:
       Random(const Random &) {}
       /**
        * Increments the amount of bytes generated thus far.
        */
       inline void IncrementByteCount(uint count) { _byte_count+= count; }
-
-      /**
-       * Moves the rng to specified position
-       * @param index the position
-       */
-      void MoveRngPosition(uint index);
 
     private:
       uint _seed;
