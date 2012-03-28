@@ -919,7 +919,7 @@ namespace Tolerant {
       // Everyone starts out with a zero-length message
       _message_lengths.append(0);
 
-      qDebug() << "MSGLEN" << idx;
+      qDebug() << "MSGLEN" << idx << "=" << _message_lengths[idx] << ", HEADER =" << _header_lengths[idx];
       if(_key_shuffle_data == pair.second) {
         _my_idx = idx;
       }
