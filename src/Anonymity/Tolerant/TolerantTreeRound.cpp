@@ -444,10 +444,10 @@ namespace Tolerant {
       
       QByteArray slot_msg(length, 0);
       // For each user, XOR that users pad with the empty message
-      for(int user_idx = 0; user_idx < GetGroup.Count(); user_idx++) {
+      for(int user_idx = 0; user_idx < GetGroup().Count(); user_idx++) {
 
         // Always generate string so that RNG is up to date
-        QByteArray user_pad = GeneratePadWithUser(active_clients[active_idx], length);
+        QByteArray user_pad = GeneratePadWithUser(user_idx, length);
 
         if(active_clients.contains(user_idx)) {
           Xor(slot_msg, slot_msg, user_pad);
