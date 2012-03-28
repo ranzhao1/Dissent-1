@@ -419,7 +419,7 @@ namespace Tolerant {
     qDebug() << "XORING for clients" << _active_clients_set;
 
     // Get the next data packet
-    QByteArray server_xor_msg = GenerateServerXorMessage(_active_clients_set.toList());
+    QByteArray server_xor_msg = GenerateServerXorMessage(_active_clients_set);
     QDataStream server_data_stream(&_server_next_packet, QIODevice::WriteOnly);
     server_data_stream << MessageType_ServerBulkData << GetRoundId() << _phase << server_xor_msg;
 
@@ -433,20 +433,25 @@ namespace Tolerant {
     VerifiableSendToServers(server_commit_packet);
   }
 
-  QByteArray TolerantTreeRound::GenerateServerXorMessage(const QList<uint>& active_clients)
+  QByteArray TolerantTreeRound::GenerateServerXorMessage(const QSet<uint>& active_clients)
   {
     QByteArray msg;
     uint size = static_cast<uint>(_slot_signing_keys.size());
 
     // For each slot 
-    for(uint idx = 0; idx < size; idx++) {
-      const uint length = _message_lengths[idx] + _header_lengths[idx];
+    for(uint slot_idx = 0; slot_idx < size; slot_idx++) {
+      const uint length = _message_lengths[slot_idx] + _header_lengths[slot_idx];
       
       QByteArray slot_msg(length, 0);
       // For each user, XOR that users pad with the empty message
-      for(int active_idx = 0; active_idx < active_clients.count(); active_idx++) {
+      for(int user_idx = 0; user_idx < GetGroup.Count(); user_idx++) {
+
+        // Always generate string so that RNG is up to date
         QByteArray user_pad = GeneratePadWithUser(active_clients[active_idx], length);
-        Xor(slot_msg, slot_msg, user_pad);
+
+        if(active_clients.contains(user_idx)) {
+          Xor(slot_msg, slot_msg, user_pad);
+        }
       }
       
       msg.append(slot_msg);
