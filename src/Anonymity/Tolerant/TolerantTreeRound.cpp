@@ -62,7 +62,7 @@ namespace Tolerant {
 
       _secrets_with_servers[server_idx] = secret;
       _rngs_with_servers[server_idx] = QSharedPointer<Random>(_crypto_lib->GetRandomNumberGenerator(secret));
-      _rngs_with_servers[server_idx]->MoveRngPosition(0);
+      qDebug() << "RNG with server" << server_idx << "Generated" << _rngs_with_servers[server_idx]->BytesGenerated();
     }
 
     // Set up shared secrets
@@ -79,7 +79,7 @@ namespace Tolerant {
 
         _secrets_with_users[user_idx] = secret;
         _rngs_with_users[user_idx] = QSharedPointer<Random>(_crypto_lib->GetRandomNumberGenerator(secret));
-        _rngs_with_users[user_idx]->MoveRngPosition(0);
+        qDebug() << "RNG with user" << user_idx << "Generated" << _rngs_with_users[user_idx]->BytesGenerated();
 
         if(static_cast<uint>(user_idx % GetGroup().GetSubgroup().Count()) == _server_idx) {
           _my_users.append(GetGroup().GetId(user_idx));
