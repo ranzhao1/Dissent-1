@@ -114,8 +114,7 @@ namespace Crypto {
           case 3072:
             return 256;
           default:
-            qFatal(QString("Invalid DSA modulus: " +
-                  QString::number(modulus)).toUtf8().data());
+            qFatal("Invalid DSA modulus");
         }
         return -1;
       }

@@ -45,7 +45,6 @@ HEADERS += ext/googletest/include/gtest/gtest-death-test.h \
            src/Tests/TestNode.hpp \
            src/Tests/TestWebClient.hpp \
            src/Tests/TolerantBulkRoundHelpers.hpp \
-           src/Tests/TolerantTreeRoundHelpers.hpp \
            src/Tests/WebServicesTest.hpp
 
 SOURCES += ext/googletest/src/gtest-all.cc \
@@ -55,6 +54,7 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/BulkRoundTest.cpp \
            src/Tests/ConnectionTest.cpp \
            src/Tests/Crypto.cpp \
+           src/Tests/CSBulkRoundTest.cpp \
            src/Tests/CSOverlayTest.cpp \
            src/Tests/EdgeTest.cpp \
            src/Tests/GroupTest.cpp \
@@ -66,6 +66,7 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/LogTest.cpp \
            src/Tests/MainTest.cpp \
            src/Tests/MessageRandomizerTest.cpp \
+           src/Tests/NeffKeyShuffleTest.cpp \
            src/Tests/NullRoundTest.cpp \
            src/Tests/OnionTest.cpp \
            src/Tests/OverlayHelper.cpp \
@@ -84,8 +85,6 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/TestWebClient.cpp \
            src/Tests/TimeTest.cpp \
            src/Tests/TolerantBulkRoundTest.cpp \
-           src/Tests/TolerantTreeRoundTest.cpp \
            src/Tests/TripleTest.cpp \
-           src/Tests/TrustedBulkRoundTest.cpp \
            src/Tests/WebServerTest.cpp \
            src/Tests/WebServicesTest.cpp

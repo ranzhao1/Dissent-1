@@ -1,12 +1,13 @@
+#include "Anonymity/BaseBulkRound.hpp"
 #include "Anonymity/BulkRound.hpp"
+#include "Anonymity/CSBulkRound.hpp"
 #include "Anonymity/RepeatingBulkRound.hpp"
+#include "Anonymity/NeffKeyShuffle.hpp"
 #include "Anonymity/NullRound.hpp"
 #include "Anonymity/Round.hpp"
 #include "Anonymity/Session.hpp"
 #include "Anonymity/ShuffleRound.hpp"
 #include "Anonymity/Tolerant/TolerantBulkRound.hpp"
-#include "Anonymity/Tolerant/TolerantTreeRound.hpp"
-#include "Anonymity/TrustedBulkRound.hpp"
 #include "Connections/ConnectionManager.hpp"
 #include "Connections/DefaultNetwork.hpp"
 #include "Connections/Id.hpp"
@@ -15,14 +16,15 @@
 #include "SessionFactory.hpp"
 
 using Dissent::Anonymity::BulkRound;
+using Dissent::Anonymity::CSBulkRound;
+using Dissent::Anonymity::NeffKeyShuffle;
 using Dissent::Anonymity::NullRound;
 using Dissent::Anonymity::RepeatingBulkRound;
 using Dissent::Anonymity::Tolerant::TolerantBulkRound;
-using Dissent::Anonymity::Tolerant::TolerantTreeRound;
 using Dissent::Anonymity::Session;
 using Dissent::Anonymity::ShuffleRound;
+using Dissent::Anonymity::TCreateBulkRound;
 using Dissent::Anonymity::TCreateRound;
-using Dissent::Anonymity::TrustedBulkRound;
 using Dissent::Connections::ConnectionManager;
 using Dissent::Connections::DefaultNetwork;
 using Dissent::Connections::Network;
@@ -46,10 +48,9 @@ namespace Applications {
     AddCreateCallback("null", &CreateNullRoundSession);
     AddCreateCallback("shuffle", &CreateShuffleRoundSession);
     AddCreateCallback("bulk", &CreateBulkRoundSession);
+    AddCreateCallback("csbulk", &CreateCSBulkRoundSession);
     AddCreateCallback("repeatingbulk", &CreateRepeatingBulkRoundSession);
-    AddCreateCallback("trustedbulk", &CreateTrustedBulkRoundSession);
     AddCreateCallback("tolerantbulk", &CreateTolerantBulkRoundSession);
-    AddCreateCallback("toleranttree", &CreateTolerantTreeRoundSession);
   }
 
   void SessionFactory::AddCreateCallback(const QString &type, Callback cb)
@@ -84,28 +85,21 @@ namespace Applications {
     Common(node, session_id, &TCreateRound<BulkRound>);
   }
 
+  void SessionFactory::CreateCSBulkRoundSession(Node *node, const Id &session_id)
+  {
+    Common(node, session_id, &TCreateBulkRound<CSBulkRound, NeffKeyShuffle>);
+  }
+
   void SessionFactory::CreateRepeatingBulkRoundSession(Node *node,
       const Id &session_id)
   {
     Common(node, session_id, &TCreateRound<RepeatingBulkRound>);
   }
 
-  void SessionFactory::CreateTrustedBulkRoundSession(Node *node,
-      const Id &session_id)
-  {
-    Common(node, session_id, &TCreateRound<TrustedBulkRound>);
-  }
-
   void SessionFactory::CreateTolerantBulkRoundSession(Node *node,
       const Id &session_id)
   {
     Common(node, session_id, &TCreateRound<TolerantBulkRound>);
-  }
-
-  void SessionFactory::CreateTolerantTreeRoundSession(Node *node,
-      const Id &session_id)
-  {
-    Common(node, session_id, &TCreateRound<TolerantTreeRound>);
   }
 
   void SessionFactory::Common(Node *node, const Id &session_id, CreateRound cr)

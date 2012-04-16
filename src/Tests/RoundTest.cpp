@@ -4,7 +4,7 @@
 
 namespace Dissent {
 namespace Tests {
-  void RoundTest_Null(CreateSessionCallback callback,
+  void RoundTest_Null(SessionCreator callback,
       Group::SubgroupPolicy sg_policy)
   {
     ConnectionManager::UseTimer = false;
@@ -30,18 +30,18 @@ namespace Tests {
     qDebug() << "Round started, shutting down";
 
     for(int idx = 0; idx < count; idx++) {
-      ASSERT_TRUE(nodes[idx]->sink.Count() == 0);
+      EXPECT_TRUE(nodes[idx]->sink.Count() == 0);
     }
 
-    ASSERT_EQ(TestNode::success, count);
-    ASSERT_EQ(TestNode::failure, 0);
+    EXPECT_EQ(TestNode::success, count);
+    EXPECT_EQ(TestNode::failure, 0);
 
     CleanUp(nodes);
     qDebug() << "Shut down";
     ConnectionManager::UseTimer = true;
   }
 
-  void RoundTest_Basic(CreateSessionCallback callback,
+  void RoundTest_Basic(SessionCreator callback,
       Group::SubgroupPolicy sg_policy)
   {
     ConnectionManager::UseTimer = false;
@@ -68,12 +68,15 @@ namespace Tests {
       nodes[idx]->session->Start();
     }
 
-    TestNode::calledback = 0;
+    qDebug() << "Transmission beginning";
+
     qint64 next = Timer::GetInstance().VirtualRun();
-    while(next != -1 && sc.GetCount() < count && TestNode::calledback < count) {
+    while(next != -1 && sc.GetCount() < count) {
       Time::GetInstance().IncrementVirtualClock(next);
       next = Timer::GetInstance().VirtualRun();
     }
+
+    qDebug() << "Transmission complete";
 
     for(int idx = 0; idx < count; idx++) {
       EXPECT_EQ(nodes[idx]->sink.Count(), 1);
@@ -92,7 +95,7 @@ namespace Tests {
    * as an argument. This is useful for booting up a node and then
    * using it to testi SessionWebService objects.
    */
-  void RoundTest_Basic_SessionTest(CreateSessionCallback callback, 
+  void RoundTest_Basic_SessionTest(SessionCreator callback, 
       Group::SubgroupPolicy sg_policy, SessionTestCallback session_cb)
   {
     ConnectionManager::UseTimer = false;
@@ -128,7 +131,7 @@ namespace Tests {
     }
 
     for(int idx = 0; idx < count; idx++) {
-      ASSERT_EQ(msg, nodes[idx]->sink.Last().second);
+      EXPECT_EQ(msg, nodes[idx]->sink.Last().second);
     }
 
     for(int idx = 0; idx < count; idx++) {
@@ -139,7 +142,7 @@ namespace Tests {
     ConnectionManager::UseTimer = true;
   }
 
-  void RoundTest_MultiRound(CreateSessionCallback callback,
+  void RoundTest_MultiRound(SessionCreator callback,
       Group::SubgroupPolicy sg_policy)
   {
     ConnectionManager::UseTimer = false;
@@ -205,7 +208,7 @@ namespace Tests {
     ConnectionManager::UseTimer = true;
   }
 
-  void RoundTest_AddOne(CreateSessionCallback callback,
+  void RoundTest_AddOne(SessionCreator callback,
       Group::SubgroupPolicy sg_policy)
   {
     ConnectionManager::UseTimer = false;
@@ -253,16 +256,47 @@ namespace Tests {
       EXPECT_EQ(msg, nodes[idx]->sink.Last().second);
     }
 
-
     int ncount = count + 1;
-    nodes.append(new TestNode(Id(), ncount));
+    bool csgroup = group.GetSubgroupPolicy() == Group::ManagedSubgroup;
+    bool be_server = (rand->GetInt() % 2 == 0) || !csgroup;
+
+    nodes.append(new TestNode(Id(), ncount, be_server));
     qDebug() << "Adding node:" << nodes.last()->cm->GetId().ToString();
 
     QObject::connect(&nodes.last()->sink, SIGNAL(DataReceived()),
         &sc, SLOT(Counter()));
-    for(int idx = 0; idx < count; idx++) {
-      nodes[idx]->cm->ConnectTo(BufferAddress(ncount));
-      nodes.last()->cm->ConnectTo(BufferAddress(idx + 1));
+
+    int expected_cons = count;
+    if(csgroup) {
+      Group fgroup = nodes[0]->sm.GetDefaultSession()->GetGroup();
+      Group sgroup = nodes[0]->sm.GetDefaultSession()->GetGroup().GetSubgroup();
+      if(be_server) {
+        qDebug() << "Adding a new server";
+        expected_cons = sgroup.Count();
+        for(int idx = 0; idx < count; idx++) {
+          if(!sgroup.Contains(nodes[idx]->cm->GetId())) {
+            continue;
+          }
+          nodes[idx]->cm->ConnectTo(BufferAddress(ncount));
+        }
+      } else {
+        expected_cons = 1;
+        Id server = sgroup.GetId(rand->GetInt(0, group.GetSubgroup().Count()));
+
+        int idx = 0;
+        for(; idx < nodes.count(); idx++) {
+          if(nodes[idx]->cm->GetId() == server) {
+            break;
+          }
+        }
+
+        qDebug() << "Selected server" << idx << ":" << server;
+        nodes[idx]->cm->ConnectTo(BufferAddress(ncount));
+      }
+    } else {
+      for(int idx = 0; idx < count; idx++) {
+        nodes[idx]->cm->ConnectTo(BufferAddress(ncount));
+      }
     }
 
     SignalCounter con_counter;
@@ -270,14 +304,14 @@ namespace Tests {
         SIGNAL(NewConnection(const QSharedPointer<Connection> &)),
         &con_counter, SLOT(Counter()));
 
-    while(next != -1 && con_counter.GetCount() != count) {
+    while(next != -1 && con_counter.GetCount() != expected_cons) {
       Time::GetInstance().IncrementVirtualClock(next);
       next = Timer::GetInstance().VirtualRun();
     }
 
     qDebug() << "Node fully connected";
 
-    ASSERT_EQ(count, con_counter.GetCount());
+    EXPECT_EQ(expected_cons, con_counter.GetCount());
 
     CreateSession(nodes.last(), group, session_id, callback);
     SignalCounter ready;
@@ -314,7 +348,7 @@ namespace Tests {
     ConnectionManager::UseTimer = true;
   }
 
-  void RoundTest_PeerDisconnectEnd(CreateSessionCallback callback,
+  void RoundTest_PeerDisconnectEnd(SessionCreator callback,
       Group::SubgroupPolicy sg_policy)
   {
     ConnectionManager::UseTimer = false;
@@ -354,7 +388,7 @@ namespace Tests {
 
     nodes[disconnector]->session->Stop();
     nodes[disconnector]->cm->Stop();
-    ASSERT_TRUE(nodes[disconnector]->session->Stopped());
+    EXPECT_TRUE(nodes[disconnector]->session->Stopped());
 
     count -= 1;
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
@@ -374,11 +408,11 @@ namespace Tests {
 
     for(int idx = 0; idx < count; idx++) {
       if(idx == disconnector) {
-        ASSERT_EQ(nodes[idx]->sink.Count(), 0);
-        ASSERT_TRUE(nodes[idx]->session->Stopped());
+        EXPECT_EQ(nodes[idx]->sink.Count(), 0);
+        EXPECT_TRUE(nodes[idx]->session->Stopped());
       } else {
-        ASSERT_EQ(nodes[idx]->sink.Count(), 1);
-        ASSERT_FALSE(nodes[idx]->session->Stopped());
+        EXPECT_EQ(nodes[idx]->sink.Count(), 1);
+        EXPECT_FALSE(nodes[idx]->session->Stopped());
       }
     }
 
@@ -388,7 +422,7 @@ namespace Tests {
     ConnectionManager::UseTimer = true;
   }
 
-  void RoundTest_PeerDisconnectMiddle(CreateSessionCallback callback,
+  void RoundTest_PeerDisconnectMiddle(SessionCreator callback,
       Group::SubgroupPolicy sg_policy, bool transient)
   {
     ConnectionManager::UseTimer = false;
@@ -526,8 +560,8 @@ namespace Tests {
     Session::EnableLogOffMonitor = true;
   }
 
-  void RoundTest_BadGuy(CreateSessionCallback good_callback,
-      CreateSessionCallback bad_callback, Group::SubgroupPolicy sg_policy,
+  void RoundTest_BadGuy(SessionCreator good_callback,
+      SessionCreator bad_callback, Group::SubgroupPolicy sg_policy,
       const BadGuyCB &cb)
   {
     ConnectionManager::UseTimer = false;
@@ -602,10 +636,10 @@ namespace Tests {
         }
 
         QSharedPointer<Round> pr = node->session->GetCurrentRound();
-        ASSERT_FALSE(node->session->GetGroup().Contains(badid));
-        ASSERT_TRUE(node->sink.Count() == 1);
+        EXPECT_FALSE(node->session->GetGroup().Contains(badid));
+        EXPECT_TRUE(node->sink.Count() == 1);
         if(node->sink.Count() == 1) {
-          ASSERT_EQ(node->sink.Last().second, msg);
+          EXPECT_EQ(node->sink.Last().second, msg);
         }
       }
     }
@@ -622,8 +656,8 @@ namespace Tests {
    * BadGuy assumes that blame finishes before messages
    * are received (as in the shuffle).
    */
-  void RoundTest_BadGuyBulk(CreateSessionCallback good_callback,
-      CreateSessionCallback bad_callback, Group::SubgroupPolicy sg_policy,
+  void RoundTest_BadGuyBulk(SessionCreator good_callback,
+      SessionCreator bad_callback, Group::SubgroupPolicy sg_policy,
       const BadGuyCB &)
   {
     ConnectionManager::UseTimer = false;
@@ -697,8 +731,8 @@ namespace Tests {
     ConnectionManager::UseTimer = true;
   }
 
-  void RoundTest_BadGuyNoAction(CreateSessionCallback good_callback,
-      CreateSessionCallback bad_callback, Group::SubgroupPolicy sg_policy,
+  void RoundTest_BadGuyNoAction(SessionCreator good_callback,
+      SessionCreator bad_callback, Group::SubgroupPolicy sg_policy,
       const BadGuyCB &cb)
   {
     ConnectionManager::UseTimer = false;
@@ -755,8 +789,8 @@ namespace Tests {
       for(int idx = 0; idx < nodes.size(); idx++) {
         TestNode *node = nodes[idx];
         QSharedPointer<Round> pr = node->session->GetCurrentRound();
-        ASSERT_EQ(pr->GetBadMembers().count(), 0);
-        ASSERT_FALSE(pr->Successful());
+        EXPECT_EQ(pr->GetBadMembers().count(), 0);
+        EXPECT_FALSE(pr->Successful());
       }
     }
 

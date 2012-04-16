@@ -63,19 +63,12 @@ namespace Applications {
       /**
        * Create a Bulk "V3"
        */
-      static void CreateTrustedBulkRoundSession(Node *node,
-          const Id &session_id);
+      static void CreateCSBulkRoundSession(Node *node, const Id &session_id);
 
       /**
        * Create a Bulk "V3" with blame
        */
       static void CreateTolerantBulkRoundSession(Node *node,
-          const Id &session_id);
-
-      /**
-       * Create a Bulk "V3" with XORing tree
-       */
-      static void CreateTolerantTreeRoundSession(Node *node,
           const Id &session_id);
 
     private:

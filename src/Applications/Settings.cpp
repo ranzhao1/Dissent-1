@@ -32,6 +32,7 @@ namespace Applications {
     LocalId(Id::Zero()),
     LeaderId(Id::Zero()),
     SubgroupPolicy(Group::CompleteGroup),
+    SuperPeer(false),
     _actions(actions),
     _use_file(true),
     _args_valid(true),
