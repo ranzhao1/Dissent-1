@@ -22,6 +22,8 @@ namespace Crypto {
     const byte *zerob = reinterpret_cast<const byte *>(zero.data());
     _rng.reset(new CryptoPP::X917RNG(bt, zerob, zerob));
 
+    ResetByteCount();
+
     if(index) {
       MoveRngPosition(index);
     }

@@ -9,12 +9,13 @@ int main(int argc, char **argv)
   QStringList args = QCoreApplication::arguments();
 
   if(args.count() < 2) {
-    qFatal(QString("Usage: " + args[0] + " settings.conf").toUtf8().constData());
+    qCritical() << "Usage:" << args[0] << "[flags] settings.conf";
+    return -1;
   }
 
-  Settings settings(args[1]);
+  Settings settings(args);
   if(!settings.IsValid()) {
-    qFatal(settings.GetError().toUtf8().constData());
+    qFatal("%s", settings.GetError().toAscii().constData());
   }
 
   QList<Address> local;
@@ -39,12 +40,22 @@ int main(int argc, char **argv)
   QList<QSharedPointer<Node> > nodes;
 
   QSharedPointer<ISink> default_sink(new DummySink());
-  QSharedPointer<ISink> app_sink = default_sink;
+  QSharedPointer<ISink> app_sink;
 
-  if(settings.Console) {
+  QScopedPointer<WebServer> ws;
+  QScopedPointer<EntryTunnel> tun_entry;
+  QScopedPointer<ExitTunnel> tun_exit;
+
+  if(settings.Mode == Settings::Mode_Null) {
+    app_sink = default_sink;
+  } else if(settings.Mode == Settings::Mode_Console) {
     app_sink = QSharedPointer<CommandLine>(new CommandLine(nodes));
-  } else if(settings.WebServer || settings.EntryTunnel || settings.ExitTunnel) {
+  } else if(settings.Mode == Settings::Mode_WebServer 
+      || settings.Mode == Settings::Mode_EntryTunnel
+      || settings.Mode == Settings::Mode_ExitTunnel) {
     app_sink = QSharedPointer<SignalSink>(new SignalSink());
+  } else {
+    qCritical() << "Unknown mode type";
   }
 
   Id local_id = (settings.LocalId == Id::Zero()) ? Id() : settings.LocalId;
@@ -56,7 +67,7 @@ int main(int argc, char **argv)
     key = QSharedPointer<AsymmetricKey>(lib->GeneratePrivateKey(id));
     dh = QSharedPointer<DiffieHellman>(lib->GenerateDiffieHellman(id));
   } else {
-    qFatal("Only DemoMode supported at this time;");
+    qCritical() << "Only DemoMode supported at this time;";
   }
 
   Node::CreateNode create = &Node::CreateBasicGossip;
@@ -79,22 +90,23 @@ int main(int argc, char **argv)
       key = QSharedPointer<AsymmetricKey>(lib->GeneratePrivateKey(id));
       dh = QSharedPointer<DiffieHellman>(lib->GenerateDiffieHellman(id));
     } else {
-      qFatal("Only DemoMode supported at this time;");
+      qCritical() << "Only DemoMode supported at this time;";
     }
 
     nodes.append(create(PrivateIdentity(local_id, key, dh, settings.SuperPeer),
           group, local, remote, default_sink, settings.SessionType));
   }
 
-  QScopedPointer<WebServer> ws;
-  QScopedPointer<EntryTunnel> tun_entry;
-  QScopedPointer<ExitTunnel> tun_exit;
 
-  if(settings.Console) {
+  QSharedPointer<DefaultNetwork> net(new DefaultNetwork(nodes[0]->GetOverlay()->GetConnectionManager(), 
+        nodes[0]->GetOverlay()->GetRpcHandler()));
+  if(settings.Mode == Settings::Mode_Console) {
     QSharedPointer<CommandLine> cl = app_sink.dynamicCast<CommandLine>();
+    if(!cl) qCritical() << "Could not cast QSharedPointer";
+
     QObject::connect(&qca, SIGNAL(aboutToQuit()), cl.data(), SLOT(Stop()));
     cl->Start();
-  } else if(settings.WebServer) {
+  } else if(settings.Mode == Settings::Mode_WebServer) {
     ws.reset(new WebServer(settings.WebServerUrl));
 
     /* Stop Web server when application is about to quit */
@@ -104,6 +116,7 @@ int main(int argc, char **argv)
     QObject::connect(ws.data(), SIGNAL(Stopped()), &qca, SLOT(quit()));
 
     QSharedPointer<SignalSink> signal_sink = app_sink.dynamicCast<SignalSink>();
+    if(!signal_sink) qCritical() << "Could not cast QSharedPointer";
 
     QSharedPointer<GetMessagesService> get_messages_sp(new GetMessagesService());
     QObject::connect(signal_sink.data(), SIGNAL(IncomingData(const QByteArray&)),
@@ -124,19 +137,24 @@ int main(int argc, char **argv)
 
     ws->Start();
 
-  } else if(settings.EntryTunnel) {
+  } else if(settings.Mode == Settings::Mode_EntryTunnel) {
+    QSharedPointer<SignalSink> signal_sink = app_sink.dynamicCast<SignalSink>();
+    if(!signal_sink) qCritical() <<  "Could not cast QSharedPointer";
+
     tun_entry.reset(new EntryTunnel(settings.EntryTunnelUrl, nodes[0]->GetSessionManager(), 
           nodes[0]->GetOverlay()->GetRpcHandler()));
 
-    QSharedPointer<SignalSink> signal_sink = app_sink.dynamicCast<SignalSink>();
     QObject::connect(signal_sink.data(), SIGNAL(IncomingData(const QByteArray&)),
         tun_entry.data(), SLOT(DownstreamData(const QByteArray&)));
 
     tun_entry->Start();
-  } else if(settings.ExitTunnel) {
-    tun_exit.reset(new ExitTunnel(nodes[0]->GetSessionManager(), nodes[0]->GetNetwork()));
 
+  } else if(settings.Mode == Settings::Mode_ExitTunnel) {
     QSharedPointer<SignalSink> signal_sink = app_sink.dynamicCast<SignalSink>();
+    if(!signal_sink) qFatal("Could not cast QSharedPointer");
+
+    tun_exit.reset(new ExitTunnel(nodes[0]->GetSessionManager(), net)); 
+
     QObject::connect(signal_sink.data(), SIGNAL(IncomingData(const QByteArray&)),
         tun_exit.data(), SLOT(SessionData(const QByteArray&)));
 
