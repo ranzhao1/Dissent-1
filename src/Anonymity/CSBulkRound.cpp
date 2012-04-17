@@ -641,7 +641,7 @@ namespace Anonymity {
       return true;
     }
 
-    QPair<QByteArray, bool> pair = GetData(4096);
+    QPair<QByteArray, bool> pair = GetData(1 << 20);
     _state->next_msg = pair.first;
     return !_state->next_msg.isEmpty();
   }
@@ -650,7 +650,7 @@ namespace Anonymity {
   {
     QByteArray msg = _state->next_msg;
     if(_state->read) {
-      QPair<QByteArray, bool> pair = GetData(4096);
+      QPair<QByteArray, bool> pair = GetData(1 << 20);
       _state->next_msg = pair.first;
     } else {
       msg = QByteArray();
