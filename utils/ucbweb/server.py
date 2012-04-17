@@ -13,7 +13,7 @@ import BaseHTTPServer
 import os
 import string
 
-LISTEN_IP = "10.0.0.18"
+LISTEN_IP = "localhost"
 LISTEN_PORT = 9090
 
 class TraceHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -23,10 +23,8 @@ class TraceHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     url,rest = self.path.split('?')
     len_headers,len_body = rest.split('&')
 
-    s = os.urandom(int(len_headers))
-    print s
-    self.wfile.write("X-Header: Value\r\n\r\n")
-#self.end_headers()
+    self.end_headers()
+    self.wfile.write(os.urandom(int(len_headers)))
     self.wfile.write(os.urandom(int(len_body)))
 
     return
