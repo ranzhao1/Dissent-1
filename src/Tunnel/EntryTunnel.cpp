@@ -70,7 +70,7 @@ namespace Tunnel {
   {
     const QVariant payload = request.GetData();
     if(!payload.canConvert(QVariant::ByteArray)) {
-      qWarning() << "Cannot unserialize tunnel data";
+      qWarning() << QString("Cannot unserialize tunnel data of type %1").arg(payload.typeName());
       return;
     }
 
