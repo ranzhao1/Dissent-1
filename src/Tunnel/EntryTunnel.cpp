@@ -69,13 +69,12 @@ namespace Tunnel {
   void EntryTunnel::TunnelData(const Request &request)
   {
     const QVariant payload = request.GetData();
-    if(!payload.canConvert(QVariant::Map)) {
+    if(!payload.canConvert(QVariant::ByteArray)) {
       qWarning() << "Cannot unserialize tunnel data";
       return;
     }
 
-    const QVariantMap msg = payload.toMap();
-    QByteArray data = msg["data"].toByteArray();
+    const QByteArray data = payload.toByteArray();
     if(data.isEmpty()) return;
   
     DownstreamData(data);

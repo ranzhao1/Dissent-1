@@ -58,7 +58,7 @@ def make_http_request(line):
   h.close()
   tend = time.time()
 
-  print "%s %s %s %s" % (d['len_head'], d['len_body'], tstart, tend)
+  print "%s %s %s %s %d" % (d['len_head'], d['len_body'], tstart, tend)
 
 if __name__ == "__main__":
   main()
