@@ -15,11 +15,11 @@ import sys
 import StringIO
 import time
 
-SERVER_IP = "localhost"
+SERVER_IP = "10.0.0.13"
 SERVER_PORT = 9090
 
-PROXY_IP = None#"10.0.0.2"
-PROXY_PORT = None#8080
+PROXY_IP = "10.0.0.2"
+PROXY_PORT = 8080
 
 def main():
   for line in sys.stdin:
@@ -74,7 +74,7 @@ def make_http_request(line):
   curl.close()
   tend = time.time()
 
-  print "%s %s %s %s" % (d['len_head'], d['len_body'], tstart, tend)
+  print "%s %s %f %f" % (d['len_head'], d['len_body'], tstart, tend)
 
 if __name__ == "__main__":
   main()
