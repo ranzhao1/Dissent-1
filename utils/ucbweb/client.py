@@ -10,12 +10,16 @@ zcat TRACEFILE | tools/showtrace | python client.py
 
 """
 
-import httplib
+import pycurl
 import sys
+import StringIO
 import time
 
-SERVER_IP = "localhost"
+SERVER_IP = "10.0.0.18"
 SERVER_PORT = 9090
+
+PROXY_IP = "10.0.0.2"
+PROXY_PORT = 8080
 
 def main():
   for line in sys.stdin:
@@ -47,18 +51,31 @@ def make_http_request(line):
   '''
 
   tstart = time.time()
-  h = httplib.HTTPConnection(SERVER_IP, SERVER_PORT)
-  h.request("GET", "/%s?%s&%s" % (d['url'], d['len_head'], d['len_body']))
 
-  r = h.getresponse()
-  if r.status != 200:
-    raise RuntimeError("Request failed on %s with code" % (d['url'], r.status))
+  buf = StringIO.StringIO()
+  curl = pycurl.Curl()
 
-  data = r.read()
-  h.close()
+  curl.setopt(pycurl.URL, "http://%s:%s/%s?%s&%s" %
+      (SERVER_IP, SERVER_PORT, d['url'], d['len_head'], d['len_body']))
+  curl.setopt(pycurl.PROXY, PROXY_IP)
+  curl.setopt(pycurl.PROXYPORT, PROXY_PORT)
+  curl.setopt(pycurl.PROXYTYPE, pycurl.PROXYTYPE_SOCKS5)
+  curl.setopt(pycurl.WRITEFUNCTION, buf.write)
+
+  curl.perform()
+
+  r = curl.getinfo(pycurl.RESPONSE_CODE)
+  '''
+  if r != 200:
+    raise RuntimeError("Request failed on %s with code because %s" \
+        % (d['url'], curl.errstr()))
+  '''
+
+  print buf.getvalue()
+  curl.close()
   tend = time.time()
 
-  print "%s %s %s %s %d" % (d['len_head'], d['len_body'], tstart, tend)
+  print "%s %s %s %s" % (d['len_head'], d['len_body'], tstart, tend)
 
 if __name__ == "__main__":
   main()
