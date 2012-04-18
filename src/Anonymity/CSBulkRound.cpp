@@ -232,9 +232,9 @@ namespace Anonymity {
     stream >> signatures >> cleartext;
 
     if(cleartext.size() != _state->msg_length) {
-      throw QRunTimeError("Cleartext size mismatch: " +
-          QString::number(_state->cleartext.size()) + " :: " +
-          QString::number(_state->msg_length));
+      throw QRunTimeError(QString("Cleartext size mismatch: %1 :: %2")
+          .arg(_state->cleartext.size())
+          .arg(_state->msg_length));
     }
 
     int server_length = GetGroup().GetSubgroup().Count();
