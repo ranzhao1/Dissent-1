@@ -38,6 +38,7 @@ namespace Applications {
       static const char* ParamNameWebServerUrl;
       static const char* ParamNameEntryTunnelUrl;
       static const char* ParamNameSuperPeer;
+      static const char* ParamNameExitTunnelProxyUrl;
 
       static const char* StringMode_Null;
       static const char* StringMode_Console;
@@ -173,6 +174,14 @@ namespace Applications {
        * Is a super peer
        */
       bool SuperPeer;
+
+      /**
+       * IP:Port for a SOCKS5 proxy through which to tunnel
+       * outgoing requests. This is useful for tunneling
+       * through Tor after Dissent.
+       */
+      QUrl ExitTunnelProxyUrl;
+
 
       /**
        * The id for the (first) local node, other nodes will be random

@@ -162,7 +162,7 @@ int main(int argc, char **argv)
     QSharedPointer<SignalSink> signal_sink = app_sink.dynamicCast<SignalSink>();
     if(!signal_sink) qFatal("Could not cast QSharedPointer");
 
-    tun_exit.reset(new ExitTunnel(nodes[0]->GetSessionManager(), net)); 
+    tun_exit.reset(new ExitTunnel(nodes[0]->GetSessionManager(), net, settings.ExitTunnelProxyUrl)); 
 
     QObject::connect(signal_sink.data(), SIGNAL(IncomingData(const QByteArray&)),
         tun_exit.data(), SLOT(SessionData(const QByteArray&)));

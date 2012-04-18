@@ -21,6 +21,7 @@ namespace Applications {
   const char* Settings::ParamNameWebServerUrl = "web_server_url";
   const char* Settings::ParamNameEntryTunnelUrl = "entry_tunnel_url";
   const char* Settings::ParamNameSuperPeer = "super_peer";
+  const char* Settings::ParamNameExitTunnelProxyUrl = "exit_tunnel_proxy_url";
 
   const char* Settings::StringMode_Null = "null";
   const char* Settings::StringMode_Console = "console";
@@ -29,10 +30,10 @@ namespace Applications {
   const char* Settings::StringMode_ExitTunnel = "exit_tunnel";
 
   Settings::Settings(const QStringList &args, bool actions) :
+    SuperPeer(false),
     LocalId(Id::Zero()),
     LeaderId(Id::Zero()),
     SubgroupPolicy(Group::CompleteGroup),
-    SuperPeer(false),
     _actions(actions),
     _use_file(true),
     _args_valid(true),
@@ -45,7 +46,8 @@ namespace Applications {
       << ParamNameRemotePeers << ParamNameEndpoints << ParamNameDemoMode << ParamNameLocalNodes 
       << ParamNameSessionType << ParamNameSubgroupPolicy << ParamNameLog 
       << ParamNameMultithreading << ParamNameLocalId << ParamNameLeaderId 
-      << ParamNameWebServerUrl << ParamNameEntryTunnelUrl << ParamNameSuperPeer;
+      << ParamNameWebServerUrl << ParamNameEntryTunnelUrl << ParamNameSuperPeer
+      << ParamNameExitTunnelProxyUrl;
 
     Init();
 
@@ -177,6 +179,7 @@ namespace Applications {
       SuperPeer = settings.value(ParamNameSuperPeer).toBool();
     }
     ParseUrlType(settings, ParamNameEntryTunnelUrl, "tcp", EntryTunnelUrl);
+    ParseUrlType(settings, ParamNameExitTunnelProxyUrl, "tcp", ExitTunnelProxyUrl);
   }
 
   Settings::Settings() :
@@ -217,6 +220,11 @@ namespace Applications {
 
     if((Mode == Mode_EntryTunnel) && !EntryTunnelUrl.isValid()) {
       _reason = "Invalid EntryTunnelUrl";
+      return false;
+    }
+
+    if((Mode == Mode_ExitTunnel) && !ExitTunnelProxyUrl.isEmpty() && !ExitTunnelProxyUrl.isValid()) {
+      _reason = "Invalid ExitTunnelProxyUrl";
       return false;
     }
 

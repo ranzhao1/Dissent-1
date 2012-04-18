@@ -21,10 +21,14 @@ using namespace Dissent::Tunnel::Packets;
 namespace Dissent {
 namespace Tunnel {
 
-  ExitTunnel::ExitTunnel(SessionManager &sm, const QSharedPointer<Network> &net) :
+  ExitTunnel::ExitTunnel(SessionManager &sm, const QSharedPointer<Network> &net,
+      const QUrl &exit_proxy_url) :
     _running(false),
     _sm(sm),
-    _net(net->Clone())
+    _net(net->Clone()),
+    _exit_proxy(QNetworkProxy::Socks5Proxy, 
+          exit_proxy_url.host(),
+          exit_proxy_url.port())
   {
     _net->SetMethod("LT::TunnelData");
   }
@@ -343,6 +347,7 @@ namespace Tunnel {
     if(!sp) return;
 
     QTcpSocket* socket = new QTcpSocket(this);
+    socket->setProxy(_exit_proxy);
 
     // Check the verification key
     if(!_table.SaveConnection(socket, sp->GetConnectionId(), sp->GetVerificationKey())) return;
@@ -377,6 +382,7 @@ namespace Tunnel {
     if(!sp) return;
 
     QUdpSocket* socket = new QUdpSocket(this);
+    socket->setProxy(_exit_proxy);
     socket->bind();
 
     // Check the verification key
