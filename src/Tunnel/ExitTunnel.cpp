@@ -26,7 +26,7 @@ namespace Tunnel {
     _running(false),
     _sm(sm),
     _net(net->Clone()),
-    _exit_proxy(QNetworkProxy::Socks5Proxy, 
+    _exit_proxy(exit_proxy_url.isEmpty() ? QNetworkProxy::NoProxy : QNetworkProxy::Socks5Proxy, 
           exit_proxy_url.host(),
           exit_proxy_url.port())
   {
