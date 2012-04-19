@@ -660,7 +660,8 @@ namespace Anonymity {
     Serialization::WriteInt(_state_machine.GetPhase(), msg_p, 0);
     int length = _state->next_msg.size() + SlotHeaderLength(_state->my_idx);
     if(_state->next_msg.size() == 0) {
-      _state->slot_open = false;
+      // Leave slot open once it has been opened
+      //_state->slot_open = false;
       length = 0;
     }
     Serialization::WriteInt(length, msg_p, 4);
