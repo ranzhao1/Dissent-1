@@ -1,8 +1,7 @@
 #ifndef DISSENT_ANONYMITY_ROUND_H_GUARD
 #define DISSENT_ANONYMITY_ROUND_H_GUARD
 
-#include <stdexcept>
-
+#include <QDateTime>
 #include <QObject>
 #include <QSharedPointer>
 
@@ -147,6 +146,16 @@ namespace Anonymity {
         _shared = shared.toWeakRef();
       }
 
+      /**
+       * Returns the time the Round was created
+       */
+      QDateTime GetCreateTime() const { return _create_time; }
+
+      /**
+       * Returns the time Start was called
+       */
+      QDateTime GetStartTime() const { return _start_time; }
+
     signals:
       /**
        * Emitted when the Round is closed for good or bad.
@@ -154,6 +163,11 @@ namespace Anonymity {
       void Finished();
 
     protected:
+      /**
+       * Called on Round Start
+       */
+      virtual void OnStart();
+
       /**
        * Called on Round Stop
        */
@@ -249,6 +263,8 @@ namespace Anonymity {
       }
 
     private:
+      QDateTime _create_time;
+      QDateTime _start_time;
       const Group _group;
       const PrivateIdentity _ident;
       const Id _round_id;
@@ -259,6 +275,12 @@ namespace Anonymity {
       bool _interrupted;
       QWeakPointer<Round> _shared;
   };
+
+  inline QDebug operator<<(QDebug dbg, const QSharedPointer<Round> &round)
+  {
+    dbg.nospace() << round->ToString();
+    return dbg.space();
+  }
 
   typedef QSharedPointer<Round> (*CreateRound)(const Round::Group &,
       const Round::PrivateIdentity &, const Connections::Id &,

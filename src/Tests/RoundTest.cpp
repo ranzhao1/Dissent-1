@@ -238,19 +238,14 @@ namespace Tests {
 
     qDebug() << "Session started";
 
-    SignalCounter sc;
+    SignalCounter sc, sc_data;
     for(int idx = 0; idx < count; idx++) {
       QObject::connect(&nodes[idx]->sink, SIGNAL(DataReceived()),
           &sc, SLOT(Counter()));
       nodes[idx]->session->Start();
     }
 
-    TestNode::calledback = 0;
-    qint64 next = Timer::GetInstance().VirtualRun();
-    while(next != -1 && sc.GetCount() < count && TestNode::calledback < count) {
-      Time::GetInstance().IncrementVirtualClock(next);
-      next = Timer::GetInstance().VirtualRun();
-    }
+    RunUntil(sc, count);
 
     for(int idx = 0; idx < count; idx++) {
       EXPECT_EQ(msg, nodes[idx]->sink.Last().second);
@@ -304,14 +299,9 @@ namespace Tests {
         SIGNAL(NewConnection(const QSharedPointer<Connection> &)),
         &con_counter, SLOT(Counter()));
 
-    while(next != -1 && con_counter.GetCount() != expected_cons) {
-      Time::GetInstance().IncrementVirtualClock(next);
-      next = Timer::GetInstance().VirtualRun();
-    }
+    RunUntil(con_counter, expected_cons);
 
     qDebug() << "Node fully connected";
-
-    EXPECT_EQ(expected_cons, con_counter.GetCount());
 
     CreateSession(nodes.last(), group, session_id, callback);
     SignalCounter ready;
@@ -320,10 +310,7 @@ namespace Tests {
         &ready, SLOT(Counter()));
     nodes.last()->session->Start();
 
-    while(next != -1 && ready.GetCount() != 1) {
-      Time::GetInstance().IncrementVirtualClock(next);
-      next = Timer::GetInstance().VirtualRun();
-    }
+    RunUntil(ready, 1);
 
     qDebug() << "Round started";
 
@@ -331,12 +318,7 @@ namespace Tests {
     nodes[sender1]->session->Send(msg);
 
     sc.Reset();
-    TestNode::calledback = 0;
-    next = Timer::GetInstance().VirtualRun();
-    while(next != -1 && sc.GetCount() < ncount && TestNode::calledback < ncount * 2) {
-      Time::GetInstance().IncrementVirtualClock(next);
-      next = Timer::GetInstance().VirtualRun();
-    }
+    RunUntil(sc, ncount);
 
     qDebug() << "Send successful";
 
@@ -437,20 +419,26 @@ namespace Tests {
     CreateSessions(nodes, group, Id(), callback);
 
     group = BuildGroup(nodes, group);
-    int leader = group.GetIndex(group.GetLeader());
     int disconnector = Random::GetInstance().GetInt(0, count);
     if(!transient && sg_policy == Group::ManagedSubgroup) {
       while(nodes[disconnector]->ident.GetSuperPeer()) {
         disconnector = Random::GetInstance().GetInt(0, count);
       }
     }
+
+    int leader = group.GetIndex(group.GetLeader());
     while(leader == disconnector) {
       disconnector = Random::GetInstance().GetInt(0, count);
     }
+
     int sender = Random::GetInstance().GetInt(0, count);
     while(sender == disconnector) {
       sender = Random::GetInstance().GetInt(0, count);
     }
+
+    qDebug() << "Leader:" << leader << nodes[leader]->ident.GetLocalId();
+    qDebug() << "Sender:" << sender << nodes[sender]->ident.GetLocalId();
+    qDebug() << "Disconnector:" << disconnector << nodes[disconnector]->ident.GetLocalId();
 
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
@@ -535,11 +523,14 @@ namespace Tests {
         count -= 1;
       }
     } else {
+      qDebug() << "Disconnecting";
+      nodes[disconnector]->session->Stop();
       nodes[disconnector]->cm->Stop();
       count -= 1;
     }
 
     RunUntil(sc_data, count);
+    qDebug() << "Finished";
 
     for(int idx = 0; idx < nodes.count(); idx++) {
       if((idx == disconnector) && count != nodes.count()) {

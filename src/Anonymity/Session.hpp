@@ -83,23 +83,23 @@ namespace Anonymity {
       void LinkDisconnect(const Request &notification);
 
       /**
-       * From the SessionManager, pass in a ReceivedRegister
+       * From the SessionManager, pass in a HandleRegister
        * @param request The request from a group member
        */
-      void ReceivedRegister(const Request &request);
+      void HandleRegister(const Request &request);
 
       /**
        * From the SessionManager, pass in a ReceiveReady
        * @param request The request from the leader
        */
-      void ReceivedPrepare(const Request &request);
+      void HandlePrepare(const Request &request);
 
       /**
        * From the SessionManager, pass in a Begin message from the Session
        * leader to call start on the round
        * @param notification The notification from the leader
        */
-      void ReceivedBegin(const Request &notification);
+      void HandleBegin(const Request &notification);
 
       /**
        * From the SessionManager, pass in incoming data
@@ -155,7 +155,23 @@ namespace Anonymity {
 
       static const int MinimumRoundSize = 3;
 
-      static const int PeerJoinDelay = 10000;
+      /**
+       * Time between a null or stopped round when peers are actively joining
+       */
+#if DISSENT_TEST
+      static const int InitialPeerJoinDelay = 1000;
+#else
+      static const int InitialPeerJoinDelay = 30000;
+#endif
+
+      /**
+       * Time between rounds if the round is active and peers have requested to join
+       */
+#if DISSENT_TEST
+      static const int RoundRunningPeerJoinDelay = 1000;
+#else
+      static const int RoundRunningPeerJoinDelay = 600000;
+#endif
 
       /**
        * Period between checking log off times
@@ -222,15 +238,20 @@ namespace Anonymity {
     private:
       /**
        * Called upon starting to register this peer with the leader
-       * @param unused
+       * @param unused unused
        */
-      void Register(const int &);
+      void Register(const int &unused = 0);
+
+      /**
+       * Sets up calls to CheckRegistrationCallback
+       */
+      void CheckRegistration();
 
       /**
        * Called upon registration / round finished to start a new round
        * @param unused
        */
-      void CheckRegistration(const int &);
+      void CheckRegistrationCallback(const int &);
 
       /**
        * Log off times to see if we can allow recent disconnects to reconnect
@@ -262,10 +283,21 @@ namespace Anonymity {
        */
       QPair<QByteArray, bool> GetData(int max);
 
+      /**
+       * If enough prepares have been issued, start a round
+       */
+      void CheckPrepares();
+
       void AddMember(const PublicIdentity &gc);
       void RemoveMember(const Id &id);
       bool AllowRegistration(const QSharedPointer<ISender> &from,
           const PublicIdentity &ident);
+
+      /**
+       * Leader's function for handling a disconnected peer
+       * @param remote_id the Id of the disconnecting peer
+       */
+      void HandleDisconnect(const Id &remote_id);
 
       /**
        * Used by the leader to queue Ready requests.
@@ -291,7 +323,8 @@ namespace Anonymity {
       Utils::TimerEvent _prepare_event;
       Utils::TimerEvent _check_log_off_event;
       QHash<Id, Id> _registered_peers;
-      QHash<Id, Id> _prepared_peers;
+      QList<Id> _prepared_peers;
+      QHash<Id, Id> _unprepared_peers;
       QSharedPointer<ResponseHandler> _prepared;
       QSharedPointer<ResponseHandler> _registered;
       GetDataCallback _get_data_cb;

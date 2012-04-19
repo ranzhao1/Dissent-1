@@ -82,6 +82,8 @@ namespace Crypto {
        */
       virtual IntegerData *Divide(const IntegerData *divisor) const = 0;
 
+      virtual IntegerData *Modulus(const IntegerData *modulus) const = 0;
+
       /**
        * Exponentiating operator
        * @param pow raise this to other
@@ -153,6 +155,11 @@ namespace Crypto {
        * Returns the integer's count in bytes
        */
       virtual int GetByteCount() const = 0;
+
+      /**
+       * Returns int32 rep
+       */
+      virtual int GetInt32() const = 0;
 
       /**
        * Convert a base64 number into a clean byte array

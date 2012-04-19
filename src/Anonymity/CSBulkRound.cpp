@@ -181,10 +181,9 @@ namespace Anonymity {
       return;
     }
 
-    if(_state_machine.GetState() == OFFLINE) {
-      SetInterrupted();
-      Stop("Interrupted before starting...");
-    } else if(_state_machine.GetState() == SHUFFLING) {
+    if((_state_machine.GetState() == OFFLINE) ||
+        (_state_machine.GetState() == SHUFFLING))
+    {
       GetShuffleRound()->HandleDisconnect(id);
     } else if(GetGroup().GetSubgroup().Contains(id)) {
       qDebug() << "A server (" << id << ") disconnected.";
@@ -232,9 +231,9 @@ namespace Anonymity {
     stream >> signatures >> cleartext;
 
     if(cleartext.size() != _state->msg_length) {
-      throw QRunTimeError(QString("Cleartext size mismatch: %1 :: %2")
-          .arg(cleartext.size())
-          .arg(_state->msg_length));
+      throw QRunTimeError("Cleartext size mismatch: " +
+          QString::number(cleartext.size()) + " :: " +
+          QString::number(_state->msg_length));
     }
 
     int server_length = GetGroup().GetSubgroup().Count();
@@ -457,7 +456,7 @@ namespace Anonymity {
   {
     if(!GetShuffleRound()->Successful()) {
       SetBadMembers(GetShuffleRound()->GetBadMembers());
-      if(GetBadMembers().count() == 0) {
+      if(GetShuffleRound()->Interrupted()) {
         SetInterrupted();
       }
       Stop("ShuffleRound failed");
