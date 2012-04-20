@@ -82,7 +82,8 @@ def make_http_request(line):
   curl.close()
   tend = time.time()
 
-  print "%s %s %f %f" % (d['len_head'], d['len_body'], tstart, tend)
+  sys.stdout.write("%s %s %f %f\n" % (d['len_head'], d['len_body'], tstart, tend))
+  sys.stdout.flush()
 
 if __name__ == "__main__":
   main()
