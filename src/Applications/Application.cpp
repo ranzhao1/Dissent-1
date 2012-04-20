@@ -46,6 +46,8 @@ int main(int argc, char **argv)
   QScopedPointer<EntryTunnel> tun_entry;
   QScopedPointer<ExitTunnel> tun_exit;
 
+  qDebug() << "Starting with leader" << settings.LeaderId;
+
   if(settings.Mode == Settings::Mode_Null) {
     app_sink = default_sink;
   } else if(settings.Mode == Settings::Mode_Console) {

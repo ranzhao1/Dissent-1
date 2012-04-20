@@ -659,11 +659,13 @@ namespace Anonymity {
     QByteArray msg_p(8, 0);
     Serialization::WriteInt(_state_machine.GetPhase(), msg_p, 0);
     int length = _state->next_msg.size() + SlotHeaderLength(_state->my_idx);
+    /*
+    // Leave slot open once it has been opened
     if(_state->next_msg.size() == 0) {
-      // Leave slot open once it has been opened
-      //_state->slot_open = false;
+      _state->slot_open = false;
       length = 0;
     }
+    */
     Serialization::WriteInt(length, msg_p, 4);
     msg_p.append(msg);
     QByteArray sig = _state->anonymous_key->Sign(msg_p);
