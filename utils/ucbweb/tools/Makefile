@@ -21,7 +21,7 @@ INCLUDE = -I.
 CFLAGS = -Wall -g $(INCLUDE)
 
 # Uncomment the following for Solaris
-LIBS = -lsocket -lnsl -lintl -ldl -lm
+#LIBS = -lsocket -lnsl -lintl -ldl -lm
 
 # Uncomment the following for Linux
 LIBS = -ldl -lm
