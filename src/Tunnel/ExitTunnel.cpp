@@ -210,8 +210,10 @@ namespace Tunnel {
 
     qDebug() << "SOCKS hostname" << host_info.hostName() << "resolved:" << okay;
     if(okay && _table.ContainsConnection(value.socket)) {
+      qDebug() << "SOCKS connecting to hostname" << host_info.hostName();
       value.socket->connectToHost(host_info.addresses()[0], value.port);
     } else {
+      qDebug() << "SOCKS aborting failed or closed connection:" << host_info.hostName();
       CloseSocket(value.socket);
     }
   }
