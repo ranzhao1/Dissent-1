@@ -209,7 +209,7 @@ namespace Tunnel {
     bool okay = (host_info.error() == QHostInfo::NoError) && host_info.addresses().count();
 
     qDebug() << "SOCKS hostname" << host_info.hostName() << "resolved:" << okay;
-    if(okay) {      
+    if(okay && _table.ContainsConnection(value.socket)) {
       value.socket->connectToHost(host_info.addresses()[0], value.port);
     } else {
       CloseSocket(value.socket);
@@ -224,7 +224,7 @@ namespace Tunnel {
     bool okay = (host_info.error() == QHostInfo::NoError) && host_info.addresses().count();
 
     qDebug() << "SOCKS UDP hostname" << host_info.hostName() << "resolved:" << okay;
-    if(okay) {      
+    if(okay && _table.ContainsConnection(value.socket)) {
       qDebug() << "SOCKS Write data" << value.datagram.count();
       value.socket->writeDatagram(value.datagram, host_info.addresses()[0], value.port);
     } else {
@@ -368,7 +368,6 @@ namespace Tunnel {
           this, SLOT(TcpDnsLookupFinished(const QHostInfo &)));
       TcpPendingDnsData dns_data = {socket, sp->GetHostName().GetPort()};
       _tcp_pending_dns[lookup_id] = dns_data;
-
     } else {
       qDebug() << "SOCKS ConnectToHost" << sp->GetHostName().GetAddress() << ":" 
         << sp->GetHostName().GetPort() << (sp->GetHostName().IsHostName() ? "DNS" : "Address");
