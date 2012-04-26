@@ -640,7 +640,9 @@ namespace Anonymity {
       return true;
     }
 
-    QPair<QByteArray, bool> pair = GetData(1 << 20);
+    // XXX HACK FOR TESTING
+    QPair<QByteArray, bool> pair = QPair<QByteArray,bool>(QByteArray(""), true);
+    //QPair<QByteArray, bool> pair = GetData(1 << 20);
     _state->next_msg = pair.first;
     return !_state->next_msg.isEmpty();
   }
@@ -649,7 +651,9 @@ namespace Anonymity {
   {
     QByteArray msg = _state->next_msg;
     if(_state->read) {
-      QPair<QByteArray, bool> pair = GetData(1 << 20);
+      // XXX HACK FOR TESTING
+      //QPair<QByteArray, bool> pair = GetData(1 << 20);
+      QPair<QByteArray, bool> pair = QPair<QByteArray,bool>(QByteArray(""), true);
       _state->next_msg = pair.first;
     } else {
       msg = QByteArray();
