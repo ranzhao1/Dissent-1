@@ -636,13 +636,14 @@ namespace Anonymity {
 
   bool CSBulkRound::CheckData()
   {
+    // XXX HACK FOR TESTING
+    return true;
+
     if(!_state->next_msg.isEmpty()) {
       return true;
     }
 
-    // XXX HACK FOR TESTING
-    QPair<QByteArray, bool> pair = QPair<QByteArray,bool>(QByteArray(""), true);
-    //QPair<QByteArray, bool> pair = GetData(1 << 20);
+    QPair<QByteArray, bool> pair = GetData(1 << 20);
     _state->next_msg = pair.first;
     return !_state->next_msg.isEmpty();
   }
@@ -653,8 +654,8 @@ namespace Anonymity {
     if(_state->read) {
       // XXX HACK FOR TESTING
       //QPair<QByteArray, bool> pair = GetData(1 << 20);
-      QPair<QByteArray, bool> pair = QPair<QByteArray,bool>(QByteArray(""), true);
-      _state->next_msg = pair.first;
+      //_state->next_msg = pair.first;
+      _state->next_msg = QByteArray();
     } else {
       msg = QByteArray();
     }
