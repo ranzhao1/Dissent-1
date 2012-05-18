@@ -18,9 +18,9 @@ import time
 SERVER_IP = "alice.cs.yale.edu"
 SERVER_PORT = 9090
 
-PROXY_IP, PROXY_PORT = (None, None)
-#PROXY_IP = "10.0.0.2"
-#PROXY_PORT = 8080
+#PROXY_IP, PROXY_PORT = (None, None)
+PROXY_IP = "10.0.0.2"
+PROXY_PORT = 8080
 
 def main():
   for line in sys.stdin:
