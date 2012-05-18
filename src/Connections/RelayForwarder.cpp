@@ -9,14 +9,19 @@
 
 namespace Dissent {
 namespace Connections {
-  const Id RelayForwarder::_prefered = Id(QString("HJf+qfK7oZVR3dOqeUQcM8TGeVA="));
+  const Id &RelayForwarder::Preferred()
+  {
+    static const Id prefered = Id(QString("HJf+qfK7oZVR3dOqeUQcM8TGeVA="));
+    return prefered;
+  }
 
   RelayForwarder::RelayForwarder(const Id &local_id, const ConnectionTable &ct,
       const QSharedPointer<RpcHandler> &rpc) :
     _local_id(local_id),
     _base_been(local_id.ToString()),
     _ct(ct),
-    _rpc(rpc)
+    _rpc(rpc),
+    _cache(4096)
   {
     _rpc->Register("RF::Data", this, "IncomingData");
   }
@@ -125,8 +130,8 @@ namespace Connections {
 
     QSharedPointer<Connection> con = _ct.GetConnection(to);
     if(!con || (dynamic_cast<RelayEdge *>(con->GetEdge().data()) != 0)) {
-      if(!been.contains(_prefered.ToString())) {
-        con = _ct.GetConnection(_prefered);
+      if(!been.contains(Preferred().ToString())) {
+        con = _ct.GetConnection(Preferred());
       }
     }
 

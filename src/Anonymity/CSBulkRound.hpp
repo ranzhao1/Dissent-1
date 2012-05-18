@@ -118,6 +118,12 @@ namespace Anonymity {
       }
 
       /**
+       * Returns the null seed, which can be found in slots that have no
+       * contents and should be skipped during this phase.
+       */
+      static QByteArray NullSeed();
+
+      /**
        * Randomize a message and prepend the seed
        * @param msg the message to randomize
        */
@@ -150,7 +156,11 @@ namespace Anonymity {
        * Delay between the start of a round and when all clients are required
        * to have submitted a message in order to be valid
        */
-      static const int CLIENT_SUBMISSION_WINDOW = 10000000;
+      static const int CLIENT_SUBMISSION_WINDOW = 120000;
+
+      static const float CLIENT_PERCENTAGE = .95;
+
+      static const float CLIENT_WINDOW_MULTIPLIER = 1.1;
 
     protected:
       typedef Utils::Random Random;
@@ -193,6 +203,7 @@ namespace Anonymity {
        */
       class State {
         public:
+          State() : accuse(false) {}
           virtual ~State() {}
 
           QVector<QSharedPointer<AsymmetricKey> > anonymous_keys;
@@ -222,9 +233,10 @@ namespace Anonymity {
           virtual ~ServerState() {}
 
           Utils::TimerEvent client_ciphertext_period;
+          qint64 start_of_phase;
+          int expected_clients;
 
           int phase;
-          int expected_messages;
 
           QByteArray my_commit;
           QByteArray my_ciphertext;
