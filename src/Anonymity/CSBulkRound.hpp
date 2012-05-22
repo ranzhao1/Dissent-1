@@ -158,9 +158,9 @@ namespace Anonymity {
        */
       static const int CLIENT_SUBMISSION_WINDOW = 120000;
 
-      static const float CLIENT_PERCENTAGE = .95;
+      static const float CLIENT_PERCENTAGE = .99;
 
-      static const float CLIENT_WINDOW_MULTIPLIER = 1.1;
+      static const float CLIENT_WINDOW_MULTIPLIER = 1.5;
 
     protected:
       typedef Utils::Random Random;
