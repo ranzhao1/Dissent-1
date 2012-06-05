@@ -662,13 +662,13 @@ namespace Anonymity {
 
     // Pull messages off of queue until max length is reached
     // or queue is empty
-    while(!_send_queue.isEmpty()) {
-      if((_send_queue.head().count() + data.count()) <= max) {
-        data.append(_send_queue.dequeue());
-      } else {
-        break;
-      }
+    while(!_send_queue.isEmpty() 
+        && ((_send_queue.head().count() + data.count()) <= max)) {
+      qDebug() << "Session: Adding to data len" << _send_queue.head().count();
+      data.append(_send_queue.dequeue());
     }
+
+    qDebug() << "Session: Returning data of length" << data.count();
 
     return QPair<QByteArray, bool>(data, !_send_queue.isEmpty());
   }
