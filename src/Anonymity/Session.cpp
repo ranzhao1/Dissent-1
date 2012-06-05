@@ -31,7 +31,6 @@ namespace Anonymity {
     _get_data_cb(this, &Session::GetData),
     _round_idx(0),
     _prepare_waiting(false),
-    _trim_send_queue(0),
     _registering(IsLeader())
   {
     QVariantHash headers = _network->GetHeaders();
@@ -473,10 +472,6 @@ namespace Anonymity {
     qDebug() << "Session" << ToString() << "round" << _current_round <<
       "finished due to" << _current_round->GetStoppedReason();
 
-    if(!_current_round->Successful()) {
-      _trim_send_queue = 0;
-    }
-
     emit RoundFinished(_current_round);
 
     if(Stopped()) {
@@ -523,7 +518,7 @@ namespace Anonymity {
       return;
     }
 
-    _send_queue.append(data);
+    _send_queue.enqueue(data);
   }
 
   void Session::IncomingData(const Request &notification)
@@ -656,29 +651,26 @@ namespace Anonymity {
 
   QPair<QByteArray, bool> Session::GetData(int max)
   {
-    if(_trim_send_queue > 0) {
-      _send_queue = _send_queue.mid(_trim_send_queue);
+    QByteArray data;
+
+    // Discard all messages that are too big to send
+    while(!_send_queue.isEmpty() && _send_queue.head().count() > max) {
+      qWarning() << "Discarding oversized message" <<
+        _send_queue.head().count() << "/" << max;
+      _send_queue.dequeue();
     }
 
-    QByteArray data;
-    int idx = 0;
-    while(idx < _send_queue.count()) {
-      if(max < _send_queue[idx].count()) {
-        qDebug() << "Messaging in queue is bigger than max data:" <<
-          _send_queue[idx].count() << "/" << max;
-        idx++;
-        continue;
-      } else if(max < (data.count() + _send_queue[idx].count())) {
+    // Pull messages off of queue until max length is reached
+    // or queue is empty
+    while(!_send_queue.isEmpty()) {
+      if((_send_queue.head().count() + data.count()) <= max) {
+        data.append(_send_queue.dequeue());
+      } else {
         break;
       }
-
-      data.append(_send_queue[idx++]);
     }
 
-    _trim_send_queue = idx;
-
-    bool more = _send_queue.count() < _trim_send_queue;
-    return QPair<QByteArray, bool>(data, more);
+    return QPair<QByteArray, bool>(data, !_send_queue.isEmpty());
   }
 }
 }

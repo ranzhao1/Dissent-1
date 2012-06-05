@@ -307,7 +307,7 @@ namespace Anonymity {
       /**
        * Used by a client to store messages to be sent for future rounds
        */
-      QList<QByteArray> _send_queue;
+      QQueue<QByteArray> _send_queue;
 
       Group _shared_group;
       QSet<Id> _bad_members;
@@ -332,7 +332,6 @@ namespace Anonymity {
       Request _prepare_request;
       bool _prepare_waiting;
       bool _prepare_waiting_for_con;
-      int _trim_send_queue;
       bool _registering;
       QHash <Id, qint64> _log_off_time;
 

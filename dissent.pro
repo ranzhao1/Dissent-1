@@ -5,13 +5,13 @@
 TEMPLATE = lib
 TARGET = dissent
 DEPENDPATH += 
-INCLUDEPATH += ext/joyent-http-parser/ ext/qt-json/ src/
+INCLUDEPATH += ext/joyent-http-parser/ ext/qt-json/ src/ ext/blogdrop/
 CONFIG += qt debug
 QT = core network
 DEFINES += "VERSION=3"
 
 # Input
-LIBS += -lcryptopp 
+LIBS += -lcryptopp -lcrypto
 HEADERS += ext/joyent-http-parser/http_parser.h \
            ext/qt-json/json.h \
            src/Dissent.hpp \
