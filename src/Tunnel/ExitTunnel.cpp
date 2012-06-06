@@ -278,7 +278,7 @@ namespace Tunnel {
       SendReply(FinishPacket(_table.IdForConnection(socket)).ToByteArray());
     }
 
-    //if(socket->isOpen()) socket->close();
+    if(socket && socket->isOpen()) socket->close();
 
     _table.ConnectionClosed(socket); 
     _tcp_buffers.remove(socket);
@@ -286,7 +286,8 @@ namespace Tunnel {
       _timers_map.remove(_timers[socket].data());
     }
     _timers.remove(socket); 
-    socket->deleteLater();
+
+    if(socket) socket->deleteLater();
   }
 
   bool ExitTunnel::CheckSession() {
