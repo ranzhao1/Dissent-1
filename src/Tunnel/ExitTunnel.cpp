@@ -278,7 +278,7 @@ namespace Tunnel {
       SendReply(FinishPacket(_table.IdForConnection(socket)).ToByteArray());
     }
 
-    if(socket->isOpen()) socket->close();
+    //if(socket->isOpen()) socket->close();
 
     _table.ConnectionClosed(socket); 
     _tcp_buffers.remove(socket);
