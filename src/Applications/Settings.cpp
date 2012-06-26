@@ -6,147 +6,76 @@ using Dissent::Utils::Logging;
 
 namespace Dissent {
 namespace Applications {
-  
-  const char* Settings::ParamNameMode = "mode";
-  const char* Settings::ParamNameRemotePeers = "remote_peers";
-  const char* Settings::ParamNameEndpoints = "endpoints";
-  const char* Settings::ParamNameDemoMode = "demo_mode";
-  const char* Settings::ParamNameLocalNodes = "local_nodes";
-  const char* Settings::ParamNameSessionType = "session_type";
-  const char* Settings::ParamNameSubgroupPolicy = "subgroup_policy";
-  const char* Settings::ParamNameLog = "log";
-  const char* Settings::ParamNameMultithreading = "multithreading";
-  const char* Settings::ParamNameLocalId = "local_id";
-  const char* Settings::ParamNameLeaderId = "leader_id";
-  const char* Settings::ParamNameWebServerUrl = "web_server_url";
-  const char* Settings::ParamNameEntryTunnelUrl = "entry_tunnel_url";
-  const char* Settings::ParamNameSuperPeer = "super_peer";
-  const char* Settings::ParamNameExitTunnelProxyUrl = "exit_tunnel_proxy_url";
-
-  const char* Settings::StringMode_Null = "null";
-  const char* Settings::StringMode_Console = "console";
-  const char* Settings::StringMode_WebServer = "web_server";
-  const char* Settings::StringMode_EntryTunnel = "entry_tunnel";
-  const char* Settings::StringMode_ExitTunnel = "exit_tunnel";
-
-  Settings::Settings(const QStringList &args, bool actions) :
-    SuperPeer(false),
-    LocalId(Id::Zero()),
-    LeaderId(Id::Zero()),
-    SubgroupPolicy(Group::CompleteGroup),
-    _actions(actions),
+  Settings::Settings(const QString &file, bool actions) :
     _use_file(true),
-    _args_valid(true),
-    _settings(args[args.count()-1], QSettings::IniFormat),
-    _reason()
+    _settings(new QSettings(file, QSettings::IniFormat))
   {
-    QStringList valid_flags;
-    valid_flags 
-      << ParamNameMode 
-      << ParamNameRemotePeers << ParamNameEndpoints << ParamNameDemoMode << ParamNameLocalNodes 
-      << ParamNameSessionType << ParamNameSubgroupPolicy << ParamNameLog 
-      << ParamNameMultithreading << ParamNameLocalId << ParamNameLeaderId 
-      << ParamNameWebServerUrl << ParamNameEntryTunnelUrl << ParamNameSuperPeer
-      << ParamNameExitTunnelProxyUrl;
-
-    Init();
-
-    if(args.count() < 2) {
-      _args_valid = false;
-      _reason = "Settings must be initialized with at least two arguments";
-      return;
-    }
-
-    _settings_flags.clear();
-    for(int i = 1; i < (args.count()-1); i++) {
-      // Flags are of format --key=value
-      const QString flag = QString(args[i]);
-      const int equals_idx = flag.indexOf("=");
-      if(equals_idx < 2) {
-        _args_valid = false;
-        _reason = QString("Invalid command line flag: %1").arg(flag);
-        break;
-      }
-
-      const QString key = flag.mid(2, equals_idx-2);
-      if(!(flag.count() > equals_idx)) {
-        _args_valid = false;
-        _reason = QString("Invalid command line flag: %1").arg(flag);
-        break;
-      }
-
-      const QString value = flag.mid(equals_idx+1);
-
-      if(!flag.startsWith("--") || !(flag.count() > 2) || !key.count() || !value.count()) {
-        _args_valid = false;
-        _reason = QString("Invalid command line flag: %1").arg(flag);
-        break;
-      }
-
-      if(!valid_flags.contains(key)) {
-        _args_valid = false;
-        _reason = QString("Unknown command line argument: %1").arg(key);
-        break;
-      }
-
-      _settings_flags.setValue(key, value);
-    }
-
-    ApplySettings(_settings);
-    ApplySettings(_settings_flags);
+    Init(actions);
   }
 
-  void Settings::ApplySettings(const QSettings& settings) 
+  Settings::Settings() :
+    _use_file(false),
+    _settings(new QSettings())
   {
-    if(settings.contains(ParamNameMode)) {
-      QString str = settings.value(ParamNameMode).toString();
-      if(str == StringMode_Null) {
-        Mode = Mode_Null;
-      } else if(str == StringMode_Console) {
-        Mode = Mode_Console;
-      } else if(str == StringMode_WebServer) {
-        Mode = Mode_WebServer;
-      } else if(str == StringMode_EntryTunnel) {
-        Mode = Mode_EntryTunnel;
-      } else if(str == StringMode_ExitTunnel) {
-        Mode = Mode_ExitTunnel;
-      } else {
-        _args_valid = false;
-        _reason = QString("Invalid mode: %1").arg(str);
-        return;
-      }
+    Init();
+  }
+
+  Settings::Settings(const QSharedPointer<QSettings> &settings,
+      bool file, bool actions) :
+    _use_file(file),
+    _settings(settings)
+  {
+    Init(actions);
+  }
+
+  void Settings::Init(bool actions)
+  {
+    Mode = Mode_Null;
+    LeaderId = Id::Zero();
+    LocalId = Id::Zero();
+    LocalNodeCount = 1;
+    SessionType = "null";
+
+    QVariant peers = _settings->value(Param<Params::RemotePeers>());
+    ParseUrlList("RemotePeer", peers, RemotePeers);
+
+    QVariant endpoints = _settings->value(Param<Params::LocalEndPoints>());
+    ParseUrlList("EndPoint", endpoints, LocalEndPoints);
+
+    DemoMode = _settings->value(Param<Params::DemoMode>()).toBool();
+
+    if(_settings->contains(Param<Params::LocalNodeCount>())) {
+      LocalNodeCount = _settings->value(Param<Params::LocalNodeCount>()).toInt();
     }
 
-    if(settings.contains(ParamNameRemotePeers)) {
-      QVariant peers = settings.value(ParamNameRemotePeers);
-      ParseUrlList("RemotePeer", peers, RemotePeers);
+    QString mode_string = _settings->value(Param<Params::Mode>()).toString();
+    if(mode_string == "null") Mode = Mode_Null;
+    else if(mode_string == "console") Mode = Mode_Console;
+    else if(mode_string == "web_server") Mode = Mode_WebServer;
+    else if(mode_string == "entry_tunnel") Mode = Mode_EntryTunnel;
+    else if(mode_string == "exit_tunnel") Mode = Mode_ExitTunnel;
+    else Mode = Mode_Unknown;
+
+    Multithreading = _settings->value(Param<Params::Multithreading>()).toBool();
+
+    WebServerUrl = TryParseUrl(_settings->value(Param<Params::WebServerUrl>()).toString(), "http");
+    EntryTunnelUrl = TryParseUrl(_settings->value(Param<Params::EntryTunnelUrl>()).toString(), "tcp");
+    ExitTunnelProxyUrl = TryParseUrl(_settings->value(Param<Params::ExitTunnelProxyUrl>()).toString(), "tcp");
+
+    if(_settings->contains(Param<Params::SessionType>())) {
+      SessionType = _settings->value(Param<Params::SessionType>()).toString();
     }
 
-    if(settings.contains(ParamNameEndpoints)) {
-      QVariant endpoints = settings.value(ParamNameEndpoints);
-      ParseUrlList("EndPoint", endpoints, LocalEndPoints);
-    }
-
-    if(settings.contains(ParamNameLocalNodes)) {
-      LocalNodeCount = settings.value(ParamNameLocalNodes).toInt();
-    }
-
-    ParseUrlType(settings, ParamNameWebServerUrl, "http", WebServerUrl);
-
-    if(settings.contains(ParamNameSessionType)) {
-      SessionType = settings.value(ParamNameSessionType).toString();
-    }
-
-    if(settings.contains(ParamNameSubgroupPolicy)) {
-      QString ptype = settings.value(ParamNameSubgroupPolicy).toString();
+    if(_settings->contains(Param<Params::SubgroupPolicy>())) {
+      QString ptype = _settings->value(Param<Params::SubgroupPolicy>()).toString();
       SubgroupPolicy = Group::StringToPolicyType(ptype);
     }
 
-    if(settings.contains(ParamNameLog)) {
-      Log = settings.value(ParamNameLog).toString();
+    if(_settings->contains(Param<Params::Log>())) {
+      Log = _settings->value(Param<Params::Log>()).toString();
       QString lower = Log.toLower();
 
-      if(_actions) {
+      if(actions) {
         if(lower == "stderr") {
           Logging::UseStderr();
         } else if(lower == "stdout") {
@@ -159,51 +88,27 @@ namespace Applications {
       }
     }
 
-    if(settings.contains(ParamNameDemoMode)) {
-      DemoMode = settings.value(ParamNameDemoMode).toBool();
+    if(_settings->contains(Param<Params::LocalId>())) {
+      LocalId = Id(_settings->value(Param<Params::LocalId>()).toString());
     }
 
-    if(settings.contains(ParamNameMultithreading)) {
-      Multithreading = settings.value(ParamNameMultithreading).toBool();
+    if(_settings->contains(Param<Params::LeaderId>())) {
+      LeaderId = Id(_settings->value(Param<Params::LeaderId>()).toString());
     }
 
-    if(settings.contains(ParamNameLocalId)) {
-      LocalId = Id(settings.value(ParamNameLocalId).toString());
+    if(_settings->contains(Param<Params::SuperPeer>())) {
+      SuperPeer = _settings->value(Param<Params::SuperPeer>()).toBool();
     }
-
-    if(settings.contains(ParamNameLeaderId)) {
-      LeaderId = Id(settings.value(ParamNameLeaderId).toString());
-    }
-
-    if(settings.contains(ParamNameSuperPeer)) {
-      SuperPeer = settings.value(ParamNameSuperPeer).toBool();
-    }
-    ParseUrlType(settings, ParamNameEntryTunnelUrl, "tcp", EntryTunnelUrl);
-    ParseUrlType(settings, ParamNameExitTunnelProxyUrl, "tcp", ExitTunnelProxyUrl);
-  }
-
-  Settings::Settings() :
-    LocalId(Id::Zero()),
-    LeaderId(Id::Zero()),
-    SubgroupPolicy(Group::CompleteGroup),
-    _use_file(false),
-    _args_valid(true)
-  {
-    Init();
-  }
-
-  void Settings::Init()
-  {
-    LocalNodeCount = 1;
-    SessionType = "null";
-    Mode = Mode_Null;
   }
 
   bool Settings::IsValid()
   {
-    if(!_args_valid) return false;
+    if(Mode == Mode_Unknown) {
+      _reason = "Unknown mode"; 
+      return false;
+    }
 
-    if(_use_file && (_settings.status() != QSettings::NoError)) {
+    if(_use_file && (_settings->status() != QSettings::NoError)) {
       _reason = "File error";
       return false;
     }
@@ -213,29 +118,22 @@ namespace Applications {
       return false;
     }
 
-    if((Mode == Mode_WebServer) && !WebServerUrl.isValid()) {
+    if((Mode == Mode_WebServer) && (!WebServerUrl.isValid() || WebServerUrl.isEmpty())) {
       _reason = "Invalid WebServerUrl";
       return false;
     }
 
-    if((Mode == Mode_EntryTunnel) && !EntryTunnelUrl.isValid()) {
-      _reason = "Invalid EntryTunnelUrl";
-      return false;
-    }
-
-    if((Mode == Mode_ExitTunnel) && !ExitTunnelProxyUrl.isEmpty() && !ExitTunnelProxyUrl.isValid()) {
-      _reason = "Invalid ExitTunnelProxyUrl";
+    if((Mode == Mode_EntryTunnel) && (!EntryTunnelUrl.isValid() || EntryTunnelUrl.isEmpty())) {
+      _reason = "Invalid WebServerUrl";
       return false;
     }
 
     if(LeaderId == Id::Zero()) {
-      qWarning() << "HERE?" << LeaderId.ToString();
       _reason = "No leader Id";
       return false;
     }
 
     if(SubgroupPolicy == -1) {
-      qWarning() << "HERE?!" << SubgroupPolicy;
       _reason = "Invalid subgroup policy";
       return false;
     }
@@ -247,23 +145,6 @@ namespace Applications {
   {
     IsValid();
     return _reason;
-  }
-
-  void Settings::ParseUrlType(const QSettings &settings, 
-      const QString &param_name, const QString &scheme, QUrl &target)
-  {
-    if(settings.contains(param_name)) {
-      QString url = settings.value(param_name).toString();
-      target = QUrl(url);
-      if(target.toString() != url) {
-        target = QUrl();
-      }
-
-      QString s = target.scheme();
-      if(s != scheme) {
-        target = QUrl();
-      }
-    }
   }
 
   void Settings::ParseUrlList(const QString &name, const QVariant &values,
@@ -319,7 +200,7 @@ namespace Applications {
     }
 
     if(!peers.empty()) {
-      _settings.setValue(ParamNameRemotePeers, peers);
+      _settings->setValue(Param<Params::RemotePeers>(), peers);
     }
 
     QStringList endpoints;
@@ -328,38 +209,113 @@ namespace Applications {
     }
 
     if(!endpoints.empty()) {
-      _settings.setValue(ParamNameEndpoints, endpoints);
+      _settings->setValue(Param<Params::LocalEndPoints>(), endpoints);
     }
 
-    QString mstr;
-    switch(Mode) {
-      case Mode_Null: 
-        mstr = StringMode_Null;
-        break;
-      case Mode_Console: 
-        mstr = StringMode_Console;
-        break;
-      case Mode_WebServer:
-        mstr = StringMode_WebServer;
-        break;
-      case Mode_EntryTunnel:
-        mstr = StringMode_EntryTunnel;
-        break;
-      case Mode_ExitTunnel:
-        mstr = StringMode_ExitTunnel;
-        break;
-    }
-    _settings.setValue(ParamNameMode, mstr);
-
-    _settings.setValue(ParamNameLocalNodes, LocalNodeCount);
-    _settings.setValue(ParamNameWebServerUrl, WebServerUrl);
-    _settings.setValue(ParamNameDemoMode, DemoMode);
-    _settings.setValue(ParamNameLog, Log);
-    _settings.setValue(ParamNameMultithreading, Multithreading);
-    _settings.setValue(ParamNameLocalId, LocalId.ToString());
-    _settings.setValue(ParamNameLeaderId, LeaderId.ToString());
-    _settings.setValue(ParamNameSubgroupPolicy,
+    _settings->setValue(Param<Params::Mode>(), Mode);
+    _settings->setValue(Param<Params::LocalNodeCount>(), LocalNodeCount);
+    _settings->setValue(Param<Params::WebServerUrl>(), WebServerUrl);
+    _settings->setValue(Param<Params::DemoMode>(), DemoMode);
+    _settings->setValue(Param<Params::Log>(), Log);
+    _settings->setValue(Param<Params::Multithreading>(), Multithreading);
+    _settings->setValue(Param<Params::LocalId>(), LocalId.ToString());
+    _settings->setValue(Param<Params::LeaderId>(), LeaderId.ToString());
+    _settings->setValue(Param<Params::SubgroupPolicy>(),
         Group::PolicyTypeToString(SubgroupPolicy));
+  }
+
+  Settings Settings::CommandLineParse(const QStringList &params, bool actions)
+  {
+    QSharedPointer<QxtCommandOptions> options = GetOptions();
+    options->parse(params);
+    QSharedPointer<QSettings> settings;
+    bool file = (options->positional().count() > 0);
+    if(file) {
+      settings = QSharedPointer<QSettings>(
+          new QSettings(options->positional()[0], QSettings::IniFormat));
+    } else {
+      settings = QSharedPointer<QSettings>(new QSettings());
+    }
+
+    QMultiHash<QString, QVariant> kv_params = options->parameters();
+
+    foreach(const QString &key, kv_params.uniqueKeys()) {
+      if(options->value(key).type() == QVariant::String &&
+          options->value(key).toString().isEmpty())
+      {
+       settings->setValue(key, true);
+      } else {
+        settings->setValue(key, options->value(key));
+      }
+    }
+
+    return Settings(settings, file, actions);
+  }
+
+  QSharedPointer<QxtCommandOptions> Settings::GetOptions()
+  {
+    QSharedPointer<QxtCommandOptions> options(new QxtCommandOptions());
+    options->add(Param<Params::Mode>(),
+        "role the node plays: none, console access, web server, exit tunnel, entry tunnel",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::RemotePeers>(),
+        "list of remote peers",
+        QxtCommandOptions::ValueRequired | QxtCommandOptions::AllowMultiple);
+
+    options->add(Param<Params::LocalEndPoints>(),
+        "list of local end points",
+        QxtCommandOptions::ValueRequired | QxtCommandOptions::AllowMultiple);
+
+    options->add(Param<Params::LocalNodeCount>(),
+        "number of virtual nodes to start",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::DemoMode>(),
+        "start in demo mode (with random public/private keys)",
+        QxtCommandOptions::NoValue);
+
+    options->add(Param<Params::SessionType>(),
+        "the type of session",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::Log>(),
+        "logging mechanism",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::WebServerUrl>(),
+        "web server url (enables web server)",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::EntryTunnelUrl>(),
+        "entry tunnel url (enables entry tunnel)",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::ExitTunnelProxyUrl>(),
+        "exit tunnel proxy url",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::Multithreading>(),
+        "enables multithreading",
+        QxtCommandOptions::NoValue);
+
+    options->add(Param<Params::LocalId>(),
+        "160-bit base64 local id",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::LeaderId>(),
+        "160-bit base64 leader id",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::SubgroupPolicy>(),
+        "subgroup policy (defining servers)",
+        QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::SuperPeer>(),
+        "sets this peer as a capable super peer",
+        QxtCommandOptions::NoValue);
+
+    return options;
   }
 }
 }

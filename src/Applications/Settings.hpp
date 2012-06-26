@@ -5,14 +5,14 @@
 #include <QDebug>
 #include <QHostAddress>
 #include <QSettings>
-#include <QStringList>
+#include <QSharedPointer>
+#include <QxtCommandOptions>
 
 #include "Connections/Id.hpp"
 #include "Identity/Group.hpp"
 
 namespace Dissent {
 namespace Applications {
-
   /**
    * Abstracts interaction with a configuration file
    */
@@ -22,68 +22,34 @@ namespace Applications {
       typedef Identity::Group Group;
 
       /**
-       * Setting parameter name strings
+       * Load configuration from disk
+       * @param file the file with the settings contained therein
+       * @param actions whether or not the settings file should change system
+       * configuration values or just be a container for configuration data,
+       * the default (true) is the latter.
        */
-      static const char* ParamNameMode;
-      static const char* ParamNameRemotePeers;
-      static const char* ParamNameEndpoints;
-      static const char* ParamNameDemoMode;
-      static const char* ParamNameLocalNodes;
-      static const char* ParamNameSessionType;
-      static const char* ParamNameSubgroupPolicy;
-      static const char* ParamNameLog;
-      static const char* ParamNameMultithreading;
-      static const char* ParamNameLocalId;
-      static const char* ParamNameLeaderId;
-      static const char* ParamNameWebServerUrl;
-      static const char* ParamNameEntryTunnelUrl;
-      static const char* ParamNameSuperPeer;
-      static const char* ParamNameExitTunnelProxyUrl;
+      explicit Settings(const QString &file, bool actions = true);
+      
+      static Settings CommandLineParse(const QStringList &params,
+          bool actions = true);
 
-      static const char* StringMode_Null;
-      static const char* StringMode_Console;
-      static const char* StringMode_WebServer;
-      static const char* StringMode_EntryTunnel;
-      static const char* StringMode_ExitTunnel;
+      static QString GetUsage()
+      {
+        static QSharedPointer<QxtCommandOptions> options = GetOptions();
+        return options->getUsage();
+      }
 
       /**
-       * Node operation mode
-       */
+      * Node operation mode
+      */
       typedef enum {
         Mode_Null,
         Mode_Console,
         Mode_WebServer,
         Mode_EntryTunnel,
-        Mode_ExitTunnel
+        Mode_ExitTunnel,
+        Mode_Unknown
       } ApplicationMode;
-
-
-      /**
-       * Mode strings
-       */
-      static const char* ParamNameMode_Console;
-      static const char* ParamNameMode_WebServer;
-      static const char* ParamNameMode_EntryTunnel;
-      static const char* ParamNameMode_ExitTunnel;
-
-      /**
-       * Load configuration from disk and command line args.
-       * The argument list should look like this:
-       *    ./dissent-binary [flags] config_file
-       * Or for example:
-       *    ./dissent --console=true --web_server=false conf/myconfig.conf
-       *
-       * Command line arguments override settings given in the config
-       * file to allow for easier scripting. Command line arguments
-       * can be repeated, with the last argument taking precedence.
-       * There must be a configuration file specified.
-       *
-       * @param command line arguments
-       * @param actions whether or not the settings file should change system
-       * configuration values or just be a container for configuration data,
-       * the default (true) is the latter.
-       */
-      explicit Settings(const QStringList &arguments, bool actions = true);
 
       /**
        * Create configuration in memory
@@ -106,6 +72,11 @@ namespace Applications {
       QString GetError();
 
       /**
+       * Whether application is a tunnel, web server, etc
+       */
+      ApplicationMode Mode;
+
+      /**
        * List of bootstrap peers
        */
       QList<QUrl> RemotePeers;
@@ -114,11 +85,6 @@ namespace Applications {
        * List of local urls to construct EdgeListeners from
        */
       QList<QUrl> LocalEndPoints;
-
-      /**
-       * The amount of nodes required before constructing an anonymity session
-       */
-      int GroupSize;
 
       /**
        * Amount of nodes to create locally
@@ -141,19 +107,9 @@ namespace Applications {
       QString Log;
 
       /**
-       * What type of interface to run
-       */
-      ApplicationMode Mode;
-
-      /**
        * IP:Port on which the HTTP server should listen
        */
       QUrl WebServerUrl;
-
-      /**
-       * Provide a IP Tunnel Entry point
-       */
-      bool EntryTunnel;
 
       /**
        * IP:Port on which the Tunnel Entry point will run
@@ -161,27 +117,15 @@ namespace Applications {
       QUrl EntryTunnelUrl;
 
       /**
-       * Provide a IP Tunnel Exit point
+       * IP:Port for a SOCKS5 server through which the exit tunnel
+       * should tunnel outgoing traffic
        */
-      bool ExitTunnel;
+      QUrl ExitTunnelProxyUrl;
 
       /**
        * Enable multhreaded operations
        */
       bool Multithreading;
-
-      /**
-       * Is a super peer
-       */
-      bool SuperPeer;
-
-      /**
-       * IP:Port for a SOCKS5 proxy through which to tunnel
-       * outgoing requests. This is useful for tunneling
-       * through Tor after Dissent.
-       */
-      QUrl ExitTunnelProxyUrl;
-
 
       /**
        * The id for the (first) local node, other nodes will be random
@@ -198,21 +142,70 @@ namespace Applications {
        */
       Group::SubgroupPolicy SubgroupPolicy;
 
+      /**
+       * SuperPeer capable?
+       */
+      bool SuperPeer;
+
+      static const char* CParam(int id)
+      {
+        static const char* params[] = {
+          "mode",
+          "remote_peers",
+          "endpoints",
+          "local_nodes",
+          "demo_mode",
+          "session_type",
+          "log",
+          "web_server_url",
+          "entry_tunnel_url",
+          "exit_tunnel_proxy_url",
+          "multithreading",
+          "local_id",
+          "leader_id",
+          "subgroup_policy",
+          "super_peer"
+        };
+        return params[id];
+      }
+
+      class Params {
+        public:
+          enum OptionId {
+            Mode = 0,
+            RemotePeers,
+            LocalEndPoints,
+            LocalNodeCount,
+            DemoMode,
+            SessionType,
+            Log,
+            WebServerUrl,
+            EntryTunnelUrl,
+            ExitTunnelProxyUrl,
+            Multithreading,
+            LocalId,
+            LeaderId,
+            SubgroupPolicy,
+            SuperPeer
+          };
+      };
+
+      template<int OptionId> static QString Param()
+      {
+        static QString param(CParam(OptionId));
+        return param;
+      }
 
     private:
-      void Init();
-      void ApplySettings(const QSettings &settings);
-      void ParseUrlType(const QSettings &settings, 
-          const QString &param_name, const QString &scheme, QUrl &target);
+      static QSharedPointer<QxtCommandOptions> GetOptions();
+      Settings(const QSharedPointer<QSettings> &settings, bool file, bool actions);
+      void Init(bool actions = false);
       void ParseUrlList(const QString &name, const QVariant &values, QList<QUrl> &list);
       void ParseUrl(const QString &name, const QVariant &value, QList<QUrl> &list);
       QUrl TryParseUrl(const QString &string_rep, const QString &scheme);
 
-      bool _actions;
       bool _use_file;
-      bool _args_valid;
-      QSettings _settings;
-      QSettings _settings_flags;
+      QSharedPointer<QSettings> _settings;
       QString _reason;
   };
 }

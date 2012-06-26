@@ -162,6 +162,8 @@ namespace Anonymity {
 
       static const float CLIENT_WINDOW_MULTIPLIER = 3;
 
+      static const int MAX_GET = 4096;
+
     protected:
       typedef Utils::Random Random;
 
@@ -219,6 +221,7 @@ namespace Anonymity {
           bool slot_open;
           bool accuse;
           QByteArray next_msg;
+          QByteArray last_msg;
           int msg_length;
           int base_msg_length;
           int my_idx;

@@ -60,7 +60,7 @@ namespace Tunnel {
        *        streams
        */
       explicit ExitTunnel(SessionManager &sm, const QSharedPointer<Network> &net,
-          const QUrl &exit_proxy);
+          const QUrl &exit_proxy = QUrl());
 
       virtual ~ExitTunnel();
 
