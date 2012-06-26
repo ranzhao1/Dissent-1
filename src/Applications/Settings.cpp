@@ -228,6 +228,7 @@ namespace Applications {
   {
     QSharedPointer<QxtCommandOptions> options = GetOptions();
     options->parse(params);
+
     QSharedPointer<QSettings> settings;
     bool file = (options->positional().count() > 0);
     if(file) {

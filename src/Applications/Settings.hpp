@@ -72,6 +72,13 @@ namespace Applications {
       QString GetError();
 
       /**
+       * Return true if mode is equal to given mode
+       */
+      inline bool IsMode(ApplicationMode other) {
+        return (Mode == other);
+      }
+
+      /**
        * Whether application is a tunnel, web server, etc
        */
       ApplicationMode Mode;

@@ -42,11 +42,11 @@ int main(int argc, char **argv)
   QSharedPointer<ISink> default_sink(new DummySink());
   QSharedPointer<ISink> app_sink = default_sink;
 
-  if(settings.Mode == Mode_Console) {
+  if(settings.IsMode(Settings::Mode_Console)) {
     app_sink = QSharedPointer<CommandLine>(new CommandLine(nodes));
-  } else if(settings.Mode == Mode_WebServer || 
-      settings.Mode == Mode_EntryTunnel || 
-      settings.Mode == Mode_ExitTunnel) {
+  } else if(settings.IsMode(Settings::Mode_WebServer) || 
+      settings.IsMode(Settings::Mode_EntryTunnel) || 
+      settings.IsMode(Settings::Mode_ExitTunnel)) {
     app_sink = QSharedPointer<SignalSink>(new SignalSink());
   }
 
@@ -102,13 +102,13 @@ int main(int argc, char **argv)
   QScopedPointer<EntryTunnel> tun_entry;
   QScopedPointer<ExitTunnel> tun_exit;
 
-  if(settings.Mode == Mode_Null) {
+  if(settings.IsMode(Settings::Mode_Null)) {
     // Do nothing
-  } else if(settings.Mode == Mode_Console) {
+  } else if(settings.IsMode(Settings::Mode_Console)) {
     QSharedPointer<CommandLine> cl = app_sink.dynamicCast<CommandLine>();
     QObject::connect(&qca, SIGNAL(aboutToQuit()), cl.data(), SLOT(Stop()));
     cl->Start();
-  } else if(settings.Mode == Mode_WebServer) {
+  } else if(settings.IsMode(Settings::Mode_WebServer)) {
     ws.reset(new WebServer(settings.WebServerUrl));
 
     /* Stop Web server when application is about to quit */
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     ws->AddRoute(HttpRequest::METHOD_HTTP_POST, "/session/send", send_message_sp);
 
     ws->Start();
-  } else if(settings.Mode == Mode_EntryTunnel) {
+  } else if(settings.IsMode(Settings::Mode_EntryTunnel)) {
     tun_entry.reset(new EntryTunnel(settings.EntryTunnelUrl, nodes[0]->GetSessionManager(), 
           nodes[0]->GetOverlay()->GetRpcHandler()));
 
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
         tun_entry.data(), SLOT(DownstreamData(const QByteArray&)));
 
     tun_entry->Start();
-  } else if(settings.Mode == Mode_ExitTunnel) {
+  } else if(settings.IsMode(Settings::Mode_ExitTunnel)) {
     tun_exit.reset(new ExitTunnel(nodes[0]->GetSessionManager(),
           nodes[0]->GetNetwork(), settings.ExitTunnelProxyUrl));
 
