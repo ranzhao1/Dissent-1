@@ -26,13 +26,13 @@ namespace Auth {
     return MakeResponseLogic(group, me, challenge);
   }
 
-  bool Authenticator::VerifyResponse(const Group &group, 
+  bool Authenticator::VerifyResponse(const PrivateIdentity &verifier, const Group &group, 
       const QSharedPointer<ISender> client, const QVariantHash &response)
   {
     bool authenticated = false;
 
     if(_challenges.contains(client)) {
-      authenticated = VerifyResponseLogic(group, client, _challenges[client], response);
+      authenticated = VerifyResponseLogic(verifier, group, client, _challenges[client], response);
       _challenges.remove(client);
     } else {
       qWarning() << "No stored challenge found for client" << client->ToString();

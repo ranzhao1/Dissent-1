@@ -124,7 +124,7 @@ namespace Sessions {
 
     Group new_group = AddGroupMember(GetGroup(), ident, false);
 
-    bool okay = _session->GetAuthenticator()->VerifyResponse(new_group, request.GetFrom(), response);
+    bool okay = _session->GetAuthenticator()->VerifyResponse(_ident, new_group, request.GetFrom(), response);
    
     request.Respond(okay);
 

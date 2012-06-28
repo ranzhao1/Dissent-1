@@ -1,22 +1,30 @@
-#ifndef DISSENT_IDENTITY_AUTH_NULL_AUTHENTICATOR_GUARD
-#define DISSENT_IDENTITY_AUTH_NULL_AUTHENTICATOR_GUARD
+#ifndef DISSENT_IDENTITY_AUTH_PUB_KEY_AUTHENTICATOR_GUARD
+#define DISSENT_IDENTITY_AUTH_PUB_KEY_AUTHENTICATOR_GUARD
 
 #include "Authenticator.hpp"
 
 namespace Dissent {
+
+namespace Crypto {
+  class Hash;
+  class Library;
+}
+
 namespace Identity {
 namespace Auth {
 
-  class NullAuthenticator : public Authenticator {
+  class PubKeyAuthenticator : public Authenticator {
+
+    typedef Crypto::Library Library;
 
     public:
 
       /**
        * Constructor
        */
-      NullAuthenticator();
+      PubKeyAuthenticator();
       
-      virtual ~NullAuthenticator() {}
+      virtual ~PubKeyAuthenticator() {}
 
     private:
 
@@ -28,6 +36,8 @@ namespace Auth {
       virtual bool VerifyResponseLogic(const PrivateIdentity &verifier,
           const Group &group, const QSharedPointer<ISender> client, 
           const QVariantHash &challenge, const QVariantHash &response);
+
+      Library *_crypto;
 
   };
 }

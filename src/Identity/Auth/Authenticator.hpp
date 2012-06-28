@@ -35,7 +35,8 @@ namespace Auth {
       QVariantHash MakeResponse(const Group &group, const PrivateIdentity &me, 
           const QVariantHash &challenge);
 
-      bool VerifyResponse(const Group &group, const QSharedPointer<ISender> client, 
+      bool VerifyResponse(const PrivateIdentity &verifier,
+          const Group &group, const QSharedPointer<ISender> client, 
           const QVariantHash &response);
 
     private:
@@ -46,7 +47,8 @@ namespace Auth {
       virtual QVariantHash MakeResponseLogic(const Group &group, 
           const PrivateIdentity &me, const QVariantHash &challenge) = 0;
 
-      virtual bool VerifyResponseLogic(const Group &group, const QSharedPointer<ISender> client, 
+      virtual bool VerifyResponseLogic(const PrivateIdentity &verifier,
+          const Group &group, const QSharedPointer<ISender> client, 
           const QVariantHash &challenge, const QVariantHash &response) = 0;
 
 

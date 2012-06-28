@@ -19,8 +19,8 @@ namespace Auth {
     return QVariantHash();
   }
 
-  bool NullAuthenticator::VerifyResponseLogic(const Group &, const QSharedPointer<ISender>, 
-    const QVariantHash &, const QVariantHash &)
+  bool NullAuthenticator::VerifyResponseLogic(const PrivateIdentity &,
+    const Group &, const QSharedPointer<ISender>, const QVariantHash &, const QVariantHash &)
   {
     return true;
   }

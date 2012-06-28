@@ -85,6 +85,7 @@
 #include "Identity/PublicIdentity.hpp"
 #include "Identity/Auth/Authenticator.hpp"
 #include "Identity/Auth/NullAuthenticator.hpp"
+#include "Identity/Auth/PubKeyAuthenticator.hpp"
 
 #include "Messaging/BufferSink.hpp"
 #include "Messaging/DummySink.hpp"
