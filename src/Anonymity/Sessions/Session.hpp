@@ -10,6 +10,7 @@
 #include "Identity/PrivateIdentity.hpp"
 #include "Identity/Group.hpp"
 #include "Identity/GroupHolder.hpp"
+#include "Identity/Auth/Authenticator.hpp"
 #include "Messaging/FilterObject.hpp"
 #include "Messaging/GetDataCallback.hpp"
 #include "Messaging/Request.hpp"
@@ -46,6 +47,7 @@ namespace Sessions {
       typedef Identity::PublicIdentity PublicIdentity;
       typedef Identity::Group Group;
       typedef Identity::GroupHolder GroupHolder;
+      typedef Identity::Auth::Authenticator Authenticator;
       typedef Messaging::Request Request;
       typedef Messaging::Response Response;
       typedef Messaging::ResponseHandler ResponseHandler;
@@ -57,11 +59,13 @@ namespace Sessions {
        * @param ident the local nodes credentials
        * @param session_id Id for the session
        * @param network handles message sending
+       * @param authenticator handles peer authentication
        * @param create_round a callback for creating a secure round
        */
       explicit Session(const QSharedPointer<GroupHolder> &group_holder,
           const PrivateIdentity &ident, const Id &session_id,
-          QSharedPointer<Network> network, CreateRound create_round);
+          QSharedPointer<Network> network, QSharedPointer<Authenticator> authenticator,
+          CreateRound create_round);
 
       /**
        * Deconstructor
@@ -77,6 +81,11 @@ namespace Sessions {
        * Returns the Session Id
        */
       inline const Id &GetSessionId() const { return _session_id; }
+
+      /**
+       * Returns the Session Authenticator
+       */
+      inline QSharedPointer<Authenticator> GetAuthenticator() { return _authenticator; }
 
       /**
        * Returns the current round
@@ -238,10 +247,12 @@ namespace Sessions {
       const PrivateIdentity _ident;
       const Id _session_id;
       QSharedPointer<Network> _network;
+      QSharedPointer<Authenticator> _authenticator;
       CreateRound _create_round;
 
       QSharedPointer<Round> _current_round;
       QSharedPointer<ResponseHandler> _registered;
+      QSharedPointer<ResponseHandler> _authenticated;
       GetDataCallback _get_data_cb;
       Request _prepare_request;
       bool _prepare_waiting;
@@ -251,9 +262,15 @@ namespace Sessions {
     private slots:
       /**
        * Contains acknowledgement from the registration request
-       * @param response the response may be positive or negative
+       * @param response the response may contain an authentication challenge
        */
       void Registered(const Response &response);
+
+      /**
+       * Contains acknowledgement from the authentication request
+       * @param response the response may be positive or negative
+       */
+      void Authenticated(const Response &response);
 
       /**
        * Called when a new connection is created

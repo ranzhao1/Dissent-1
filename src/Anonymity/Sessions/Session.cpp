@@ -3,6 +3,7 @@
 #include "Connections/ConnectionTable.hpp"
 #include "Connections/Network.hpp"
 #include "Identity/PublicIdentity.hpp"
+#include "Identity/Auth/Authenticator.hpp"
 #include "Messaging/Request.hpp"
 #include "Utils/Timer.hpp"
 
@@ -13,15 +14,18 @@ namespace Anonymity {
 namespace Sessions {
   Session::Session(const QSharedPointer<GroupHolder> &group_holder,
       const PrivateIdentity &ident, const Id &session_id,
-      QSharedPointer<Network> network, CreateRound create_round) :
+      QSharedPointer<Network> network, QSharedPointer<Authenticator> authenticator,
+      CreateRound create_round) :
     _group_holder(group_holder),
     _base_group(GetGroup()),
     _ident(ident),
     _session_id(session_id),
     _network(network),
+    _authenticator(authenticator),
     _create_round(create_round),
     _current_round(0),
     _registered(new ResponseHandler(this, "Registered")),
+    _authenticated(new ResponseHandler(this, "Authenticated")),
     _get_data_cb(this, &Session::GetData),
     _prepare_waiting(false),
     _trim_send_queue(0),
@@ -101,6 +105,24 @@ namespace Sessions {
   }
 
   void Session::Registered(const Response &response)
+  {
+    QVariantHash container;
+
+    container["response"] = _authenticator->MakeResponse(GetGroup(), _ident, response.GetData().toHash());
+    container["session_id"] = _session_id.GetByteArray();
+
+    qDebug() << _ident.GetLocalId() << "authenticating";
+
+    QByteArray ident;
+    QDataStream stream(&ident, QIODevice::WriteOnly);
+    stream << GetPublicIdentity(_ident);
+    container["ident"] = ident;
+
+    _network->SendRequest(GetGroup().GetLeader(), "SM::Authenticate", container,
+        _authenticated, true);
+  }
+
+  void Session::Authenticated(const Response &response)
   {
     if(Stopped()) {
       return;

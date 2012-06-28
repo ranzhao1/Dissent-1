@@ -16,6 +16,7 @@ namespace Tests {
         cm(new ConnectionManager(id, rpc)),
         sm(rpc),
         net(new DefaultNetwork(cm, rpc)),
+        auth(new NullAuthenticator()),
         ident(cm->GetId(),
             QSharedPointer<AsymmetricKey>(CryptoFactory::GetInstance().
               GetLibrary()->CreatePrivateKey()),
@@ -36,6 +37,7 @@ namespace Tests {
       QSharedPointer<ConnectionManager> cm;
       SessionManager sm;
       QSharedPointer<Network> net;
+      QSharedPointer<Authenticator> auth;
       BufferSink sink;
       PrivateIdentity ident;
       QSharedPointer<Session> session;
@@ -77,7 +79,7 @@ namespace Tests {
         }
 
         QSharedPointer<Session> session(new Session(gh, node->ident,
-              session_id, node->net, _create_round));
+              session_id, node->net, node->auth, _create_round));
         session->SetSharedPointer(session);
 
         node->session = session;

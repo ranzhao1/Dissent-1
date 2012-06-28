@@ -170,6 +170,12 @@ namespace Sessions {
        */
       void HandleRegister(const Request &request);
 
+      /**
+       * From the SessionLeaderManager, pass in a HandleAuthenticate
+       * @param request The request from a group member
+       */
+      void HandleAuthenticate(const Request &request);
+
     protected:
       /**
        * Called when the session is started

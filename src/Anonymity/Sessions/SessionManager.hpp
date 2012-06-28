@@ -127,6 +127,12 @@ namespace Sessions {
       void HandleRegister(const Request &request);
 
       /**
+       * A remote peer is requesting to authenticate into a session hosted by the local peer
+       * @param request a request to be included
+       */
+      void HandleAuthenticate(const Request &request);
+
+      /**
        * A remote peer is notifying this peer it is ready for the next round
        * @param request a request to be informed when to start
        */

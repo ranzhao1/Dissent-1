@@ -83,6 +83,8 @@
 #include "Identity/GroupHolder.hpp"
 #include "Identity/PrivateIdentity.hpp"
 #include "Identity/PublicIdentity.hpp"
+#include "Identity/Auth/Authenticator.hpp"
+#include "Identity/Auth/NullAuthenticator.hpp"
 
 #include "Messaging/BufferSink.hpp"
 #include "Messaging/DummySink.hpp"
@@ -178,6 +180,7 @@ using namespace Dissent::ClientServer;
 using namespace Dissent::Connections;
 using namespace Dissent::Crypto;
 using namespace Dissent::Identity;
+using namespace Dissent::Identity::Auth;
 using namespace Dissent::Messaging;
 using namespace Dissent::Overlay;
 using namespace Dissent::Transports;

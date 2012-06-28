@@ -10,6 +10,7 @@
 #include "SessionFactory.hpp"
 
 using Dissent::Identity::PublicIdentity;
+using Dissent::Identity::Auth::NullAuthenticator;
 using Dissent::ClientServer::CSNetwork;
 using Dissent::ClientServer::CSOverlay;
 using Dissent::Connections::DefaultNetwork;
@@ -26,12 +27,14 @@ namespace Applications {
       const QSharedPointer<GroupHolder> &group_holder,
       const QSharedPointer<BaseOverlay> &overlay,
       const QSharedPointer<Network> &network,
+      const QSharedPointer<Authenticator> &authenticator,
       const QSharedPointer<ISink> &sink,
       const QString &type) :
     _ident(ident),
     _group_holder(group_holder),
     _overlay(overlay),
     _net(network),
+    _auth(authenticator),
     _sm(_overlay->GetRpcHandler()),
     _sink(sink)
   {
@@ -53,8 +56,9 @@ namespace Applications {
     QSharedPointer<Network> network(new DefaultNetwork(
           overlay->GetConnectionManager(),
           overlay->GetRpcHandler()));
+    QSharedPointer<Authenticator> auth(new NullAuthenticator());
     return QSharedPointer<Node>(new Node(ident, gh, overlay,
-          network, sink, session));
+          network, auth, sink, session));
   }
 
   QSharedPointer<Node> Node::CreateClientServer(const PrivateIdentity &ident,
@@ -71,8 +75,9 @@ namespace Applications {
           overlay->GetConnectionManager(),
           overlay->GetRpcHandler(),
           gh));
+    QSharedPointer<Authenticator> auth(new NullAuthenticator());
     return QSharedPointer<Node>(new Node(ident, gh, overlay,
-          network, sink, session));
+          network, auth, sink, session));
   }
 }
 }

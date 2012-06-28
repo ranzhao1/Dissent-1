@@ -20,6 +20,7 @@ namespace Sessions {
     _rpc(rpc)
   {
     _rpc->Register("SM::Register", this, "HandleRegister");
+    _rpc->Register("SM::Authenticate", this, "HandleAuthenticate");
     _rpc->Register("SM::Prepare", this, "HandlePrepare");
     _rpc->Register("SM::Begin", this, "HandleBegin");
     _rpc->Register("SM::Data", this, "IncomingData");
@@ -29,6 +30,7 @@ namespace Sessions {
   SessionManager::~SessionManager()
   {
     _rpc->Unregister("SM::Register");
+    _rpc->Unregister("SM::Authenticate");
     _rpc->Unregister("SM::Prepare");
     _rpc->Unregister("SM::Begin");
     _rpc->Unregister("SM::Data");
@@ -83,7 +85,17 @@ namespace Sessions {
     if(sl) {
       sl->HandleRegister(request);
     } else {
-      request.Failed(Response::InvalidInput, "No such session leader");
+      request.Failed(Response::InvalidInput, "No such session leader (Register)");
+    }
+  }
+
+  void SessionManager::HandleAuthenticate(const Request &request)
+  {
+    QSharedPointer<SessionLeader> sl = GetSessionLeader(request);
+    if(sl) {
+      sl->HandleAuthenticate(request);
+    } else {
+      request.Failed(Response::InvalidInput, "No such session leader (Authenticate)");
     }
   }
 

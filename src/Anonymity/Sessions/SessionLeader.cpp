@@ -30,6 +30,7 @@ namespace Sessions {
   {
 #ifdef NO_SESSION_MANAGER
     _network->Register("SM::Register", this, "HandleRegister");
+    _network->Register("SM::Authenticate", this, "HandleAuthenticate");
     _network->Register("SM::Disconnect", this, "LinkDisconnect");
 #endif
     foreach(const QSharedPointer<Connection> con,
@@ -105,10 +106,34 @@ namespace Sessions {
     qDebug() << "Received a valid registration message from:" << ident;
     _last_registration = Dissent::Utils::Time::GetInstance().CurrentTime();
 
-    AddMember(ident);
-    request.Respond(true);
+    Group new_group = AddGroupMember(GetGroup(), ident, false);
+    QVariantHash chal = _session->GetAuthenticator()->MakeChallenge(new_group, request.GetFrom());
+    request.Respond(chal);
 
     CheckRegistration();
+  }
+
+  void SessionLeader::HandleAuthenticate(const Request &request)
+  {
+    QVariantHash response = request.GetData().toHash().value("response").toHash();
+    QDataStream stream(request.GetData().toHash().value("ident").toByteArray());
+    PublicIdentity ident;
+    stream >> ident;
+
+    qDebug() << "Received an authentication message from:" << ident;
+
+    Group new_group = AddGroupMember(GetGroup(), ident, false);
+
+    bool okay = _session->GetAuthenticator()->VerifyResponse(new_group, request.GetFrom(), response);
+   
+    request.Respond(okay);
+
+    if(okay) {
+      qDebug() << "Client" << request.GetFrom()->ToString() << "authenticated OK";
+      AddMember(ident);
+    } else {
+      qDebug() << "Client" << request.GetFrom()->ToString() << "failed to authenticate";
+    }
   }
 
   bool SessionLeader::AllowRegistration(const QSharedPointer<ISender> &,
