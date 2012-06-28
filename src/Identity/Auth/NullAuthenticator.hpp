@@ -8,6 +8,10 @@ namespace Identity {
 namespace Auth {
 
   class NullAuthenticator : public Authenticator {
+    /**
+     * This is a stub authenticator that lets anyone into
+     * the group
+     */
 
     public:
 

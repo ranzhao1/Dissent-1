@@ -96,6 +96,7 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Identity/PublicIdentity.hpp \
            src/Identity/Auth/Authenticator.hpp \
            src/Identity/Auth/NullAuthenticator.hpp \
+           src/Identity/Auth/PubKeyAuthenticator.hpp \
            src/Messaging/BufferSink.hpp \
            src/Messaging/DummySink.hpp \
            src/Messaging/Filter.hpp \
@@ -241,6 +242,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Identity/Group.cpp \
            src/Identity/Auth/Authenticator.cpp \
            src/Identity/Auth/NullAuthenticator.cpp \
+           src/Identity/Auth/PubKeyAuthenticator.cpp \
            src/Messaging/RpcHandler.cpp \
            src/Messaging/SignalSink.cpp \
            src/Overlay/BaseOverlay.cpp \
