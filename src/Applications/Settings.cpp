@@ -31,6 +31,9 @@ namespace Applications {
   void Settings::Init(bool actions)
   {
     Mode = Mode_Null;
+    Help = _settings->value("help", false).toBool();
+    if(Help) return;
+
     LeaderId = Id::Zero();
     LocalId = Id::Zero();
     LocalNodeCount = 1;
@@ -119,12 +122,12 @@ namespace Applications {
     }
 
     if((Mode == Mode_WebServer) && (!WebServerUrl.isValid() || WebServerUrl.isEmpty())) {
-      _reason = "Invalid WebServerUrl";
+      _reason = "Invalid WebServerUrl: " + WebServerUrl.toString();
       return false;
     }
 
     if((Mode == Mode_EntryTunnel) && (!EntryTunnelUrl.isValid() || EntryTunnelUrl.isEmpty())) {
-      _reason = "Invalid WebServerUrl";
+      _reason = "Invalid EntryTunnelUrl: " + EntryTunnelUrl.toString();
       return false;
     }
 
@@ -231,20 +234,29 @@ namespace Applications {
 
     QSharedPointer<QSettings> settings;
     bool file = (options->positional().count() > 0);
+
     if(file) {
       settings = QSharedPointer<QSettings>(
           new QSettings(options->positional()[0], QSettings::IniFormat));
     } else {
       settings = QSharedPointer<QSettings>(new QSettings());
+      if(params.size() == 1) {
+        settings->setValue("help", true);
+      }
     }
 
     QMultiHash<QString, QVariant> kv_params = options->parameters();
+
+    if(kv_params.value("help", false).toBool() && file) {
+      file = false;
+      settings = QSharedPointer<QSettings>(new QSettings());
+    }
 
     foreach(const QString &key, kv_params.uniqueKeys()) {
       if(options->value(key).type() == QVariant::String &&
           options->value(key).toString().isEmpty())
       {
-       settings->setValue(key, true);
+        settings->setValue(key, true);
       } else {
         settings->setValue(key, options->value(key));
       }
@@ -259,6 +271,10 @@ namespace Applications {
     options->add(Param<Params::Mode>(),
         "role the node plays: none, console access, web server, exit tunnel, entry tunnel",
         QxtCommandOptions::ValueRequired);
+
+    options->add(Param<Params::Help>(),
+        "help (this screen)",
+        QxtCommandOptions::NoValue);
 
     options->add(Param<Params::RemotePeers>(),
         "list of remote peers",
@@ -281,7 +297,7 @@ namespace Applications {
         QxtCommandOptions::ValueRequired);
 
     options->add(Param<Params::Log>(),
-        "logging mechanism",
+        "logging mechanism: stderr, stdout, or a file path",
         QxtCommandOptions::ValueRequired);
 
     options->add(Param<Params::WebServerUrl>(),

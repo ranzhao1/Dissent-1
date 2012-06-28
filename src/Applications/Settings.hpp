@@ -154,10 +154,13 @@ namespace Applications {
        */
       bool SuperPeer;
 
+      bool Help;
+
       static const char* CParam(int id)
       {
         static const char* params[] = {
           "mode",
+          "help",
           "remote_peers",
           "endpoints",
           "local_nodes",
@@ -180,6 +183,7 @@ namespace Applications {
         public:
           enum OptionId {
             Mode = 0,
+            Help,
             RemotePeers,
             LocalEndPoints,
             LocalNodeCount,
