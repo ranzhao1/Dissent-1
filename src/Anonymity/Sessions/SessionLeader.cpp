@@ -12,6 +12,7 @@
 #include "Utils/Timer.hpp"
 
 #include "SessionLeader.hpp"
+#include "Identity/Authentication/NullAuthenticator.hpp"
 
 namespace Dissent {
 namespace Anonymity {
@@ -20,17 +21,19 @@ namespace Sessions {
 
   SessionLeader::SessionLeader(const Group &group,
       const PrivateIdentity &ident, QSharedPointer<Network> network,
-      const QSharedPointer<Session> &session) :
+      const QSharedPointer<Session> &session,
+      const QSharedPointer<Identity::Authentication::IAuthenticator> &auth) :
     _group(group),
     _ident(ident),
     _network(network),
     _session(session),
-    _prepared(new ResponseHandler(this, "Prepared")),
-    _round_idx(0)
+    _round_idx(0),
+    _auth(auth)
   {
 #ifdef NO_SESSION_MANAGER
-    _network->Register("SM::Register", this, "HandleRegister");
-    _network->Register("SM::Authenticate", this, "HandleAuthenticate");
+    _network->Register("SM::Prepared", this, "HandlePrepared");
+    _network->Register("SM::ChallengeRequest", this, "HandleChallengeRequest");
+    _network->Register("SM::ChallengeResponse", this, "HandleChallengeResponse");
     _network->Register("SM::Disconnect", this, "LinkDisconnect");
 #endif
     foreach(const QSharedPointer<Connection> con,
@@ -77,63 +80,66 @@ namespace Sessions {
     emit Stopping();
   }
 
-  void SessionLeader::HandleRegister(const Request &request)
+  void SessionLeader::HandleChallengeRequest(const Request &request)
+  {
+    if(!Started()) {
+      qDebug() << "Received a ChallengeRequest message when not started.";
+      request.Failed(Response::InvalidInput, "SessionLeader not started");
+      return;
+    }
+
+    Id sender_id = Connections::IOverlaySender::GetRemoteId(request.GetFrom());
+    if(sender_id == Id::Zero()) {
+      qDebug() << "Received a ChallengeResponse from a non-IOverlay sender";
+      request.Failed(Response::InvalidSender,
+          "Wrong sending type, expected IOverlaySender.");
+      return;
+    }
+
+    request.Respond(_auth->RequestChallenge(sender_id, request.GetData()));
+  }
+
+  void SessionLeader::HandleChallengeResponse(const Request &request)
   {
     if(!Started()) {
       qDebug() << "Received a registration message when not started.";
       request.Failed(Response::InvalidInput, "SessionLeader not started");
       return;
     }
+    
+    QVariantHash req = request.GetData().toHash();
+    QVariant cresponse = req.value("challenge");
 
-    QDataStream stream(request.GetData().toHash().value("ident").toByteArray());
-    PublicIdentity ident;
-    stream >> ident;
-
-    if(!ident.GetVerificationKey()->IsValid()) {
-      qWarning() << "Received a registration request with invalid credentials";
-      request.Failed(Response::InvalidInput, "PrivateIdentity do not match Id");
+    Id sender_id = Connections::IOverlaySender::GetRemoteId(request.GetFrom());
+    if(sender_id == Id::Zero()) {
+      qDebug() << "Received a ChallengeResponse from a non-IOverlay sender";
+      request.Failed(Response::InvalidSender,
+          "Wrong sending type, expected IOverlaySender.");
       return;
     }
 
-    if(!AllowRegistration(request.GetFrom(), ident)) {
-      qDebug() << "Peer," << ident << ", has connectivity problems," <<
+    QPair<bool, PublicIdentity> auth = _auth->VerifyResponse(sender_id, cresponse);
+    if(!auth.first) {
+      qDebug() << "Failed to authenticate.";
+      request.Failed(Response::InvalidInput, "Failed to authenticate.");
+      return;
+    }
+
+    if(!AllowRegistration(request.GetFrom(), auth.second)) {
+      qDebug() << "Peer," << auth.second << ", has connectivity problems," <<
        "deferring registration until later.";
       request.Failed(Response::Other,
           "Unable to register at this time, try again later.");
       return;
     }
 
-    qDebug() << "Received a valid registration message from:" << ident;
+    qDebug() << "Received a valid registration message from:" << auth.second;
     _last_registration = Dissent::Utils::Time::GetInstance().CurrentTime();
 
-    Group new_group = AddGroupMember(GetGroup(), ident, false);
-    QVariantHash chal = _session->GetAuthenticator()->MakeChallenge(new_group, request.GetFrom());
-    request.Respond(chal);
+    AddMember(auth.second);
+    request.Respond(true);
 
     CheckRegistration();
-  }
-
-  void SessionLeader::HandleAuthenticate(const Request &request)
-  {
-    QVariantHash response = request.GetData().toHash().value("response").toHash();
-    QDataStream stream(request.GetData().toHash().value("ident").toByteArray());
-    PublicIdentity ident;
-    stream >> ident;
-
-    qDebug() << "Received an authentication message from:" << ident;
-
-    Group new_group = AddGroupMember(GetGroup(), ident, false);
-
-    bool okay = _session->GetAuthenticator()->VerifyResponse(_ident, new_group, request.GetFrom(), response);
-   
-    request.Respond(okay);
-
-    if(okay) {
-      qDebug() << "Client" << request.GetFrom()->ToString() << "authenticated OK";
-      AddMember(ident);
-    } else {
-      qDebug() << "Client" << request.GetFrom()->ToString() << "failed to authenticate";
-    }
   }
 
   bool SessionLeader::AllowRegistration(const QSharedPointer<ISender> &,
@@ -221,39 +227,39 @@ namespace Sessions {
 
     _prepared_peers.clear();
     _unprepared_peers = _registered_peers;
-    foreach(const Id &id, _registered_peers) {
-      _network->SendRequest(id, "SM::Prepare", msg, _prepared);
-    }
+
+    ///@todo replace the group holder for this network
+    ///with a group holder related to the leaders group
+    _session->GetGroupHolder()->UpdateGroup(group);
+
+    _network->Broadcast("SM::Prepare", msg);
 
     return true;
   }
 
-  void SessionLeader::Prepared(const Response &response)
+  void SessionLeader::HandlePrepared(const Request &notification)
   {
-    QSharedPointer<Connections::IOverlaySender> sender =
-      response.GetFrom().dynamicCast<Connections::IOverlaySender>();
-
-    if(!sender) {
-      qWarning() << "Received a prepared message from a non-IOverlaySender:" <<
-        response.GetFrom()->ToString();
+    Id sender_id = Connections::IOverlaySender::GetRemoteId(notification.GetFrom());
+    if(sender_id == Id::Zero()) {
+      qWarning() << "Received a LinkDisconnect from a non-IOverlaySender." <<
+        notification.GetFrom()->ToString();
       return;
-    } else if(!GetGroup().Contains(sender->GetRemoteId())) {
-      qWarning() << "Received a prepared message from a non-group member:" <<
-        response.GetFrom()->ToString();
+    } else if(!GetGroup().Contains(sender_id)) {
+      qWarning() << "Received a LinkDisconnect from a non-member:" << sender_id;
       return;
     }
 
     Q_ASSERT(GetCurrentRound());
-    Id round_id(response.GetData().toByteArray());
+    Id round_id(notification.GetData().toHash().value("round_id").toByteArray());
     if(GetCurrentRound()->GetRoundId() != round_id) {
       qDebug() << "Received a prepared message from the wrong round.  RoundId:" <<
-        round_id << "from" << response.GetFrom()->ToString();
+        round_id << "from" << notification.GetFrom()->ToString();
       return;
     }
 
     // Were we waiting on this one?
-    if(_unprepared_peers.remove(sender->GetRemoteId()) > 0) {
-      _prepared_peers.append(sender->GetRemoteId());
+    if(_unprepared_peers.remove(sender_id) > 0) {
+      _prepared_peers.append(sender_id);
       CheckPrepares();
     }
   }
@@ -279,9 +285,7 @@ namespace Sessions {
     QVariantHash msg;
     msg["session_id"] = GetSessionId().GetByteArray();
     msg["round_id"] = GetCurrentRound()->GetRoundId().GetByteArray();
-    foreach(const Id &id, _prepared_peers) {
-      _network->SendNotification(id, "SM::Begin", msg);
-    }
+    _network->Broadcast("SM::Begin", msg);
   }
 
   void SessionLeader::HandleRoundFinished()
@@ -301,16 +305,13 @@ namespace Sessions {
 
   void SessionLeader::LinkDisconnect(const Request &notification)
   {
-    QSharedPointer<Connections::IOverlaySender> sender =
-      notification.GetFrom().dynamicCast<Connections::IOverlaySender>();
-
-    if(!sender) {
+    Id sender_id = Connections::IOverlaySender::GetRemoteId(notification.GetFrom());
+    if(sender_id == Id::Zero()) {
       qWarning() << "Received a LinkDisconnect from a non-IOverlaySender." <<
-        sender->ToString();
+        notification.GetFrom()->ToString();
       return;
-    } else if(!GetGroup().Contains(sender->GetRemoteId())) {
-      qWarning() << "Received a LinkDisconnect from a non-member." <<
-        sender->GetRemoteId();
+    } else if(!GetGroup().Contains(sender_id)) {
+      qWarning() << "Received a LinkDisconnect from a non-member:" << sender_id;
       return;
     }
 

@@ -6,11 +6,11 @@
 
 #include "Anonymity/Round.hpp"
 #include "Connections/Id.hpp"
+#include "Identity/Authentication/IAuthenticate.hpp"
 #include "Identity/PublicIdentity.hpp"
 #include "Identity/PrivateIdentity.hpp"
 #include "Identity/Group.hpp"
 #include "Identity/GroupHolder.hpp"
-#include "Identity/Auth/Authenticator.hpp"
 #include "Messaging/FilterObject.hpp"
 #include "Messaging/GetDataCallback.hpp"
 #include "Messaging/Request.hpp"
@@ -47,7 +47,6 @@ namespace Sessions {
       typedef Identity::PublicIdentity PublicIdentity;
       typedef Identity::Group Group;
       typedef Identity::GroupHolder GroupHolder;
-      typedef Identity::Auth::Authenticator Authenticator;
       typedef Messaging::Request Request;
       typedef Messaging::Response Response;
       typedef Messaging::ResponseHandler ResponseHandler;
@@ -56,15 +55,15 @@ namespace Sessions {
       /**
        * Constructor
        * @param group_holder contains the anonymity group
-       * @param ident the local nodes credentials
+       * @param auth used to establish credentials with the leader
        * @param session_id Id for the session
        * @param network handles message sending
        * @param authenticator handles peer authentication
        * @param create_round a callback for creating a secure round
        */
       explicit Session(const QSharedPointer<GroupHolder> &group_holder,
-          const PrivateIdentity &ident, const Id &session_id,
-          QSharedPointer<Network> network, QSharedPointer<Authenticator> authenticator,
+          const QSharedPointer<Identity::Authentication::IAuthenticate> &auth,
+          const Id &session_id, QSharedPointer<Network> network,
           CreateRound create_round);
 
       /**
@@ -81,11 +80,6 @@ namespace Sessions {
        * Returns the Session Id
        */
       inline const Id &GetSessionId() const { return _session_id; }
-
-      /**
-       * Returns the Session Authenticator
-       */
-      inline QSharedPointer<Authenticator> GetAuthenticator() { return _authenticator; }
 
       /**
        * Returns the current round
@@ -112,7 +106,7 @@ namespace Sessions {
 
       static const int MinimumRoundSize = 3;
 
-      const GroupHolder &GetGroupHolder();
+      const QSharedPointer<GroupHolder> &GetGroupHolder() { return _group_holder; }
 
       /**
        * Returns true if the group is formed well enough to start the round
@@ -124,6 +118,15 @@ namespace Sessions {
        */
       inline bool CheckGroup() { return CheckGroup(GetGroup()); }
 
+      /**
+       * Returns the private identity
+       */
+      inline PrivateIdentity GetPrivateIdentity() const
+      {
+        return _auth->GetPrivateIdentity();
+      }
+
+    protected:
     signals:
       /**
        * Signals that a round is beginning.
@@ -164,7 +167,7 @@ namespace Sessions {
        * From the SessionManager, pass in a ReceiveReady
        * @param request The request from the leader
        */
-      void HandlePrepare(const Request &request);
+      void HandlePrepare(const Request &notification);
 
       /**
        * From the SessionManager, pass in a Begin message from the Session
@@ -179,8 +182,6 @@ namespace Sessions {
        */
       void IncomingData(const Request &notification);
 
-
-    protected:
       /**
        * Called when the session is started
        */
@@ -210,6 +211,13 @@ namespace Sessions {
        * Called when a round has finished
        */
       virtual void HandleRoundFinished();
+
+      /**
+       * Simplifies logic for handling registration
+       * @param request is this a request or a response
+       * @param data the request or response data
+       */
+      void SendChallenge(bool request, const QVariant &data);
 
     private:
       /**
@@ -244,33 +252,33 @@ namespace Sessions {
       Utils::TimerEvent _register_event;
       QSharedPointer<GroupHolder> _group_holder;
       const Group _base_group;
-      const PrivateIdentity _ident;
       const Id _session_id;
       QSharedPointer<Network> _network;
-      QSharedPointer<Authenticator> _authenticator;
       CreateRound _create_round;
 
       QSharedPointer<Round> _current_round;
+      QSharedPointer<ResponseHandler> _challenged;
       QSharedPointer<ResponseHandler> _registered;
       QSharedPointer<ResponseHandler> _authenticated;
       GetDataCallback _get_data_cb;
-      Request _prepare_request;
+      Request _prepare_notification;
       bool _prepare_waiting;
       int _trim_send_queue;
       bool _registering;
+      QSharedPointer<Identity::Authentication::IAuthenticate> _auth;
 
     private slots:
+      /**
+       * Contains a challenge from the authenticating service
+       * @param response the message containing the response
+       */
+      void Challenged(const Response &response);
+
       /**
        * Contains acknowledgement from the registration request
        * @param response the response may contain an authentication challenge
        */
       void Registered(const Response &response);
-
-      /**
-       * Contains acknowledgement from the authentication request
-       * @param response the response may be positive or negative
-       */
-      void Authenticated(const Response &response);
 
       /**
        * Called when a new connection is created

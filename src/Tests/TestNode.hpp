@@ -16,7 +16,6 @@ namespace Tests {
         cm(new ConnectionManager(id, rpc)),
         sm(rpc),
         net(new DefaultNetwork(cm, rpc)),
-        auth(new NullAuthenticator()),
         ident(cm->GetId(),
             QSharedPointer<AsymmetricKey>(CryptoFactory::GetInstance().
               GetLibrary()->CreatePrivateKey()),
@@ -37,7 +36,6 @@ namespace Tests {
       QSharedPointer<ConnectionManager> cm;
       SessionManager sm;
       QSharedPointer<Network> net;
-      QSharedPointer<Authenticator> auth;
       BufferSink sink;
       PrivateIdentity ident;
       QSharedPointer<Session> session;
@@ -78,8 +76,9 @@ namespace Tests {
           node->net = QSharedPointer<Network>(new CSNetwork(node->cm, node->rpc, gh));
         }
 
-        QSharedPointer<Session> session(new Session(gh, node->ident,
-              session_id, node->net, node->auth, _create_round));
+        QSharedPointer<IAuthenticate> authe(new NullAuthenticate(node->ident));
+        QSharedPointer<Session> session(new Session(gh, authe,
+              session_id, node->net, _create_round));
         session->SetSharedPointer(session);
 
         node->session = session;
@@ -89,8 +88,9 @@ namespace Tests {
             node, SLOT(HandleRoundFinished(QSharedPointer<Round>)));
 
         if(node->ident.GetLocalId() == group.GetLeader()) {
+          QSharedPointer<IAuthenticator> autho(new NullAuthenticator());
           QSharedPointer<SessionLeader> sl(new SessionLeader(
-                group, node->ident, node->net, session));
+                group, node->ident, node->net, session, autho));
           node->sm.AddSessionLeader(sl);
           sl->Start();
         }

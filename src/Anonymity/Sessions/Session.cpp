@@ -3,9 +3,11 @@
 #include "Connections/ConnectionTable.hpp"
 #include "Connections/Network.hpp"
 #include "Identity/PublicIdentity.hpp"
-#include "Identity/Auth/Authenticator.hpp"
 #include "Messaging/Request.hpp"
 #include "Utils/Timer.hpp"
+
+#include "Identity/Authentication/NullAuthenticate.hpp"
+#include "Identity/Authentication/TwoPhaseNullAuthenticate.hpp"
 
 #include "Session.hpp"
 
@@ -13,23 +15,22 @@ namespace Dissent {
 namespace Anonymity {
 namespace Sessions {
   Session::Session(const QSharedPointer<GroupHolder> &group_holder,
-      const PrivateIdentity &ident, const Id &session_id,
-      QSharedPointer<Network> network, QSharedPointer<Authenticator> authenticator,
+      const QSharedPointer<Identity::Authentication::IAuthenticate> &auth,
+      const Id &session_id, QSharedPointer<Network> network,
       CreateRound create_round) :
     _group_holder(group_holder),
     _base_group(GetGroup()),
-    _ident(ident),
     _session_id(session_id),
     _network(network),
-    _authenticator(authenticator),
     _create_round(create_round),
     _current_round(0),
+    _challenged(new ResponseHandler(this, "Challenged")),
     _registered(new ResponseHandler(this, "Registered")),
-    _authenticated(new ResponseHandler(this, "Authenticated")),
     _get_data_cb(this, &Session::GetData),
     _prepare_waiting(false),
     _trim_send_queue(0),
-    _registering(false)
+    _registering(false),
+    _auth(auth)
   {
     qRegisterMetaType<QSharedPointer<Round> >("QSharedPointer<Round>");
 
@@ -67,7 +68,7 @@ namespace Sessions {
 
   void Session::OnStart()
   {
-    qDebug() << _ident.GetLocalId() << "Session started:" << _session_id;
+    qDebug() << GetPrivateIdentity().GetLocalId() << "Session started:" << _session_id;
 
     if(ShouldRegister()) {
       Register();
@@ -89,47 +90,69 @@ namespace Sessions {
 
   void Session::Register(const int &)
   {
-    qDebug() << _ident.GetLocalId() << "registering";
-
+    qDebug() << GetPrivateIdentity().GetLocalId() << "registering";
     _registering = true;
+    QVariant data = _auth->PrepareForChallenge();
+    SendChallenge(_auth->RequireRequestChallenge(), data);
+  }
+
+  void Session::SendChallenge(bool request, const QVariant &data)
+  {
     QVariantHash container;
     container["session_id"] = _session_id.GetByteArray();
+    container["challenge"] = data;
 
-    QByteArray ident;
-    QDataStream stream(&ident, QIODevice::WriteOnly);
-    stream << GetPublicIdentity(_ident);
-    container["ident"] = ident;
+    if(request) {
+      _network->SendRequest(GetGroup().GetLeader(), "SM::ChallengeRequest", container,
+          _challenged, true);
+    } else {
+      _network->SendRequest(GetGroup().GetLeader(), "SM::ChallengeResponse", container,
+          _registered, true);
+    }
+  }
 
-    _network->SendRequest(GetGroup().GetLeader(), "SM::Register", container,
-        _registered, true);
+  void Session::Challenged(const Response &response)
+  {
+    if(Stopped()) {
+      return;
+    }
+
+    if(response.Successful()) {
+      QPair<bool, QVariant> auth = _auth->ProcessChallenge(response.GetData());
+      if(auth.first) {
+        qDebug() << "Sending challenge response";
+        SendChallenge(false, auth.second);
+        return;
+      }
+
+      qDebug() << "Received an invalid challenge, retrying.";
+    }
+
+    if(!_register_event.Stopped()) {
+      qDebug() << "Almost started two registration attempts simultaneously!";
+      return;
+    }
+
+    int delay = 5000;
+    if(response.GetErrorType() == Response::Other) {
+      delay = 60000;
+    }
+    qDebug() << "Unable to register due to" << response.GetError() <<
+      "Trying again later.";
+
+    Dissent::Utils::TimerCallback *cb =
+      new Dissent::Utils::TimerMethod<Session, int>(this, &Session::Register, 0);
+    _register_event = Dissent::Utils::Timer::GetInstance().QueueCallback(cb, delay);
   }
 
   void Session::Registered(const Response &response)
-  {
-    QVariantHash container;
-
-    container["response"] = _authenticator->MakeResponse(GetGroup(), _ident, response.GetData().toHash());
-    container["session_id"] = _session_id.GetByteArray();
-
-    qDebug() << _ident.GetLocalId() << "authenticating";
-
-    QByteArray ident;
-    QDataStream stream(&ident, QIODevice::WriteOnly);
-    stream << GetPublicIdentity(_ident);
-    container["ident"] = ident;
-
-    _network->SendRequest(GetGroup().GetLeader(), "SM::Authenticate", container,
-        _authenticated, true);
-  }
-
-  void Session::Authenticated(const Response &response)
   {
     if(Stopped()) {
       return;
     }
 
     if(response.Successful() && response.GetData().toBool()) {
-      qDebug() << _ident.GetLocalId() << "registered and waiting to go.";
+      qDebug() << GetPrivateIdentity().GetLocalId() << "registered and waiting to go.";
       return;
     }
 
@@ -178,21 +201,21 @@ namespace Sessions {
   void Session::HandleRoundFinished()
   {
     if(_prepare_waiting) {
-      HandlePrepare(_prepare_request);
+      HandlePrepare(_prepare_notification);
     }
   }
 
-  void Session::HandlePrepare(const Request &request)
+  void Session::HandlePrepare(const Request &notification)
   {
     if(_prepare_waiting) {
       _prepare_waiting = false;
     }
 
-    QVariantHash msg = request.GetData().toHash();
+    QVariantHash msg = notification.GetData().toHash();
 
     if(_current_round && !_current_round->Stopped() && _current_round->Started()) {
       _prepare_waiting = true;
-      _prepare_request = request;
+      _prepare_notification = notification;
       if(msg.value("interrupt").toBool()) {
         _current_round->Stop("Round interrupted.");
       }
@@ -212,25 +235,28 @@ namespace Sessions {
       Group group;
       stream >> group;
       qDebug() << "Prepare contains new group. I am present:" <<
-        group.Contains(_ident.GetLocalId());
+        group.Contains(GetPrivateIdentity().GetLocalId());
       _group_holder->UpdateGroup(group);
     }
 
     if(!CheckGroup()) {
       qDebug() << "Received a prepare message but lack of sufficient peers";
       _prepare_waiting = true;
-      _prepare_request = request;
+      _prepare_notification = notification;
       return;
     }
 
     NextRound(round_id);
-    request.Respond(brid);
-    _prepare_request = Request();
+    QVariantHash response;
+    response["session_id"] = GetSessionId().GetByteArray();
+    response["round_id"] = brid;
+    GetNetwork()->SendNotification(GetGroup().GetLeader(), "SM::Prepared", response);
+    _prepare_notification = Request();
   }
 
   void Session::NextRound(const Id &round_id)
   {
-    _current_round = _create_round(GetGroup(), _ident, round_id,
+    _current_round = _create_round(GetGroup(), GetPrivateIdentity(), round_id,
         _network, _get_data_cb);
 
     qDebug() << "Session" << ToString() << "preparing new round" <<
@@ -264,7 +290,7 @@ namespace Sessions {
         }
         break;
       case Group::ManagedSubgroup:
-        if(group.GetSubgroup().Contains(_ident.GetLocalId())) {
+        if(group.GetSubgroup().Contains(GetPrivateIdentity().GetLocalId())) {
           foreach(const PublicIdentity &gc, group.GetSubgroup()) {
             if(ct.GetConnection(gc.GetId()) == 0) {
               qDebug() << "Missing a subgroup connection" << gc.GetId();
@@ -320,6 +346,11 @@ namespace Sessions {
       return;
     }
 
+    if(_current_round->Started()) {
+      qDebug() << "Received duplicate Begin message";
+      return;
+    }
+
     qDebug() << "Session" << ToString() << "starting round" <<
       _current_round->ToString() << "started" << _current_round->Started();
     emit RoundStarting(_current_round);
@@ -360,7 +391,7 @@ namespace Sessions {
         this, SLOT(HandleDisconnectSlot()));
 
     if(_prepare_waiting && CheckGroup()) {
-      HandlePrepare(_prepare_request);
+      HandlePrepare(_prepare_notification);
     }
   }
 
@@ -376,7 +407,7 @@ namespace Sessions {
         return _network->GetConnection(GetGroup().GetLeader());
         break;
       case Group::ManagedSubgroup:
-        if(GetGroup().GetSubgroup().Contains(_ident.GetLocalId())) {
+        if(GetGroup().GetSubgroup().Contains(GetPrivateIdentity().GetLocalId())) {
           return _network->GetConnection(GetGroup().GetLeader());
         } else {
           return _network->GetConnectionManager()->GetConnectionTable().GetConnections().count() > 1;
@@ -416,7 +447,7 @@ namespace Sessions {
         send = true;
         break;
       case Group::ManagedSubgroup:
-        if(GetGroup().GetSubgroup().Contains(_ident.GetLocalId())) {
+        if(GetGroup().GetSubgroup().Contains(GetPrivateIdentity().GetLocalId())) {
           send = true;
         } else if(!CheckGroup()) {
           _registering = false;

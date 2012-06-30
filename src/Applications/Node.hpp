@@ -5,7 +5,6 @@
 #include "Identity/PrivateIdentity.hpp"
 #include "Identity/Group.hpp"
 #include "Identity/GroupHolder.hpp"
-#include "Identity/Auth/NullAuthenticator.hpp"
 #include "Messaging/ISink.hpp"
 #include "Overlay/BaseOverlay.hpp"
 #include "Transports/Address.hpp"
@@ -21,7 +20,6 @@ namespace Applications {
       typedef Identity::PrivateIdentity PrivateIdentity;
       typedef Identity::Group Group;
       typedef Identity::GroupHolder GroupHolder;
-      typedef Identity::Auth::Authenticator Authenticator;
       typedef Anonymity::Sessions::SessionManager SessionManager;
       typedef Connections::Connection Connection;
       typedef Connections::Network Network;
@@ -52,7 +50,6 @@ namespace Applications {
           const QSharedPointer<GroupHolder> &group_holder,
           const QSharedPointer<BaseOverlay> &overlay,
           const QSharedPointer<Network> &network,
-          const QSharedPointer<Authenticator> &authenticator,
           const QSharedPointer<ISink> &sink,
           const QString &type);
 
@@ -65,7 +62,6 @@ namespace Applications {
       QSharedPointer<GroupHolder> GetGroupHolder() const { return _group_holder; }
       Group GetGroup() const { return _group_holder->GetGroup(); }
       QSharedPointer<Network> GetNetwork() { return _net; }
-      QSharedPointer<Authenticator> GetAuthenticator() { return _auth; }
       QSharedPointer<BaseOverlay> GetOverlay() { return _overlay; }
       SessionManager &GetSessionManager() { return _sm; }
       QSharedPointer<ISink> GetSink() const { return _sink; }
@@ -75,7 +71,6 @@ namespace Applications {
       QSharedPointer<GroupHolder> _group_holder;
       QSharedPointer<BaseOverlay> _overlay;
       QSharedPointer<Network> _net;
-      QSharedPointer<Authenticator> _auth;
       SessionManager _sm;
       QSharedPointer<ISink> _sink;
   };

@@ -9,6 +9,7 @@
 
 #include "Anonymity/Round.hpp"
 #include "Connections/Id.hpp"
+#include "Identity/Authentication/IAuthenticator.hpp"
 #include "Identity/PublicIdentity.hpp"
 #include "Identity/PrivateIdentity.hpp"
 #include "Identity/Group.hpp"
@@ -32,7 +33,6 @@ namespace Crypto {
 
 namespace Messaging {
   class Response;
-  class ResponseHandler;
 }
 
 namespace Anonymity {
@@ -62,7 +62,6 @@ namespace Sessions {
       typedef Messaging::ISender ISender;
       typedef Messaging::Request Request;
       typedef Messaging::Response Response;
-      typedef Messaging::ResponseHandler ResponseHandler;
       typedef Messaging::GetDataMethod<SessionLeader> GetDataCallback;
 
       /**
@@ -75,7 +74,8 @@ namespace Sessions {
        */
       explicit SessionLeader(const Group &group,
           const PrivateIdentity &ident, QSharedPointer<Network> network,
-          const QSharedPointer<Session> &session);
+          const QSharedPointer<Session> &session,
+          const QSharedPointer<Identity::Authentication::IAuthenticator> &auth);
 
       /**
        * Deconstructor
@@ -165,17 +165,21 @@ namespace Sessions {
       void LinkDisconnect(const Request &notification);
 
       /**
-       * From the SessionLeaderManager, pass in a HandleRegister
-       * @param request The request from a group member
+       * A member wants to join, begins the initiation for joining.
+       * @param request a request to be included
        */
-      void HandleRegister(const Request &request);
+      void HandleChallengeRequest(const Request &request);
 
       /**
-       * From the SessionLeaderManager, pass in a HandleAuthenticate
-       * @param request The request from a group member
+       * This combines with register to actually enable a member to join a round
+       * @param response a request to join
        */
-      void HandleAuthenticate(const Request &request);
+      void HandleChallengeResponse(const Request &request);
 
+      /**
+       * Response to a prepare
+       */
+      void HandlePrepared(const Request &notification);
     protected:
       /**
        * Called when the session is started
@@ -245,19 +249,13 @@ namespace Sessions {
       Utils::TimerEvent _prepare_event;
       Utils::TimerEvent _check_log_off_event;
       QHash<Id, Id> _registered_peers;
-      QSharedPointer<ResponseHandler> _prepared;
       QList<Id> _prepared_peers;
       QHash<Id, Id> _unprepared_peers;
-      QSharedPointer<ResponseHandler> _registered;
       int _round_idx;
       QHash <Id, qint64> _log_off_time;
+      QSharedPointer<Identity::Authentication::IAuthenticator> _auth;
 
     private slots:
-      /**
-       * Response to a prepare
-       */
-      void Prepared(const Response &response);
-
       /**
        * Called when a new connection is created
        * @param con the new connection

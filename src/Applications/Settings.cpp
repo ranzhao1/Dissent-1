@@ -99,9 +99,7 @@ namespace Applications {
       LeaderId = Id(_settings->value(Param<Params::LeaderId>()).toString());
     }
 
-    if(_settings->contains(Param<Params::SuperPeer>())) {
-      SuperPeer = _settings->value(Param<Params::SuperPeer>()).toBool();
-    }
+    SuperPeer = _settings->value(Param<Params::SuperPeer>(), false).toBool();
   }
 
   bool Settings::IsValid()
@@ -240,14 +238,16 @@ namespace Applications {
           new QSettings(options->positional()[0], QSettings::IniFormat));
     } else {
       settings = QSharedPointer<QSettings>(new QSettings());
+      // Bug in other platforms?? I do not know...
+      settings->clear();
       if(params.size() == 1) {
-        settings->setValue("help", true);
+        settings->setValue(Param<Params::Help>(), true);
       }
     }
 
     QMultiHash<QString, QVariant> kv_params = options->parameters();
 
-    if(kv_params.value("help", false).toBool() && file) {
+    if(kv_params.value(Param<Params::Help>(), false).toBool() && file) {
       file = false;
       settings = QSharedPointer<QSettings>(new QSettings());
     }
