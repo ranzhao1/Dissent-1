@@ -11,3 +11,5 @@ docs/html
 test.log
 libdissent.so*
 roster
+keys/priv/*
+keys/pub/*

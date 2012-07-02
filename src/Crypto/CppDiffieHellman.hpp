@@ -65,6 +65,17 @@ namespace Crypto {
           const QByteArray &remote_pub, const QByteArray &proof) const;
 
       /**
+       * Serialize DH key
+       */
+      virtual QByteArray GetByteArray() const;
+
+      /**
+       * Read a DH object from serialized form
+       * @param data input byte array
+       */
+      virtual bool InitFromByteArray(const QByteArray &data);
+
+      /**
        * Get the digest of a list of integers (represented as ByteArrays)
        * @param list of integers
        */

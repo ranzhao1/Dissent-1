@@ -44,6 +44,12 @@ namespace Crypto {
       virtual QByteArray GetByteArray() const = 0;
 
       /**
+       * Loads a key from the provided byte array
+       * @param data key byte array
+       */
+      virtual bool InitFromByteArray(const QByteArray &data) = 0;
+
+      /**
        * Signs the data, returning the signature
        * @param data the data to sign
        */

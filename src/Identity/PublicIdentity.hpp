@@ -74,6 +74,12 @@ namespace Identity {
             GetId().ToString(), (GetSuperPeer() ? "true" : "false"));
       }
 
+      /**
+       * Saves the identity to a file
+       * @param filename the file to save the key into. Will overwrite the file.
+       */
+      bool Save(const QString &filename) const;
+
     private:
       Id _id;
       QSharedPointer<AsymmetricKey> _verification_key;

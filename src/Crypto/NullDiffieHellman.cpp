@@ -47,6 +47,17 @@ namespace Crypto {
     }
   }
 
+  QByteArray NullDiffieHellman::GetByteArray() const
+  {
+    return _key;
+  }
+
+  bool NullDiffieHellman::InitFromByteArray(const QByteArray &data)
+  {
+    _key = data;
+    return true;
+  }
+
 }
 }
 

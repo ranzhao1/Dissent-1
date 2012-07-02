@@ -58,8 +58,20 @@ namespace Identity {
        */
       bool GetSuperPeer() const { return _super_peer; }
 
+      /**
+       * Saves the identity to a file
+       * @param filename the file to save the key into. Will overwrite the file.
+       */
+      bool Save(const QString &filename) const;
+
+      /**
+       * Read the identity from a file
+       * @param filename the file from which to read
+       */
+      bool InitFromFile(const QString &filename);
+
     private:
-      const Id _local_id;
+      Id _local_id;
       QSharedPointer<AsymmetricKey> _signing_key;
       QSharedPointer<DiffieHellman> _dh_key;
       bool _super_peer;

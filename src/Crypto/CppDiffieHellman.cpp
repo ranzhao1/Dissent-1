@@ -179,5 +179,21 @@ namespace Crypto {
     _q_int = CryptoPP::Integer(reinterpret_cast<byte *>(GetQ().data()), GetQ().count());
     _g_int = CryptoPP::Integer(reinterpret_cast<byte *>(GetG().data()), GetG().count());
   }
+
+  QByteArray CppDiffieHellman::GetByteArray() const 
+  {
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << _public_key << _private_key;
+    return data;
+  }
+
+  bool CppDiffieHellman::InitFromByteArray(const QByteArray &data)
+  {
+    QDataStream stream(data);
+    stream >> _public_key >> _private_key;
+    return true;
+  }
+
 }
 }

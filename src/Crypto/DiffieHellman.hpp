@@ -81,6 +81,17 @@ namespace Crypto {
       virtual QByteArray VerifySharedSecret(const QByteArray &prover_pub,
           const QByteArray &remote_pub, const QByteArray &proof) const = 0;
 
+      /**
+       * Serialize DH key
+       */
+      virtual QByteArray GetByteArray() const = 0;
+
+      /**
+       * Read a DH object from serialized form
+       * @param data input byte array
+       */
+      virtual bool InitFromByteArray(const QByteArray &data) = 0;
+
     private:
       static void Init();
       static QByteArray _p, _g, _q;
