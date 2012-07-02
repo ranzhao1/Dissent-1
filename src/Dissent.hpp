@@ -83,6 +83,8 @@
 #include "Identity/Authentication/IAuthenticator.hpp"
 #include "Identity/Authentication/NullAuthenticate.hpp"
 #include "Identity/Authentication/NullAuthenticator.hpp"
+#include "Identity/Authentication/RosterAuthenticate.hpp"
+#include "Identity/Authentication/RosterAuthenticator.hpp"
 #include "Identity/Group.hpp"
 #include "Identity/GroupHolder.hpp"
 #include "Identity/PrivateIdentity.hpp"

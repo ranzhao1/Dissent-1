@@ -70,6 +70,11 @@ namespace Identity {
        */
       bool InitFromFile(const QString &filename);
 
+      /**
+       * Return a new random identity
+       */
+      static PrivateIdentity RandomIdentity();
+
     private:
       Id _local_id;
       QSharedPointer<AsymmetricKey> _signing_key;

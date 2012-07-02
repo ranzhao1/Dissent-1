@@ -1,5 +1,6 @@
 #include <QDataStream>
 #include <QFile>
+#include "Crypto/Library.hpp"
 #include "PrivateIdentity.hpp"
 
 namespace Dissent {
@@ -46,6 +47,19 @@ namespace Identity {
     file.close();
     
     return true;
+  }
+
+  PrivateIdentity PrivateIdentity::RandomIdentity()
+  {
+    Crypto::Library *lib = Crypto::CryptoFactory::GetInstance().GetLibrary();
+
+    QByteArray id(20, 0);
+    lib->GetRandomNumberGenerator()->GenerateBlock(id);
+
+    return PrivateIdentity(Id(id),
+      QSharedPointer<AsymmetricKey>(lib->GeneratePrivateKey(id)),
+      QSharedPointer<DiffieHellman>(lib->GenerateDiffieHellman(id)));
+
   }
 
 }
