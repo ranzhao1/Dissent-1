@@ -45,9 +45,10 @@ namespace BlogDrop {
        */
       bool IsElement(const Integer &i) const;
 
-      inline const Integer& GetP() { return _p; }
-      inline const Integer& GetQ() { return _q; }
-      inline const Integer& GetG() { return _g; }
+      inline const Integer& GetP() const { return _p; }
+      inline const Integer& GetQ() const { return _q; }
+      inline const Integer& GetG() const { return _g; }
+      inline const Integer& GetPSqrt() const { return _p_sqrt; }
 
     private:
       /**
