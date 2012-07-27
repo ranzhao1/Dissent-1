@@ -81,6 +81,7 @@
 #include "Crypto/OnionEncryptor.hpp"
 #include "Crypto/Serialization.hpp"
 #include "Crypto/ThreadedOnionEncryptor.hpp"
+#include "Crypto/BlogDrop/Parameters.hpp"
 
 #include "Identity/Authentication/IAuthenticate.hpp"
 #include "Identity/Authentication/IAuthenticator.hpp"
@@ -188,6 +189,7 @@ using namespace Dissent::Applications;
 using namespace Dissent::ClientServer;
 using namespace Dissent::Connections;
 using namespace Dissent::Crypto;
+using namespace Dissent::Crypto::BlogDrop;
 using namespace Dissent::Identity::Authentication;
 using namespace Dissent::Identity;
 using namespace Dissent::Messaging;
