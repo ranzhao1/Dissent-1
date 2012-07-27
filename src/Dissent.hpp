@@ -83,6 +83,8 @@
 #include "Crypto/ThreadedOnionEncryptor.hpp"
 #include "Crypto/BlogDrop/Parameters.hpp"
 #include "Crypto/BlogDrop/Plaintext.hpp"
+#include "Crypto/BlogDrop/PrivateKey.hpp"
+#include "Crypto/BlogDrop/PublicKey.hpp"
 
 #include "Identity/Authentication/IAuthenticate.hpp"
 #include "Identity/Authentication/IAuthenticator.hpp"

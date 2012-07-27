@@ -70,5 +70,13 @@ namespace Tests {
     EXPECT_TRUE(output.count() > (params.GetP().GetByteCount()-4));
     EXPECT_EQ(msg, output+leftover);
   }
+
+  TEST(BlogDrop, Keys) {
+    Parameters params = Parameters::Parameters::Fixed();
+
+    PrivateKey priv(params);
+    Integer j = priv.GetInteger();
+    ASSERT_TRUE(j > 2);
+  }
 }
 }
