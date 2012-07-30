@@ -118,6 +118,25 @@ namespace Tests {
     EXPECT_EQ(Integer(0), base.Pow(Integer(10), Integer(100)));
   }
 
+  TEST(Integer, CppModInverse)
+  {
+    for(int i=0; i<10; i++) {
+      Integer p = Integer::GetRandomInteger(1024, 0, true);
+      Integer a = Integer::GetRandomInteger(0, p);
+      Integer inv = a.ModInverse(p);
+      Integer out = (a*inv)%p;
+
+      ASSERT_TRUE(a > 0);
+      ASSERT_TRUE(p > a);
+
+      qDebug() << "a" << a.GetByteArray().toHex();
+      qDebug() << "p" << p.GetByteArray().toHex();
+      qDebug() << "out" << out.GetByteArray().toHex();
+
+      ASSERT_EQ(Integer(1), out);
+    }
+  }
+  
   TEST(Integer, CppRandom)
   {
     CryptoFactory &cf = CryptoFactory::GetInstance();

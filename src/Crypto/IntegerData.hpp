@@ -95,6 +95,13 @@ namespace Crypto {
           const IntegerData *mod) const = 0;
 
       /**
+       * Modular multiplicative inverse
+       * find x such that ax == 1 mod p
+       * @param mod modulus for inverse
+       */
+      virtual IntegerData *ModInverse(const IntegerData *mod) const = 0;
+
+      /**
        * Assignment operator
        * @param other the IntegerData to use for setting
        */

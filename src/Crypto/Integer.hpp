@@ -140,6 +140,15 @@ namespace Crypto {
       }
 
       /**
+       * Compute x such that ax == 1 mod p
+       * @param mod inverse modulo this group
+       */
+      Integer ModInverse(const Integer &mod) const
+      {
+        return Integer(_data->ModInverse(mod._data.constData()));
+      }
+
+      /**
        * Assignment operator
        * @param other the other Integer
        */
