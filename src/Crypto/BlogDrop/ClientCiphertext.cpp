@@ -28,7 +28,49 @@ namespace BlogDrop {
 
   void ClientCiphertext::SetAuthorProof(const PrivateKey &author_priv, const Plaintext &m)
   {
+    _element = (_element * m.GetInteger()) % _params.GetP();
 
+    // g1 = Product of server PKs, A = g1^a = client ciphertext elm,  a = client SK
+    // g2 = DH key generator,      B = g2^b = client PK,              b = client SK
+    // g3 = DH key generator,      C = g3^c = author PK,              c = author SK
+
+    // f  = random element mod q
+    // v1 = random element mod q
+    // v2 = random element mod q
+
+    Integer f, v1, v2;
+    f = _params.RandomExponent();
+    v1 = _params.RandomExponent();
+    v2 = _params.RandomExponent();
+
+    Integer t1, t2, t3;
+
+    // t1 = A^f * g1^v1
+    t1 = (_element.Pow(f, _params.GetP()) * 
+        _server_pks.GetInteger().Pow(v1, _params.GetP())) % _params.GetP();
+
+    // t2 = B^f * g2^v1
+    t2 = (_one_time_pub.GetInteger().Pow(f, _params.GetP()) *
+        _params.GetG().Pow(v1, _params.GetP())) % _params.GetP();
+
+    // t3 = g3^v2
+    t3 = _params.GetG().Pow(v2, _params.GetP());
+
+    // chal1 = f
+    _challenge_1 = f;
+
+    // chal2 = H(g1, g2, g3, y1, y2, y3, t1, t2, t3) - f
+    Integer hash = Commit(_server_pks.GetInteger(), _params.GetG(), _params.GetG(),
+        _element, _one_time_pub.GetInteger(), _author_pub.GetInteger(),
+        t1, t2, t3);
+
+    _challenge_2 = (hash - f) % _params.GetQ();
+   
+    // resp1 = v1
+    _response_1 = v1;
+
+    // resp2 = v2 - (chal2 * c)
+    _response_2 = (v2 - (_challenge_2 * author_priv.GetInteger())) % _params.GetQ();
   }
 
   void ClientCiphertext::SetProof()
@@ -37,9 +79,9 @@ namespace BlogDrop {
     // g2 = DH key generator,      B = g2^b = client PK,              b = client SK
     // g3 = DH key generator,      C = g3^c = author PK,              c = author SK
 
-    // f  = random element mod phi(n)
-    // v1 = random element mod phi(n)
-    // v2 = random element mod phi(n)
+    // f  = random element mod q
+    // v1 = random element mod q
+    // v2 = random element mod q
 
     Integer f, v1, v2;
     f = _params.RandomExponent();

@@ -56,6 +56,11 @@ namespace BlogDrop {
     return data.mid(1, data.count()-2);
   }
 
+  void Plaintext::SetRandom()
+  {
+    _m = _params.RandomElement();
+  }
+
 }
 }
 }

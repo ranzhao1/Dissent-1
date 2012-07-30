@@ -140,8 +140,8 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDrop, ClientProof) 
-  {
+
+  void TestClientOnce() {
     Parameters params = Parameters::Parameters::Fixed();
 
     // Generate an author PK
@@ -178,5 +178,62 @@ namespace Tests {
 
     ASSERT_TRUE(c.VerifyProof());
   }
+
+  TEST(BlogDrop, ClientProof) 
+  {
+    for(int i=0; i<10; i++) {
+      TestClientOnce();
+    }
+  }
+
+  void TestAuthorOnce() {
+    Parameters params = Parameters::Parameters::Fixed();
+
+    // Generate an author PK
+    PrivateKey author_priv(params);
+    const PublicKey author_pk(author_priv);
+
+    // Generate list of server pks
+    const int nkeys = 100;
+    QSet<PublicKey> server_pks;
+    for(int i=0; i<nkeys; i++) {
+      PrivateKey priv(params);
+      PublicKey pub(priv);
+      server_pks.insert(pub);
+    }
+
+    PublicKeySet server_pk_set(params, server_pks);
+
+    // Get a random plaintext
+    Plaintext m(params);
+    m.SetRandom();
+
+    // Generate ciphertext
+    ClientCiphertext c(params, server_pk_set, author_pk);
+    c.SetAuthorProof(author_priv, m);
+
+    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < params.GetQ());
+    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < params.GetQ());
+    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < params.GetQ());
+    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < params.GetQ());
+
+    // Make sure all values are distinct
+    QSet<QByteArray> set;
+    set.insert(c.GetChallenge1().GetByteArray());
+    set.insert(c.GetChallenge2().GetByteArray());
+    set.insert(c.GetResponse1().GetByteArray());
+    set.insert(c.GetResponse2().GetByteArray());
+    ASSERT_EQ(4, set.count());
+
+    ASSERT_TRUE(c.VerifyProof());
+  }
+
+  TEST(BlogDrop, AuthorProof) 
+  {
+    for(int i=0; i<10; i++) {
+      TestAuthorOnce();
+    }
+  }
+  
 }
 }

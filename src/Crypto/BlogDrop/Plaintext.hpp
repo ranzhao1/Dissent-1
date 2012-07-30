@@ -38,6 +38,16 @@ namespace BlogDrop {
        */
       QByteArray Decode() const;
 
+      /**
+       * Set plaintext to random value
+       */
+      void SetRandom();
+
+      /**
+       * Return integer representing this plaintext
+       */
+      inline Integer GetInteger() const { return _m; }
+
     private:
 
       const Parameters &_params;
