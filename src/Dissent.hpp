@@ -85,6 +85,8 @@
 #include "Crypto/BlogDrop/Plaintext.hpp"
 #include "Crypto/BlogDrop/PrivateKey.hpp"
 #include "Crypto/BlogDrop/PublicKey.hpp"
+#include "Crypto/BlogDrop/PublicKeySet.hpp"
+#include "Crypto/BlogDrop/ServerCiphertext.hpp"
 
 #include "Identity/Authentication/IAuthenticate.hpp"
 #include "Identity/Authentication/IAuthenticator.hpp"

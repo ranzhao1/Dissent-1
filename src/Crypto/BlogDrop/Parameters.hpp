@@ -45,10 +45,17 @@ namespace BlogDrop {
        */
       bool IsElement(const Integer &i) const;
 
-      inline const Integer& GetP() const { return _p; }
-      inline const Integer& GetQ() const { return _q; }
-      inline const Integer& GetG() const { return _g; }
-      inline const Integer& GetPSqrt() const { return _p_sqrt; }
+      inline const Integer GetP() const { return _p; }
+      inline const Integer GetQ() const { return _q; }
+      inline const Integer GetG() const { return _g; }
+      inline const Integer GetPSqrt() const { return _p_sqrt; }
+
+      inline bool operator==(const Parameters &other) const {
+        return (_p == other.GetP() &&
+            _q == other.GetQ() &&
+            _g == other.GetG() &&
+            _p_sqrt == other.GetPSqrt());
+      }
 
     private:
       /**
@@ -58,7 +65,7 @@ namespace BlogDrop {
        * @param g must generate the large prime-order subgroup 
        *        group of Z*_p
        */
-      Parameters(const Integer &p, const Integer &g);
+      Parameters(const Integer p, const Integer g);
 
 
       const Integer _p;
