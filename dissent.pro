@@ -93,8 +93,13 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/OnionEncryptor.hpp \
            src/Crypto/ThreadedOnionEncryptor.hpp \
            src/Crypto/Serialization.hpp \
+           src/Crypto/BlogDrop/ClientCiphertext.hpp \
            src/Crypto/BlogDrop/Parameters.hpp \
            src/Crypto/BlogDrop/Plaintext.hpp \
+           src/Crypto/BlogDrop/PrivateKey.hpp \
+           src/Crypto/BlogDrop/PublicKey.hpp \
+           src/Crypto/BlogDrop/PublicKeySet.hpp \
+           src/Crypto/BlogDrop/ServerCiphertext.hpp \
            src/Identity/Authentication/IAuthenticate.hpp \
            src/Identity/Authentication/IAuthenticator.hpp \
            src/Identity/Authentication/LRSAuthenticate.hpp \
@@ -251,8 +256,13 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/NullPrivateKey.cpp \
            src/Crypto/OnionEncryptor.cpp \
            src/Crypto/ThreadedOnionEncryptor.cpp \
+           src/Crypto/BlogDrop/ClientCiphertext.cpp \
            src/Crypto/BlogDrop/Parameters.cpp \
            src/Crypto/BlogDrop/Plaintext.cpp \
+           src/Crypto/BlogDrop/PrivateKey.cpp \
+           src/Crypto/BlogDrop/PublicKey.cpp \
+           src/Crypto/BlogDrop/PublicKeySet.cpp \
+           src/Crypto/BlogDrop/ServerCiphertext.cpp \
            src/Identity/Group.cpp \
            src/Identity/Authentication/LRSAuthenticate.cpp \
            src/Identity/Authentication/LRSAuthenticator.cpp \

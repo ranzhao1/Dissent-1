@@ -81,6 +81,7 @@
 #include "Crypto/OnionEncryptor.hpp"
 #include "Crypto/Serialization.hpp"
 #include "Crypto/ThreadedOnionEncryptor.hpp"
+#include "Crypto/BlogDrop/ClientCiphertext.hpp"
 #include "Crypto/BlogDrop/Parameters.hpp"
 #include "Crypto/BlogDrop/Plaintext.hpp"
 #include "Crypto/BlogDrop/PrivateKey.hpp"

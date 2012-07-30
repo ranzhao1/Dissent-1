@@ -139,5 +139,44 @@ namespace Tests {
       ASSERT_TRUE(c.VerifyProof(PublicKey(server_sk)));
     }
   }
+
+  TEST(BlogDrop, ClientProof) 
+  {
+    Parameters params = Parameters::Parameters::Fixed();
+
+    // Generate an author PK
+    PrivateKey priv(params);
+    const PublicKey author_pk(priv);
+
+    // Generate list of server pks
+    const int nkeys = 100;
+    QSet<PublicKey> server_pks;
+    for(int i=0; i<nkeys; i++) {
+      PrivateKey priv(params);
+      PublicKey pub(priv);
+      server_pks.insert(pub);
+    }
+
+    PublicKeySet server_pk_set(params, server_pks);
+
+    // Generate ciphertext
+    ClientCiphertext c(params, server_pk_set, author_pk);
+    c.SetProof();
+
+    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < params.GetQ());
+    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < params.GetQ());
+    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < params.GetQ());
+    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < params.GetQ());
+
+    // Make sure all values are distinct
+    QSet<QByteArray> set;
+    set.insert(c.GetChallenge1().GetByteArray());
+    set.insert(c.GetChallenge2().GetByteArray());
+    set.insert(c.GetResponse1().GetByteArray());
+    set.insert(c.GetResponse2().GetByteArray());
+    ASSERT_EQ(4, set.count());
+
+    ASSERT_TRUE(c.VerifyProof());
+  }
 }
 }

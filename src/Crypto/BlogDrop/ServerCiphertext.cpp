@@ -19,7 +19,7 @@ namespace BlogDrop {
     Integer v, t1, t2;
       
     // v in [0,q) 
-    v = Integer::GetRandomInteger(0, _params.GetQ());
+    v = _params.RandomExponent();
 
     // g1 = DH generator
     // g2 = product of client PKs
@@ -69,7 +69,6 @@ namespace BlogDrop {
     return (tmp == _challenge);
   }
 
-#define DEBUG_INT(a) qDebug() << #a << a.GetByteArray().toHex();
   Integer ServerCiphertext::Commit(const Integer &g1, const Integer &g2, 
       const Integer &y1, const Integer &y2,
       const Integer &t1, const Integer &t2) const
@@ -85,13 +84,6 @@ namespace BlogDrop {
     hash->Update(y2.GetByteArray());
     hash->Update(t1.GetByteArray());
     hash->Update(t2.GetByteArray());
-
-    DEBUG_INT(g1);
-    DEBUG_INT(g2);
-    DEBUG_INT(y1);
-    DEBUG_INT(y2);
-    DEBUG_INT(t1);
-    DEBUG_INT(t2);
 
     return Integer(hash->ComputeHash()) % _params.GetQ();
   }
