@@ -52,6 +52,10 @@ namespace BlogDrop {
     // t'1 = g1^r  * y1^c
     // t'2 = g2^-r  * y2^c
 
+    if(!(_params.IsElement(pub.GetInteger()) &&
+      _params.IsElement(_client_pks.GetInteger()) &&
+      _params.IsElement(_element))) return false;
+
     Integer g2, t1, t2;
 
     // t1 = g1^r * y1^c

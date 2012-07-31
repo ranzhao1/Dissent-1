@@ -123,6 +123,11 @@ namespace BlogDrop {
     // g2 = DH key generator,      B = g2^b = client PK,              b = client SK
     // g3 = DH key generator,      C = g3^c = author PK,              c = author SK
 
+    if(!(_params.IsElement(_server_pks.GetInteger()) &&
+          _params.IsElement(_author_pub.GetInteger()) &&
+          _params.IsElement(_one_time_pub.GetInteger()) &&
+          _params.IsElement(_element))) return false;
+
     Integer t1, t2, t3;
 
     // t1 = A^chal1 * g1^resp1
