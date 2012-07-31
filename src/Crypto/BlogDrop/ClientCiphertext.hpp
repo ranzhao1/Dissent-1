@@ -27,6 +27,17 @@ namespace BlogDrop {
        */
       explicit ClientCiphertext(const Parameters params, const PublicKeySet server_pks,
           const PublicKey author_pub);
+
+      /**
+       * Constructor: Initialize a ciphertext from a serialized bytearray
+       * @param params Group parameters
+       * @param server_pks Server public keys
+       * @param author_pub author public key
+       * @param the byte array
+       */
+      explicit ClientCiphertext(const Parameters params, const PublicKeySet server_pks,
+          const PublicKey author_pub, const QByteArray &serialized);
+
       /**
        * Constructor: Initialize a ciphertext with an existing
        * one-time public key
@@ -62,8 +73,12 @@ namespace BlogDrop {
        */
       bool VerifyProof() const;
 
-      inline PublicKey GetOneTimeKey() const { return _one_time_pub; }
+      /**
+       * Get a byte array for this ciphertext
+       */
+      QByteArray GetByteArray() const;
 
+      inline PublicKey GetOneTimeKey() const { return _one_time_pub; }
       inline Integer GetElement() const { return _element; }
       inline Integer GetChallenge1() const { return _challenge_1; }
       inline Integer GetChallenge2() const { return _challenge_2; }
@@ -76,12 +91,12 @@ namespace BlogDrop {
           const Integer &y1, const Integer &y2, const Integer &y3,
           const Integer &t1, const Integer &t2, const Integer &t3) const;
 
-      const Parameters _params;
-      const PublicKeySet _server_pks;
-      const PublicKey _author_pub;
+      Parameters _params;
+      PublicKeySet _server_pks;
+      PublicKey _author_pub;
 
-      const PrivateKey _one_time_priv;
-      const PublicKey _one_time_pub;
+      PrivateKey _one_time_priv;
+      PublicKey _one_time_pub;
 
       Integer _element;
       Integer _challenge_1, _challenge_2;

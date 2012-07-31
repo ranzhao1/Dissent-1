@@ -2,6 +2,7 @@
 #define DISSENT_DISSENT_H_GUARD
 
 #include "Anonymity/BaseBulkRound.hpp"
+#include "Anonymity/BlogDropRound.hpp"
 #include "Anonymity/BulkRound.hpp"
 #include "Anonymity/CSBulkRound.hpp"
 #include "Anonymity/Log.hpp"

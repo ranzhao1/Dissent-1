@@ -25,6 +25,15 @@ namespace BlogDrop {
       ServerCiphertext(const Parameters params, const PublicKeySet client_pks);
 
       /**
+       * Constructor: Initialize a ciphertext from serialized version
+       * @param Group parameters
+       * @param Client public keys
+       * @param serialized byte array
+       */
+      ServerCiphertext(const Parameters params, const PublicKeySet client_pks,
+          const QByteArray &serialized);
+
+      /**
        * Destructor
        */
       virtual ~ServerCiphertext() {}
@@ -42,6 +51,11 @@ namespace BlogDrop {
        */
       bool VerifyProof(const PublicKey &pub) const;
 
+      /**
+       * Get serialized version
+       */
+      QByteArray GetByteArray() const;
+
       inline Integer GetElement() const { return _element; }
       inline Integer GetChallenge() const { return _challenge; }
       inline Integer GetResponse() const { return _response; }
@@ -52,8 +66,8 @@ namespace BlogDrop {
           const Integer &y1, const Integer &y2,
           const Integer &t1, const Integer &t2) const;
 
-      const Parameters _params;
-      const PublicKeySet _client_pks;
+      Parameters _params;
+      PublicKeySet _client_pks;
 
       Integer _element;
       Integer _challenge;

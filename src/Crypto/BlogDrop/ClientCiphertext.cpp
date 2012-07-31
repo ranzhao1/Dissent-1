@@ -18,6 +18,31 @@ namespace BlogDrop {
   }
 
   ClientCiphertext::ClientCiphertext(const Parameters params, const PublicKeySet server_pks,
+      const PublicKey author_pub, const QByteArray &serialized) :
+    _params(params),
+    _server_pks(server_pks),
+    _author_pub(author_pub),
+    _one_time_priv(params),
+    _one_time_pub(_one_time_priv)
+  {
+    QList<QByteArray> list;
+    QDataStream stream(serialized);
+    stream >> list;
+
+    if(list.count() != 6) {
+      qWarning() << "Failed to unserialize";
+      return; 
+    }
+
+    _one_time_pub.SetInteger(Integer(list[0]));
+    _element = Integer(list[1]);
+    _challenge_1 = Integer(list[2]);
+    _challenge_2 = Integer(list[3]);
+    _response_1 = Integer(list[4]);
+    _response_2 = Integer(list[5]);
+  }
+
+  ClientCiphertext::ClientCiphertext(const Parameters params, const PublicKeySet server_pks,
       const PublicKey author_pub, const PublicKey one_time_pub) :
     _params(params),
     _server_pks(server_pks),
@@ -175,6 +200,23 @@ namespace BlogDrop {
     hash->Update(t3.GetByteArray());
 
     return Integer(hash->ComputeHash()) % _params.GetQ();
+  }
+
+  QByteArray ClientCiphertext::GetByteArray() const 
+  {
+    QList<QByteArray> list;
+
+    list.append(_one_time_pub.GetByteArray());
+    list.append(_element.GetByteArray());
+    list.append(_challenge_1.GetByteArray());
+    list.append(_challenge_2.GetByteArray());
+    list.append(_response_1.GetByteArray());
+    list.append(_response_2.GetByteArray());
+
+    QByteArray out;
+    QDataStream stream(&out, QIODevice::WriteOnly);
+    stream << list;
+    return out;
   }
 }
 }

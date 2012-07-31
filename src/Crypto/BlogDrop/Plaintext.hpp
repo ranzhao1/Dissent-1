@@ -16,8 +16,7 @@ namespace BlogDrop {
 
     public:
 
-      /**
-       * Constructor
+      /** * Constructor
        */
       Plaintext(const Parameters &params);
 
@@ -47,6 +46,18 @@ namespace BlogDrop {
        * Return integer representing this plaintext
        */
       inline Integer GetInteger() const { return _m; }
+
+      /**
+       * Number of bytes that can fit in a plaintext
+       */
+      inline static int CanFit(const Parameters &params) {
+        return params.GetP().GetByteCount() - 3;
+      }
+
+      /**
+       * Reveal a plaintext by combining ciphertext elements
+       */
+      void Reveal(const Integer &c);
 
     private:
 

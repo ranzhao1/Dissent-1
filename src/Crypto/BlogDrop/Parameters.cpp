@@ -38,6 +38,13 @@ namespace BlogDrop {
     return Parameters(p, g.Pow(2, p));
   }
 
+  Parameters Parameters::Zero() 
+  {
+    return Parameters(); 
+  }
+
+  Parameters::Parameters() {}
+
   Parameters::Parameters(const Integer p, const Integer g):
     _p(p),
     _q((p-1)/2),

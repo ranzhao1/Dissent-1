@@ -20,6 +20,7 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            ext/qxt/qxtglobal.h \
            src/Dissent.hpp \
            src/Anonymity/BaseBulkRound.hpp \
+           src/Anonymity/BlogDropRound.hpp \
            src/Anonymity/BulkRound.hpp \
            src/Anonymity/CSBulkRound.hpp \
            src/Anonymity/Log.hpp \
@@ -200,6 +201,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            ext/qt-json/json.cpp \
            ext/qxt/qxtcommandoptions.cpp \
            src/Anonymity/BaseBulkRound.cpp \
+           src/Anonymity/BlogDropRound.cpp \
            src/Anonymity/BulkRound.cpp \
            src/Anonymity/CSBulkRound.cpp \
            src/Anonymity/Log.cpp \

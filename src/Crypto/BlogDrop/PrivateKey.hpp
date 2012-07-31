@@ -37,8 +37,8 @@ namespace BlogDrop {
 
     private:
 
-      const Parameters _params;
-      const Integer _key;
+      Parameters _params;
+      Integer _key;
 
   };
 }

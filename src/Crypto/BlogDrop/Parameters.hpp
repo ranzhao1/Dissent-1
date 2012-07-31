@@ -25,6 +25,11 @@ namespace BlogDrop {
       static Parameters Fixed();
 
       /**
+       * Constructor with zeroed parameters
+       */
+      static Parameters Zero();
+
+      /**
        * Destructor
        */
       virtual ~Parameters() {}
@@ -67,20 +72,21 @@ namespace BlogDrop {
        */
       Parameters(const Integer p, const Integer g);
 
+      Parameters();
 
-      const Integer _p;
+      Integer _p;
       /**
        * Equal to (p-1)/2. Useful for testing if an element
        * is a QR mod p, since:
        *
        *   (a is QR_p) iff (a^{(p-1)/2} == a^q == 1 mod p)
        */
-      const Integer _q;
+      Integer _q;
 
       /**
        * Generator of group
        */
-      const Integer _g;
+      Integer _g;
 
       /** 
        * Equal to (p+1)/4. Useful for taking square roots
@@ -88,7 +94,7 @@ namespace BlogDrop {
        * 
        *   sqrt(a) = +/- a^{(p+1)/4}
        */
-      const Integer _p_sqrt; 
+      Integer _p_sqrt; 
 
   };
 }

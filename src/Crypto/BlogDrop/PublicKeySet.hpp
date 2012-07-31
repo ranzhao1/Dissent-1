@@ -37,7 +37,7 @@ namespace BlogDrop {
 
     private:
 
-      const Parameters _params;
+      Parameters _params;
 
       /**
        * Product of all public keys:

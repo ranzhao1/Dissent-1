@@ -11,6 +11,25 @@ namespace BlogDrop {
     _client_pks(client_pks)
   {}
 
+  ServerCiphertext::ServerCiphertext(const Parameters params, const PublicKeySet client_pks,
+      const QByteArray &serialized) :
+    _params(params),
+    _client_pks(client_pks)
+  {
+    QList<QByteArray> list;
+    QDataStream stream(serialized);
+    stream >> list;
+
+    if(list.count() != 3) {
+      qWarning() << "Failed to unserialize";
+      return; 
+    }
+
+    _element = Integer(list[0]);
+    _challenge = Integer(list[1]);
+    _response = Integer(list[2]);
+  }
+
   void ServerCiphertext::SetProof(const PrivateKey &priv)
   {
     // element = (prod of client_pks)^-server_sk mod p
@@ -78,18 +97,37 @@ namespace BlogDrop {
       const Integer &t1, const Integer &t2) const
   {
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
+
     hash->Restart();
+
     hash->Update(_params.GetP().GetByteArray());
     hash->Update(_params.GetQ().GetByteArray());
     hash->Update(_params.GetG().GetByteArray());
+
     hash->Update(g1.GetByteArray());
     hash->Update(g2.GetByteArray());
+
     hash->Update(y1.GetByteArray());
     hash->Update(y2.GetByteArray());
+
     hash->Update(t1.GetByteArray());
     hash->Update(t2.GetByteArray());
 
     return Integer(hash->ComputeHash()) % _params.GetQ();
+  }
+
+  QByteArray ServerCiphertext::GetByteArray() const 
+  {
+    QList<QByteArray> list;
+
+    list.append(_element.GetByteArray());
+    list.append(_challenge.GetByteArray());
+    list.append(_response.GetByteArray());
+
+    QByteArray out;
+    QDataStream stream(&out, QIODevice::WriteOnly);
+    stream << list;
+    return out;
   }
 }
 }

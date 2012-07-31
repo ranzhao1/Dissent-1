@@ -17,9 +17,19 @@ namespace BlogDrop {
     public:
 
       /**
-       * Constructor: Initialize a public key from a private key
+       * Initialize and empty public key
+       */
+      PublicKey();
+
+      /**
+       * Constructor: Initialize a public key matching a private key
        */
       PublicKey(const PrivateKey &key);
+
+      /**
+       * Initialize an empty public key with these parameters
+       */
+      PublicKey(const Parameters params, const QByteArray key);
 
       /**
        * Destructor
@@ -37,6 +47,21 @@ namespace BlogDrop {
       Integer GetInteger() const { return _public_key; }
 
       /**
+       *
+       */
+      void SetInteger(Integer i) { _public_key = i; }
+
+      /**
+       * Get serialized version of the integer
+       */
+      inline QByteArray GetByteArray() const { return _public_key.GetByteArray(); }
+
+      /**
+       * Is the key valid?
+       */
+      inline bool IsValid() const { return _params.IsElement(_public_key); }
+
+      /**
        * Equality operator
        * @param other integer to compare
        */
@@ -47,8 +72,9 @@ namespace BlogDrop {
 
     private:
 
-      const Parameters _params;
-      const Integer _public_key;
+      Parameters _params;
+      Integer _public_key;
+
   };
 
   inline uint qHash(const PublicKey &key) { 

@@ -71,6 +71,11 @@ namespace Applications {
       static void CreateTolerantBulkRoundSession(Node *node,
           const Id &session_id);
 
+      /**
+       * Create a BlogDropRound
+       */
+      static void CreateBlogDropRoundSession(Node *node, const Id &session_id);
+
     private:
       static void Common(Node *node, const Id &session_id, CreateRound cr);
 

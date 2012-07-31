@@ -13,7 +13,7 @@ namespace BlogDrop {
   QByteArray Plaintext::Encode(const QByteArray &input)
   {
     // We can store p bytes minus 2 bytes for padding and one more to be safe
-    const int can_read = _params.GetP().GetByteCount() - 3;
+    const int can_read = Plaintext::CanFit(_params);
     if(can_read < 1) qFatal("Illegal parameters");
    
     // Add initial 0xff byte and trailing 0x00 byte
@@ -59,6 +59,11 @@ namespace BlogDrop {
   void Plaintext::SetRandom()
   {
     _m = _params.RandomElement();
+  }
+
+  void Plaintext::Reveal(const Integer &c)
+  {
+    _m = (_m * c) % _params.GetP();
   }
 
 }

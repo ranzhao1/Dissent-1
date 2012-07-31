@@ -1,0 +1,354 @@
+#ifndef DISSENT_ANONYMITY_BLOG_DROP_ROUND_H_GUARD
+#define DISSENT_ANONYMITY_BLOG_DROP_ROUND_H_GUARD
+
+#include <QMetaEnum>
+
+#include "Crypto/BlogDrop/ClientCiphertext.hpp"
+#include "Crypto/BlogDrop/Parameters.hpp"
+#include "Crypto/BlogDrop/PrivateKey.hpp"
+#include "Crypto/BlogDrop/PublicKey.hpp"
+#include "Crypto/BlogDrop/PublicKeySet.hpp"
+#include "RoundStateMachine.hpp"
+#include "BaseBulkRound.hpp"
+#include "NullRound.hpp"
+
+namespace Dissent {
+namespace Utils {
+  class Random;
+}
+
+namespace Anonymity {
+  class BlogDropRound : public BaseBulkRound
+  {
+    Q_OBJECT
+    Q_ENUMS(States);
+    Q_ENUMS(MessageType);
+
+    public:
+      friend class RoundStateMachine<BlogDropRound>;
+
+      typedef Crypto::BlogDrop::ClientCiphertext ClientCiphertext;
+      typedef Crypto::BlogDrop::Parameters Parameters;
+      typedef Crypto::BlogDrop::PrivateKey PrivateKey;
+      typedef Crypto::BlogDrop::PublicKey PublicKey;
+      typedef Crypto::BlogDrop::PublicKeySet PublicKeySet;
+
+      enum MessageType {
+        CLIENT_CIPHERTEXT = 0,
+        SERVER_PUBLIC_KEY,
+        SERVER_CLIENT_LIST,
+        SERVER_COMMIT,
+        SERVER_CIPHERTEXT,
+        SERVER_VALIDATION,
+        SERVER_CLEARTEXT,
+      };
+
+      enum States {
+        OFFLINE = 0,
+        SHUFFLING,
+        PROCESS_DATA_SHUFFLE,
+        CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS,
+        PREPARE_FOR_BULK,
+        CLIENT_WAIT_FOR_CLEARTEXT,
+        SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
+        SERVER_WAIT_FOR_CLIENT_LISTS,
+        SERVER_WAIT_FOR_SERVER_COMMITS,
+        SERVER_WAIT_FOR_SERVER_CIPHERTEXT,
+        SERVER_WAIT_FOR_SERVER_VALIDATION,
+        SERVER_PUSH_CLEARTEXT,
+        FINISHED,
+      };
+
+      /**
+       * Constructor
+       * @param group Group used during this round
+       * @param ident the local nodes credentials
+       * @param round_id Unique round id (nonce)
+       * @param network handles message sending
+       * @param get_data requests data to share during this session
+       * @param create_shuffle optional parameter specifying a shuffle round
+       * to create, currently used for testing
+       */
+      explicit BlogDropRound(const Group &group, const PrivateIdentity &ident,
+          const Id &round_id, QSharedPointer<Network> network,
+          GetDataCallback &get_data,
+          CreateRound create_shuffle = &TCreateRound<NullRound>);
+
+      /**
+       * Destructor
+       */
+      virtual ~BlogDropRound();
+
+      /**
+       * Returns true if the local node is a member of the subgroup
+       */
+      inline bool IsServer() const
+      {
+        return GetGroup().GetSubgroup().Contains(GetLocalId());
+      }
+
+      /**
+       * Converts a MessageType into a QString
+       * @param mt value to convert
+       */
+      static QString StateToString(int state)
+      {
+        int index = staticMetaObject.indexOfEnumerator("States");
+        return staticMetaObject.enumerator(index).valueToKey(state);
+      }
+
+      /**
+       * Converts a MessageType into a QString
+       * @param mt value to convert
+       */
+      static QString MessageTypeToString(int mtype)
+      {
+        int index = staticMetaObject.indexOfEnumerator("MessageType");
+        return staticMetaObject.enumerator(index).valueToKey(mtype);
+      }
+
+      /**
+       * Returns the string representation of the round
+       */
+      inline virtual QString ToString() const
+      {
+        return "BlogDropRound: " + GetRoundId().ToString() +
+          " Phase: " + QString::number(_state_machine.GetPhase());
+      }
+
+      /**
+       * Notifies this round that a peer has joined the session.  This will
+       * cause this type of round to finished immediately.
+       */
+      virtual void PeerJoined() { _stop_next = true; }
+
+      virtual void HandleDisconnect(const Id &id);
+
+    protected:
+      typedef Utils::Random Random;
+
+      /**
+       * Funnels data into the RoundStateMachine for evaluation
+       * @param data Incoming data
+       * @param from the remote peer sending the data
+       */
+      inline virtual void ProcessData(const Id &from, const QByteArray &data)
+      {
+        _state_machine.ProcessData(from, data);
+      }
+
+      /**
+       * Called when the BulkRound is started
+       */
+      virtual void OnStart();
+
+      /**
+       * Called when the BulkRound is stopped
+       */
+      virtual void OnStop();
+
+      /**
+       * Server sends a message to all servers
+       * @param data the message to send
+       */
+      void VerifiableBroadcastToServers(const QByteArray &data);
+
+      /**
+       * Server sends a message to all clients
+       * @param data the message to send
+       */
+      void VerifiableBroadcastToClients(const QByteArray &data);
+
+    private:
+      /**
+       * Holds the internal state for this round
+       */
+      class State {
+        public:
+          State() : 
+            params(Parameters::Fixed()),
+            anonymous_priv(params),
+            anonymous_pub(anonymous_priv) {}
+
+          virtual ~State() {}
+
+          /* My blogdrop keys */
+          Parameters params;
+          PrivateKey anonymous_priv;
+          PublicKey anonymous_pub;
+
+          /* Set of all server PKs */
+          QHash<int,PublicKey> server_pks;
+          QSharedPointer<PublicKeySet> server_pk_set;
+
+          /* Plaintext output */
+          QByteArray cleartext;
+
+          QByteArray shuffle_data;
+
+          QList<PublicKey> anonymous_keys;
+          QHash<int, QByteArray> signatures;
+
+          int my_idx;
+          int phase;
+          Id my_server;
+      };
+
+      /**
+       * Holds the internal state for servers in this round
+       */
+      class ServerState : public State {
+        public:
+          ServerState() :
+            server_priv(params),
+            server_pub(server_priv) {}
+
+          virtual ~ServerState() {}
+
+          int expected_clients;
+          QSet<Id> allowed_clients;
+
+          /* Blogdrop server keys */
+          PrivateKey server_priv;
+          PublicKey server_pub;
+
+          /* Serialized hash[id] = serialized list of serialized ciphertexts */
+          QHash<Id,QByteArray> client_ciphertexts;
+
+          /* list[slot][client] = ciphertext */
+          QList<QList<ClientCiphertext> > client_cobjs_by_slot;
+
+          /* list[slot] = one-time-keys */
+          QList<QSet<PublicKey> > client_one_time_keys;
+          QList<QSharedPointer<PublicKeySet> > client_pk_sets;
+
+          QByteArray my_commit;
+          QByteArray my_ciphertext;
+
+          QSet<Id> handled_servers;
+          QHash<int, QByteArray> server_commits;
+          QHash<int, QByteArray> server_ciphertexts;
+      };
+
+      /**
+       * Called by the constructor to initialize the server state machine
+       */
+      void InitServer();
+
+      /**
+       * Called by the constructor to initialize the client state machine
+       */
+      void InitClient();
+
+      /**
+       * Called before each state transition
+       */
+      void BeforeStateTransition();
+
+      /**
+       * Called after each cycle, i.e., phase conclusion
+       */
+      bool CycleComplete();
+
+      /**
+       * Safety net, should never be called
+       */
+      void EmptyHandleMessage(const Id &, QDataStream &)
+      {
+        qDebug() << "Received a message into the empty handle message...";
+      }
+        
+      /**
+       * Some transitions don't require any state preparation, they are handled
+       * by this
+       */
+      void EmptyTransitionCallback() {}
+
+      /**
+       * Submits the anonymous signing key into the shuffle
+       */
+      virtual QPair<QByteArray, bool> GetShuffleData(int max);
+
+      /**
+       * Called when the shuffle finishes
+       */
+      virtual void ShuffleFinished();
+
+      /**
+       * Client handles public key from server
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleServerPublicKey(const Id &from, QDataStream &stream);
+
+      /**
+       * Server handles client ciphertext messages
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleClientCiphertext(const Id &from, QDataStream &stream);
+
+      /**
+       * Server handles other server client list messages
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleServerClientList(const Id &from, QDataStream &stream);
+
+      /**
+       * Server handles other server commit messages
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleServerCommit(const Id &from, QDataStream &stream);
+
+      /**
+       * Server handles other server ciphertext messages
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleServerCiphertext(const Id &from, QDataStream &stream);
+
+      /**
+       * Server handles other server validation messages
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleServerValidation(const Id &from, QDataStream &stream);
+
+      /**
+       * Client handles server cleartext message
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleServerCleartext(const Id &from, QDataStream &stream);
+
+      /* Below are the state transitions */
+      void StartShuffle();
+      void ProcessDataShuffle();
+      void ProcessKeyShuffle();
+      void SubmitServerPublicKey();
+      void PrepareForBulk();
+      void SubmitClientCiphertext();
+      void SetOnlineClients();
+      void SubmitClientList();
+      void SubmitCommit();
+      void SubmitServerCiphertext();
+      void GenerateServerCiphertext();
+      void GenerateServerCommit();
+      QByteArray GenerateClientCiphertext();
+      void SubmitValidation();
+      void PushCleartext();
+
+      void ProcessCleartext();
+      void ConcludeClientCiphertextSubmission(const int &);
+
+      QSharedPointer<ServerState> _server_state;
+      QSharedPointer<State> _state;
+      RoundStateMachine<BlogDropRound> _state_machine;
+      bool _stop_next;
+  };
+}
+}
+
+#endif

@@ -1,4 +1,5 @@
 #include "Anonymity/BaseBulkRound.hpp"
+#include "Anonymity/BlogDropRound.hpp"
 #include "Anonymity/BulkRound.hpp"
 #include "Anonymity/CSBulkRound.hpp"
 #include "Anonymity/RepeatingBulkRound.hpp"
@@ -19,6 +20,7 @@
 #include "SessionFactory.hpp"
 
 using Dissent::Anonymity::BulkRound;
+using Dissent::Anonymity::BlogDropRound;
 using Dissent::Anonymity::CSBulkRound;
 using Dissent::Anonymity::NeffKeyShuffle;
 using Dissent::Anonymity::NullRound;
@@ -55,6 +57,7 @@ namespace Applications {
   {
     AddCreateCallback("null", &CreateNullRoundSession);
     AddCreateCallback("shuffle", &CreateShuffleRoundSession);
+    AddCreateCallback("blogdrop", &CreateBlogDropRoundSession);
     AddCreateCallback("bulk", &CreateBulkRoundSession);
     AddCreateCallback("csbulk", &CreateCSBulkRoundSession);
     AddCreateCallback("repeatingbulk", &CreateRepeatingBulkRoundSession);
@@ -86,6 +89,11 @@ namespace Applications {
       const Id &session_id)
   {
     Common(node, session_id, &TCreateRound<ShuffleRound>);
+  }
+
+  void SessionFactory::CreateBlogDropRoundSession(Node *node, const Id &session_id)
+  {
+    Common(node, session_id, &TCreateRound<BlogDropRound>);
   }
 
   void SessionFactory::CreateBulkRoundSession(Node *node, const Id &session_id)
