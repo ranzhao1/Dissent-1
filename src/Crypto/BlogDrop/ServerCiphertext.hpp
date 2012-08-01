@@ -19,16 +19,16 @@ namespace BlogDrop {
 
       /**
        * Constructor: Initialize a ciphertext
-       * @param Group parameters
-       * @param Client public keys
+       * @param params Group parameters
+       * @param client_pks Client public keys
        */
       ServerCiphertext(const Parameters params, const PublicKeySet client_pks);
 
       /**
        * Constructor: Initialize a ciphertext from serialized version
-       * @param Group parameters
-       * @param Client public keys
-       * @param serialized byte array
+       * @param params Group parameters
+       * @param client_pks Client public keys
+       * @param serialized serialized byte array
        */
       ServerCiphertext(const Parameters params, const PublicKeySet client_pks,
           const QByteArray &serialized);
@@ -46,8 +46,8 @@ namespace BlogDrop {
 
       /**
        * Check ciphertext proof
-       * @param public key of server
-       * @param returns true if proof is okay
+       * @param pub public key of server
+       * @returns true if proof is okay
        */
       bool VerifyProof(const PublicKey &pub) const;
 

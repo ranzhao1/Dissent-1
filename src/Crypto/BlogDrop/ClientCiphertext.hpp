@@ -63,7 +63,6 @@ namespace BlogDrop {
 
       /**
        * Initialize elements proving correctness of ciphertext
-       * @param client private key used to generate proof
        */
       void SetProof();
 

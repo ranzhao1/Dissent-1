@@ -22,6 +22,8 @@ namespace BlogDrop {
 
       /**
        * Constructor: Initialize using a QSet of keys
+       * @params params group parameters
+       * @params keys keyset to use
        */
       PublicKeySet(const Parameters params, const QList<PublicKey> &keys);
 

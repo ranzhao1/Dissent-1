@@ -23,11 +23,14 @@ namespace BlogDrop {
 
       /**
        * Constructor: Initialize a public key matching a private key
+       * @param key the key to use
        */
       PublicKey(const PrivateKey &key);
 
       /**
        * Initialize an empty public key with these parameters
+       * @params params group parameters
+       * @params key serialized key
        */
       PublicKey(const Parameters params, const QByteArray key);
 
@@ -47,7 +50,8 @@ namespace BlogDrop {
       Integer GetInteger() const { return _public_key; }
 
       /**
-       *
+       * Sets key to specified integer
+       * @param i integer to set
        */
       void SetInteger(Integer i) { _public_key = i; }
 

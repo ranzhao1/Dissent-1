@@ -46,7 +46,7 @@ namespace BlogDrop {
 
       /**
        * Return true if i is a QR mod p
-       * @param element to test
+       * @param i element to test
        */
       bool IsElement(const Integer &i) const;
 
