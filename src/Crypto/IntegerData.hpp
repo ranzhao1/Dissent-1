@@ -95,6 +95,26 @@ namespace Crypto {
           const IntegerData *mod) const = 0;
 
       /**
+       * Cascade exponentiation modulo n
+       * For integer n, compute ((x1^e1 * x2^e2) mod n)
+       * This can be much faster than the naive way.
+       * @param x1 first base
+       * @param e1 first exponent
+       * @param x2 second base
+       * @param e2 second exponent
+       */
+      virtual IntegerData *PowCascade(const IntegerData *x1, const IntegerData *e1,
+          const IntegerData *x2, const IntegerData *e2) const = 0;
+
+      /**
+       * Multiplication modulo
+       * @param other multiplicand
+       * @param mod modulus 
+       */
+      virtual IntegerData *MultiplyMod(const IntegerData *other,
+          const IntegerData *mod) const = 0;
+
+      /**
        * Modular multiplicative inverse
        * find x such that ax == 1 mod p
        * @param mod modulus for inverse

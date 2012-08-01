@@ -140,6 +140,33 @@ namespace Crypto {
       }
 
       /**
+       * Cascade exponentiation modulo n
+       * For integer n, compute ((x1^e1 * x2^e2) mod n)
+       * This can be much faster than the naive way.
+       * @param x1 first base
+       * @param e1 first exponent
+       * @param x2 second base
+       * @param e2 second exponent
+       */
+      Integer PowCascade(const Integer &x1, const Integer &e1,
+          const Integer &x2, const Integer &e2) const
+      {
+        return Integer(_data->PowCascade(x1._data.constData(), e1._data.constData(),
+            x2._data.constData(), e2._data.constData()));
+      }
+
+      /**
+       * Multiplication modulo
+       * @param other multiplicand
+       * @param mod modulus
+       */
+      Integer MultiplyMod(const Integer &other, const Integer &mod) const
+      {
+        return Integer(_data->MultiplyMod(other._data.constData(),
+              mod._data.constData()));
+      }
+
+      /**
        * Compute x such that ax == 1 mod p
        * @param mod inverse modulo this group
        */

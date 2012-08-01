@@ -34,15 +34,6 @@ namespace Anonymity {
     _state_machine.AddState(SHUFFLING, -1, 0, &BlogDropRound::StartShuffle);
     _state_machine.AddState(FINISHED);
 
-    if(group.GetSubgroup().Contains(ident.GetLocalId())) {
-      _state_machine.AddState(CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS,
-          SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey,
-          &BlogDropRound::SubmitServerPublicKey);
-    } else {
-      _state_machine.AddState(CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS,
-          SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey);
-    }
-
     _state_machine.AddState(PREPARE_FOR_BULK, -1, 0,
         &BlogDropRound::PrepareForBulk);
     
@@ -63,7 +54,7 @@ namespace Anonymity {
     }
 
     _state->n_servers = GetGroup().GetSubgroup().Count();
-    _state->n_clients = GetGroup().Count() - _state->n_servers;
+    _state->n_clients = GetGroup().Count();// - _state->n_servers;
   }
 
   void BlogDropRound::InitServer()
@@ -84,6 +75,10 @@ namespace Anonymity {
 
       _server_state->allowed_clients.insert(con->GetRemoteId());
     }
+
+    _state_machine.AddState(CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS,
+        SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey,
+        &BlogDropRound::SubmitServerPublicKey);
 
     _state_machine.AddState(SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
         CLIENT_CIPHERTEXT, &BlogDropRound::HandleClientCiphertext,
@@ -140,6 +135,8 @@ namespace Anonymity {
       }
     }
 
+    _state_machine.AddState(CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS,
+        SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey);
     _state_machine.AddState(CLIENT_WAIT_FOR_CLEARTEXT,
         SERVER_CLEARTEXT, &BlogDropRound::HandleServerCleartext,
         &BlogDropRound::SubmitClientCiphertext);
@@ -198,22 +195,9 @@ namespace Anonymity {
   {
     if(!GetGroup().Contains(id)) {
       return;
-    }
-
-    if(IsServer() && GetGroup().Contains(id)) {
-      _server_state->allowed_clients.remove(id);
-    }
-
-    if((_state_machine.GetState() == OFFLINE) ||
-        (_state_machine.GetState() == SHUFFLING))
-    {
-      GetShuffleRound()->HandleDisconnect(id);
-    } else if(GetGroup().GetSubgroup().Contains(id)) {
-      qDebug() << "A server (" << id << ") disconnected.";
-      SetInterrupted();
-      Stop("A server (" + id.ToString() +") disconnected.");
     } else {
-      qDebug() << "A client (" << id << ") disconnected, ignoring.";
+      SetInterrupted();
+      Stop(QString(id.ToString() + " disconnected"));
     }
   }
 
@@ -488,11 +472,7 @@ namespace Anonymity {
 
   QPair<QByteArray, bool> BlogDropRound::GetShuffleData(int)
   {
-    if(IsServer()) {
-      _state->shuffle_data = QByteArray();
-    } else {
-      _state->shuffle_data = _state->anonymous_pub.GetByteArray();
-    }
+    _state->shuffle_data = _state->anonymous_pub.GetByteArray();
 
     return QPair<QByteArray, bool>(_state->shuffle_data, false);
   }
@@ -520,11 +500,6 @@ namespace Anonymity {
     int count = GetShuffleSink().Count();
     for(int idx = 0; idx < count; idx++) {
       QPair<QSharedPointer<ISender>, QByteArray> pair(GetShuffleSink().At(idx));
-
-      // Server key slots are empty
-      if(pair.second.isEmpty()) {
-          continue;
-      }
 
       PublicKey key(_state->params, pair.second);
 
@@ -643,7 +618,10 @@ namespace Anonymity {
 
   void BlogDropRound::SubmitClientList()
   {
-    // XXX should verify all ciphertexts before sending them out
+    // Add my own ciphertext to the set
+    _server_state->client_ciphertexts[GetLocalId()] = GenerateClientCiphertext();
+
+    // XXX should verify all ciphertexts before sending them out?
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << SERVER_CLIENT_LIST << GetRoundId() <<

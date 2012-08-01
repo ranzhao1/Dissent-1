@@ -72,7 +72,7 @@ namespace BlogDrop {
 
   void Plaintext::Reveal(const Integer &c)
   {
-    _m = (_m * c) % _params.GetP();
+    _m = _m.MultiplyMod(c, _params.GetP());
   }
 
 }

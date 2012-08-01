@@ -35,17 +35,5 @@ namespace Tests {
     RoundTest_PeerDisconnectMiddle(SessionCreator(TCreateRound<BlogDropRound>),
         Group::ManagedSubgroup);
   }
-
-  TEST(BlogDropRound, BasicRoundManagedNeffKey)
-  {
-    RoundTest_Basic(SessionCreator(TCreateBulkRound<BlogDropRound, NeffKeyShuffle>),
-        Group::ManagedSubgroup);
-  }
-
-  TEST(BlogDropRound, MultiRoundManagedNeffKey)
-  {
-    RoundTest_MultiRound(SessionCreator(TCreateBulkRound<BlogDropRound, NeffKeyShuffle>),
-        Group::ManagedSubgroup);
-  }
 }
 }

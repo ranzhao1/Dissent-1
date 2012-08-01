@@ -61,7 +61,7 @@ namespace BlogDrop {
         t1, t2);
 
     // r = v - cx == v - (chal)server_sk
-    _response = (v - (_challenge*priv.GetInteger())) % _params.GetQ();
+    _response = (v - (_challenge.MultiplyMod(priv.GetInteger(), _params.GetQ()))) % _params.GetQ();
 
   }
 
@@ -81,8 +81,8 @@ namespace BlogDrop {
     Integer g2, t1, t2;
 
     // t1 = g1^r * y1^c
-    t1 = (_params.GetG().Pow(_response, _params.GetP()) * 
-        pub.GetInteger().Pow(_challenge, _params.GetP())) % _params.GetP();
+    t1 = _params.GetP().PowCascade(_params.GetG(), _response,
+        pub.GetInteger(), _challenge);
 
     // t2 = g2^-r * y2^c
     t2 = (_client_pks.GetInteger().Pow(_response, _params.GetP()).ModInverse(_params.GetP()) *

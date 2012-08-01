@@ -14,6 +14,16 @@ namespace BlogDrop {
 
   Parameters Parameters::Fixed() 
   {
+#ifdef DISSENT_TEST
+    const QByteArray bytes_p = QByteArray::fromHex(
+                               "1ADC5BAB8AA55C5B3277EC87A7383ACFDD581D8A86E71"
+                               "1CE98F1690BF81122EE873C53EC2A0646074B94416CDB"
+                               "FBC01FADA1C9D110DBEF1706CEBAC27F7D53C8F");
+    const QByteArray bytes_g = QByteArray::fromHex(
+                               "140A22002B9DC16A1F4AD9FE6CEB8548F98F7047EDE02"
+                               "EEF41A0F8DDD85B25AC551137DDD3A940A33EF6889CC5"
+                               "78DA0745F458AF4A9171EA189EA2A39D852C9E5");
+#else
     const QByteArray bytes_p = QByteArray::fromHex(
                                "1CEB470C95CA446FBDD85B00B06D7CEC03189704005BE"
                                "DE7779B56F79057C3552BA74E7B1E9592805EB6B9FD43"
@@ -28,6 +38,7 @@ namespace BlogDrop {
                                "98DA86832DE32AC95F1B8EEEF61D1B16E4C7C84FB7AA4"
                                "1F622538B72600443E179C1A9AAA40F8E7384311CE536"
                                "1BDEBA2E1513579CC4457BFD3167B1B");
+#endif
 
     const Integer p(bytes_p);
     const Integer g(bytes_g);
@@ -72,7 +83,7 @@ namespace BlogDrop {
   bool Parameters::AreProbablyValid() const 
   {
     // g != -1, 0, 1
-    if(_g == 0 || _g == 1 || _g == Integer(-1).Modulus(_p))
+    if(_g == 0 || _g == 1 || _g == Integer(-1).Modulo(_p))
       return false;
 
     qDebug() << _g.Pow(_q, _p).GetByteArray();

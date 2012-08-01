@@ -139,6 +139,36 @@ namespace Crypto {
       }
 
       /**
+       * Cascade exponentiation modulo n
+       * For integer n, compute ((x1^e1 * x2^e2) mod n)
+       * This can be much faster than the naive way.
+       * @param x1 first base
+       * @param e1 first exponent
+       * @param x2 second base
+       * @param e2 second exponent
+       */
+      virtual IntegerData *PowCascade(const IntegerData *x1, const IntegerData *e1,
+          const IntegerData *x2, const IntegerData *e2) const 
+      {
+        CryptoPP::ModularArithmetic ma(_integer);
+        return new CppIntegerData(ma.CascadeExponentiate(
+              GetInteger(x1), GetInteger(e1),
+              GetInteger(x2), GetInteger(e2)));
+      }
+
+      /**
+       * Multiplication mod operator
+       * @param other number to multiply
+       * @param mod modulus
+       */
+      virtual IntegerData *MultiplyMod(const IntegerData *other,
+          const IntegerData *mod) const
+      {
+        return new CppIntegerData(a_times_b_mod_c(_integer,
+              GetInteger(other), GetInteger(mod)));
+      }
+
+      /**
        * Modular multiplicative inverse
        * @param mod the modulus
        */

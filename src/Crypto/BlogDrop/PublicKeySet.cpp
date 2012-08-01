@@ -10,8 +10,7 @@ namespace BlogDrop {
   {
     _key = 1;
     for(int i=0; i<keys.count(); i++) {
-      // TODO XXX: Use mulmod instead of naive *
-      _key = (_key.Multiply(keys[i].GetInteger())) % params.GetP();
+      _key = _key.MultiplyMod(keys[i].GetInteger(), params.GetP());
     }
   }
 

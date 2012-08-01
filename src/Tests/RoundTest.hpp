@@ -7,6 +7,12 @@
 
 namespace Dissent {
 namespace Tests {
+
+  // If this is bigger than ~50, test 
+  // messages won't fit into BlogDrop test-size group
+  // elements
+  static const int TEST_MESSAGE_LENGTH = 50;
+
   typedef bool (*BadGuyCB)(Round *);
 
   inline void FlipByte(QByteArray &msg) {
