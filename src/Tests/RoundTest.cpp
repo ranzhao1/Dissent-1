@@ -58,7 +58,8 @@ namespace Tests {
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
 
-    QByteArray msg(512, 0);
+    // Reducing message size so that it can fit in a BlogDrop group element
+    QByteArray msg(100, 0);
     rand->GenerateBlock(msg);
     nodes[sender]->session->Send(msg);
 

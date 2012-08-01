@@ -5,13 +5,13 @@ namespace Dissent {
 namespace Crypto {
 namespace BlogDrop {
 
-  PublicKeySet::PublicKeySet(const Parameters params, const QSet<PublicKey> &keys) :
+  PublicKeySet::PublicKeySet(const Parameters params, const QList<PublicKey> &keys) :
     _params(params)
   {
     _key = 1;
-    for(QSet<PublicKey>::const_iterator i=keys.begin(); i!=keys.end(); i++) {
+    for(int i=0; i<keys.count(); i++) {
       // TODO XXX: Use mulmod instead of naive *
-      _key = (_key.Multiply(i->GetInteger())) % params.GetP();
+      _key = (_key.Multiply(keys[i].GetInteger())) % params.GetP();
     }
   }
 

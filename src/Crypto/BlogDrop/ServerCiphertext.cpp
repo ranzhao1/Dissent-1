@@ -9,7 +9,8 @@ namespace BlogDrop {
   ServerCiphertext::ServerCiphertext(const Parameters params, const PublicKeySet client_pks) :
     _params(params),
     _client_pks(client_pks)
-  {}
+  {
+  }
 
   ServerCiphertext::ServerCiphertext(const Parameters params, const PublicKeySet client_pks,
       const QByteArray &serialized) :
@@ -28,6 +29,7 @@ namespace BlogDrop {
     _element = Integer(list[0]);
     _challenge = Integer(list[1]);
     _response = Integer(list[2]);
+
   }
 
   void ServerCiphertext::SetProof(const PrivateKey &priv)
@@ -60,6 +62,7 @@ namespace BlogDrop {
 
     // r = v - cx == v - (chal)server_sk
     _response = (v - (_challenge*priv.GetInteger())) % _params.GetQ();
+
   }
 
   bool ServerCiphertext::VerifyProof(const PublicKey &pub) const

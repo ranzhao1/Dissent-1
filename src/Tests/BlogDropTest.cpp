@@ -44,7 +44,9 @@ namespace Tests {
   {
     Parameters params = Parameters::Parameters::Fixed();
     Plaintext p(params);
-    EXPECT_EQ(QByteArray(), p.Decode());
+    QByteArray out;
+    EXPECT_FALSE(p.Decode(out));
+    EXPECT_EQ(QByteArray(), out);
   }
 
   TEST(BlogDrop, PlaintextShort) 
@@ -54,7 +56,10 @@ namespace Tests {
 
     QByteArray shorts("shorts");
     EXPECT_EQ(QByteArray(), p.Encode(shorts));
-    EXPECT_EQ(shorts, p.Decode());
+
+    QByteArray out;
+    EXPECT_TRUE(p.Decode(out));
+    EXPECT_EQ(shorts, out);
   }
 
   TEST(BlogDrop, PlaintextRandom) 
@@ -71,7 +76,8 @@ namespace Tests {
     QByteArray leftover = p.Encode(msg);
     EXPECT_TRUE(leftover.count() < msg.count());
 
-    QByteArray output = p.Decode();
+    QByteArray output;
+    EXPECT_TRUE(p.Decode(output));
     EXPECT_TRUE(output.count() > 0);
     EXPECT_TRUE(output.count() < params.GetP().GetByteCount());
     EXPECT_TRUE(output.count() > (params.GetP().GetByteCount()-4));
@@ -100,12 +106,12 @@ namespace Tests {
     const int nkeys = 100;
     Parameters params = Parameters::Parameters::Fixed();
 
-    QSet<PublicKey> keys;
+    QList<PublicKey> keys;
     Integer prod = 1;
     for(int i=0; i<nkeys; i++) {
       PrivateKey priv(params);
       PublicKey pub(priv);
-      keys.insert(pub);
+      keys.append(pub);
 
       prod = (prod * pub.GetInteger()) % params.GetP();
     }
@@ -120,11 +126,11 @@ namespace Tests {
       const int nkeys = 100;
       Parameters params = Parameters::Parameters::Fixed();
 
-      QSet<PublicKey> client_pks;
+      QList<PublicKey> client_pks;
       for(int i=0; i<nkeys; i++) {
         PrivateKey priv(params);
         PublicKey pub(priv);
-        client_pks.insert(pub);
+        client_pks.append(pub);
       }
 
       PublicKeySet client_pk_set(params, client_pks);
@@ -150,11 +156,11 @@ namespace Tests {
 
     // Generate list of server pks
     const int nkeys = 100;
-    QSet<PublicKey> server_pks;
+    QList<PublicKey> server_pks;
     for(int i=0; i<nkeys; i++) {
       PrivateKey priv(params);
       PublicKey pub(priv);
-      server_pks.insert(pub);
+      server_pks.append(pub);
     }
 
     PublicKeySet server_pk_set(params, server_pks);
@@ -195,11 +201,11 @@ namespace Tests {
 
     // Generate list of server pks
     const int nkeys = 100;
-    QSet<PublicKey> server_pks;
+    QList<PublicKey> server_pks;
     for(int i=0; i<nkeys; i++) {
       PrivateKey priv(params);
       PublicKey pub(priv);
-      server_pks.insert(pub);
+      server_pks.append(pub);
     }
 
     PublicKeySet server_pk_set(params, server_pks);
@@ -235,5 +241,67 @@ namespace Tests {
     }
   }
   
+  TEST(BlogDrop, Reveal) {
+    Parameters params = Parameters::Parameters::Fixed();
+
+    // Generate an author PK
+    PrivateKey author_priv(params);
+    const PublicKey author_pk(author_priv);
+
+    // Generate list of server pks
+    const int nkeys = 100;
+    QList<PublicKey> server_pks;
+    QList<PrivateKey> server_sks;
+    for(int i=0; i<nkeys; i++) {
+      PrivateKey priv(params);
+      server_sks.append(priv);
+      PublicKey pub(priv);
+      server_pks.append(pub);
+    }
+
+    PublicKeySet server_pk_set(params, server_pks);
+
+    // Get a random plaintext
+    Plaintext m(params);
+    m.SetRandom();
+
+    // Generate ciphertext
+    ClientCiphertext c(params, server_pk_set, author_pk);
+    c.SetAuthorProof(author_priv, m);
+
+    // Get client pk set
+    QList<PublicKey> client_pks;
+    client_pks.append(c.GetOneTimeKey());
+    PublicKeySet client_pk_set(params, client_pks);
+
+    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < params.GetQ());
+    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < params.GetQ());
+    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < params.GetQ());
+    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < params.GetQ());
+
+    // Make sure all values are distinct
+    QSet<QByteArray> set;
+    set.insert(c.GetChallenge1().GetByteArray());
+    set.insert(c.GetChallenge2().GetByteArray());
+    set.insert(c.GetResponse1().GetByteArray());
+    set.insert(c.GetResponse2().GetByteArray());
+    ASSERT_EQ(4, set.count());
+
+    ASSERT_TRUE(c.VerifyProof());
+
+    Plaintext out(params);
+    out.Reveal(c.GetElement());
+
+    for(int i=0; i<nkeys; i++) {
+      ServerCiphertext s(params, client_pk_set);
+      s.SetProof(server_sks[i]);
+
+      ASSERT_TRUE(s.VerifyProof(server_pks[i]));
+
+      out.Reveal(s.GetElement()); 
+    }
+
+    ASSERT_EQ(m.GetInteger(), out.GetInteger());
+  }
 }
 }

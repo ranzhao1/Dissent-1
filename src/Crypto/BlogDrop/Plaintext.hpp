@@ -27,15 +27,18 @@ namespace BlogDrop {
 
       /**
        * Encode ByteArray into BlogDrop plaintext
-       * @param QByteArray to encode
+       * @param input QByteArray to encode
        * @returns Parts of bytearray that overflowed
        */
       QByteArray Encode(const QByteArray &input); 
 
       /**
        * Decode a plaintext element into a QByteArray
+       * @param ret reference in which to return string
+       * @returns true if everything is okay, false if cannot read
+       *          string
        */
-      QByteArray Decode() const;
+      bool Decode(QByteArray &ret) const;
 
       /**
        * Set plaintext to random value
@@ -51,7 +54,7 @@ namespace BlogDrop {
        * Number of bytes that can fit in a plaintext
        */
       inline static int CanFit(const Parameters &params) {
-        return params.GetP().GetByteCount() - 3;
+        return params.GetP().GetByteCount() - 4;
       }
 
       /**

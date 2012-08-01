@@ -192,6 +192,9 @@ namespace Anonymity {
           int my_idx;
           int phase;
           Id my_server;
+
+          int n_clients;
+          int n_servers;
       };
 
       /**
@@ -219,7 +222,7 @@ namespace Anonymity {
           QList<QList<ClientCiphertext> > client_cobjs_by_slot;
 
           /* list[slot] = one-time-keys */
-          QList<QSet<PublicKey> > client_one_time_keys;
+          QList<QList<PublicKey> > client_one_time_keys;
           QList<QSharedPointer<PublicKeySet> > client_pk_sets;
 
           QByteArray my_commit;
@@ -332,7 +335,7 @@ namespace Anonymity {
       void SubmitClientCiphertext();
       void SetOnlineClients();
       void SubmitClientList();
-      void SubmitCommit();
+      void SubmitServerCommit();
       void SubmitServerCiphertext();
       void GenerateServerCiphertext();
       void GenerateServerCommit();

@@ -62,6 +62,12 @@ namespace BlogDrop {
             _p_sqrt == other.GetPSqrt());
       }
 
+      /**
+       * Return true if parameters pass a few basic
+       * sanity checks
+       */
+      bool AreProbablyValid() const;
+
     private:
       /**
        * Private constructor

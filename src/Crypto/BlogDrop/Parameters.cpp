@@ -51,15 +51,7 @@ namespace BlogDrop {
     _g(g),
     _p_sqrt((p+1)/4) 
   {
-    // g != -1, 0, 1
-    if(_g == 0 || _g == 1 || _g == Integer(-1).Modulus(_p))
-      qFatal("Illegal parameters");
-
-    qDebug() << _g.Pow(_q, _p).GetByteArray();
-
-    // g^q = 1
-    if(_g.Pow(_q, _p) != 1)
-      qFatal("Illegal parameters");
+    Q_ASSERT(AreProbablyValid());
   }
 
   Integer Parameters::RandomExponent() const
@@ -77,6 +69,20 @@ namespace BlogDrop {
     return (i.Pow(_q, _p) == 1);
   }
 
+  bool Parameters::AreProbablyValid() const 
+  {
+    // g != -1, 0, 1
+    if(_g == 0 || _g == 1 || _g == Integer(-1).Modulus(_p))
+      return false;
+
+    qDebug() << _g.Pow(_q, _p).GetByteArray();
+
+    // g^q = 1
+    if(_g.Pow(_q, _p) != 1)
+      return false;
+
+    return true;
+  }
 }
 }
 }

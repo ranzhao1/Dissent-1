@@ -1,7 +1,7 @@
 #ifndef DISSENT_CRYPTO_BLOGDROP_PUBLICKEY_SET_H_GUARD
 #define DISSENT_CRYPTO_BLOGDROP_PUBLICKEY_SET_H_GUARD
 
-#include <QSet>
+#include <QList>
 
 #include "Crypto/Integer.hpp"
 #include "Parameters.hpp"
@@ -23,7 +23,7 @@ namespace BlogDrop {
       /**
        * Constructor: Initialize using a QSet of keys
        */
-      PublicKeySet(const Parameters params, const QSet<PublicKey> &keys);
+      PublicKeySet(const Parameters params, const QList<PublicKey> &keys);
 
       /**
        * Destructor
