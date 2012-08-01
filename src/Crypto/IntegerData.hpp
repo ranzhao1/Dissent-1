@@ -84,7 +84,7 @@ namespace Crypto {
        */
       virtual IntegerData *Divide(const IntegerData *divisor) const = 0;
 
-      virtual IntegerData *Modulus(const IntegerData *modulus) const = 0;
+      virtual IntegerData *Modulo(const IntegerData *modulus) const = 0;
 
       /**
        * Exponentiating operator

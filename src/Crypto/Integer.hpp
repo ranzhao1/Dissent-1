@@ -124,9 +124,9 @@ namespace Crypto {
         return Integer(_data->Divide(divisor._data.constData()));
       }
 
-      inline Integer Modulus(const Integer &mod) const
+      inline Integer Modulo(const Integer &mod) const
       {
-        return Integer(_data->Modulus(mod._data.constData()));
+        return Integer(_data->Modulo(mod._data.constData()));
       }
 
       /**
@@ -307,7 +307,7 @@ namespace Crypto {
 
   inline Integer operator%(const Integer &value, const Integer &mod)
   {
-    return value.Modulus(mod);
+    return value.Modulo(mod);
   }
 
   /**
