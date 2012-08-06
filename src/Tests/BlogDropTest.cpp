@@ -265,13 +265,26 @@ namespace Tests {
     Plaintext m(params);
     m.SetRandom();
 
-    // Generate ciphertext
+    // Generate author ciphertext
     ClientCiphertext c(params, server_pk_set, author_pk);
     c.SetAuthorProof(author_priv, m);
+
+    // Generate non-author ciphertext
+    QList<ClientCiphertext> cover;
+    const int ncover = 50;
+    for(int i=0; i<ncover; i++) {
+      ClientCiphertext cov(params, server_pk_set, author_pk);
+      cov.SetProof();
+      cover.append(cov);
+    }
 
     // Get client pk set
     QList<PublicKey> client_pks;
     client_pks.append(c.GetOneTimeKey());
+    for(int i=0; i<ncover; i++) {
+      client_pks.append(cover[i].GetOneTimeKey());
+    }
+
     PublicKeySet client_pk_set(params, client_pks);
 
     ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < params.GetQ());
@@ -299,6 +312,10 @@ namespace Tests {
       ASSERT_TRUE(s.VerifyProof(server_pks[i]));
 
       out.Reveal(s.GetElement()); 
+    }
+
+    for(int i=0; i<ncover; i++) {
+      out.Reveal(cover[i].GetElement());
     }
 
     ASSERT_EQ(m.GetInteger(), out.GetInteger());
