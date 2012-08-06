@@ -18,7 +18,7 @@ namespace BlogDrop {
 
       /** * Constructor
        */
-      Plaintext(const Parameters &params);
+      Plaintext(const Parameters params);
 
       /**
        * Destructor
@@ -64,7 +64,7 @@ namespace BlogDrop {
 
     private:
 
-      const Parameters &_params;
+      Parameters _params;
       Integer _m;
 
   };

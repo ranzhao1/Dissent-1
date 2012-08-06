@@ -18,7 +18,7 @@ namespace BlogDrop {
       /**
        * Constructor: Initialize a random private key
        */
-      PrivateKey(const Parameters &params);
+      PrivateKey(const Parameters params);
 
       /**
        * Destructor

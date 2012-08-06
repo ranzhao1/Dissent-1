@@ -320,5 +320,72 @@ namespace Tests {
 
     ASSERT_EQ(m.GetInteger(), out.GetInteger());
   }
+
+  TEST(BlogDrop, EndToEnd) {
+    const int nservers = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
+    const int nclients = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
+    const int author_idx = Random::GetInstance().GetInt(0, nclients);
+    Parameters params = Parameters::Parameters::Fixed();
+
+    // Generate an author PK
+    PrivateKey author_priv(params);
+    const PublicKey author_pk(author_priv);
+
+    // Generate list of server pks
+    QList<PublicKey> server_pks;
+    QList<PrivateKey> server_sks;
+    QList<BlogDropServer> servers;
+    for(int i=0; i<nservers; i++) {
+      PrivateKey priv(params);
+      server_sks.append(priv);
+      PublicKey pub(priv);
+      server_pks.append(pub);
+
+      servers.append(BlogDropServer(params, author_pk, priv));
+    }
+    PublicKeySet server_pk_set(params, server_pks);
+
+    // Get a random plaintext
+    Library *lib = CryptoFactory::GetInstance().GetLibrary();
+    QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
+    QByteArray msg(2048, 0);
+    rand->GenerateBlock(msg);
+
+    QByteArray leftover;
+    QByteArray taken;
+
+    // Generate client ciphertext and give it to all servers
+    for(int client_idx=0; client_idx<nclients; client_idx++) {
+      ClientCiphertext c = BlogDropClient(params, server_pk_set, 
+            author_pk).GenerateCoverCiphertext();
+
+      if(client_idx == author_idx) {
+        c = BlogDropAuthor(params, server_pk_set, author_priv).GenerateAuthorCiphertext(msg, leftover); 
+        ASSERT_TRUE(leftover.count()>0);
+        taken = msg.left(msg.count() - leftover.count());
+        ASSERT_EQ(msg, taken+leftover);
+      }
+
+      for(int server_idx=0; server_idx<nservers; server_idx++) {
+        ASSERT_TRUE(servers[server_idx].AddClientCiphertext(c));
+      }
+    }
+
+    // Generate server ciphertext and pass it to all servers
+    for(int i=0; i<nservers; i++) {
+      ServerCiphertext s = servers[i].CloseBin();
+      for(int j=0; j<nservers; j++) {
+        ASSERT_TRUE(servers[j].AddServerCiphertext(servers[i].GetPublicKey(), s));
+      }
+    }
+
+    // Reveal the plaintext
+    for(int i=0; i<nservers; i++) {
+      QByteArray out;
+      ASSERT_TRUE(servers[i].RevealPlaintext(out));
+      ASSERT_EQ(taken, out);
+    }
+
+  }
 }
 }

@@ -96,6 +96,9 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/OnionEncryptor.hpp \
            src/Crypto/ThreadedOnionEncryptor.hpp \
            src/Crypto/Serialization.hpp \
+           src/Crypto/BlogDrop/BlogDropAuthor.hpp \
+           src/Crypto/BlogDrop/BlogDropClient.hpp \
+           src/Crypto/BlogDrop/BlogDropServer.hpp \
            src/Crypto/BlogDrop/ClientCiphertext.hpp \
            src/Crypto/BlogDrop/Parameters.hpp \
            src/Crypto/BlogDrop/Plaintext.hpp \
@@ -260,6 +263,9 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/NullPrivateKey.cpp \
            src/Crypto/OnionEncryptor.cpp \
            src/Crypto/ThreadedOnionEncryptor.cpp \
+           src/Crypto/BlogDrop/BlogDropAuthor.cpp \
+           src/Crypto/BlogDrop/BlogDropClient.cpp \
+           src/Crypto/BlogDrop/BlogDropServer.cpp \
            src/Crypto/BlogDrop/ClientCiphertext.cpp \
            src/Crypto/BlogDrop/Parameters.cpp \
            src/Crypto/BlogDrop/Plaintext.cpp \

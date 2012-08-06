@@ -76,7 +76,10 @@ namespace BlogDrop {
 
     if(!(_params.IsElement(pub.GetInteger()) &&
       _params.IsElement(_client_pks.GetInteger()) &&
-      _params.IsElement(_element))) return false;
+      _params.IsElement(_element))) {
+      qDebug() << "Proof contains illegal group elements";
+      return false;
+    }
 
     Integer g2, t1, t2;
 

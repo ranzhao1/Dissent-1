@@ -25,7 +25,7 @@ namespace BlogDrop {
        * Constructor: Initialize a public key matching a private key
        * @param key the key to use
        */
-      PublicKey(const PrivateKey &key);
+      PublicKey(const PrivateKey key);
 
       /**
        * Initialize an empty public key with these parameters
