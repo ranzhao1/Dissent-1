@@ -2,6 +2,7 @@
 #define DISSENT_CRYPTO_BLOGDROP_AUTHOR_H_GUARD
 
 #include "BlogDropClient.hpp"
+#include "Plaintext.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -25,11 +26,20 @@ namespace BlogDrop {
        */
       virtual ~BlogDropAuthor() {}
 
-
       /**
        * Generate a client cover-traffic ciphertext
+       * @param out the ciphertext generated
+       * @param in the byte array to encode
+       * @returns true on success
        */
-      ClientCiphertext GenerateAuthorCiphertext(const QByteArray &in, QByteArray &out) const;
+      bool GenerateAuthorCiphertext(ClientCiphertext &out, const QByteArray &in) const;
+
+      /**
+       * Maximum length of a plaintext message
+       */
+      inline int MaxPlaintextLength() const {
+        return Plaintext::CanFit(GetParameters());
+      }
 
     private:
 

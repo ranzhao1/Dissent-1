@@ -68,6 +68,7 @@ namespace BlogDrop {
       Integer _m;
 
   };
+
 }
 }
 }

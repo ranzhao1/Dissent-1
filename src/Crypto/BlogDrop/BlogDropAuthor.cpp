@@ -12,13 +12,17 @@ namespace BlogDrop {
   {
   }
 
-  ClientCiphertext BlogDropAuthor::GenerateAuthorCiphertext(const QByteArray &in, QByteArray &out) const
+  bool BlogDropAuthor::GenerateAuthorCiphertext(ClientCiphertext &out, const QByteArray &in) const
   {
+    if(in.count() > MaxPlaintextLength()) return false;
+
     Plaintext m(GetParameters()); 
-    out = m.Encode(in);
-    ClientCiphertext c(GetParameters(), GetServerKeys(), GetAuthorKey());
-    c.SetAuthorProof(_author_priv, m);
-    return c;
+    QByteArray extra = m.Encode(in);
+    if(extra.count()) return false;
+
+    out = ClientCiphertext(GetParameters(), GetServerKeys(), GetAuthorKey());
+    out.SetAuthorProof(_author_priv, m);
+    return true;
   }
 
 }

@@ -348,11 +348,11 @@ namespace Tests {
     // Get a random plaintext
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
-    QByteArray msg(2048, 0);
-    rand->GenerateBlock(msg);
 
-    QByteArray leftover;
-    QByteArray taken;
+    BlogDropAuthor auth(params, server_pk_set, author_priv);
+
+    QByteArray msg(auth.MaxPlaintextLength(), 0);
+    rand->GenerateBlock(msg);
 
     // Generate client ciphertext and give it to all servers
     for(int client_idx=0; client_idx<nclients; client_idx++) {
@@ -360,10 +360,7 @@ namespace Tests {
             author_pk).GenerateCoverCiphertext();
 
       if(client_idx == author_idx) {
-        c = BlogDropAuthor(params, server_pk_set, author_priv).GenerateAuthorCiphertext(msg, leftover); 
-        ASSERT_TRUE(leftover.count()>0);
-        taken = msg.left(msg.count() - leftover.count());
-        ASSERT_EQ(msg, taken+leftover);
+        ASSERT_TRUE(auth.GenerateAuthorCiphertext(c, msg)); 
       }
 
       for(int server_idx=0; server_idx<nservers; server_idx++) {
@@ -383,7 +380,7 @@ namespace Tests {
     for(int i=0; i<nservers; i++) {
       QByteArray out;
       ASSERT_TRUE(servers[i].RevealPlaintext(out));
-      ASSERT_EQ(taken, out);
+      ASSERT_EQ(msg, out);
     }
 
   }
