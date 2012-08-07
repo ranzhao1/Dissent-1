@@ -1,5 +1,6 @@
 #include "Utils/Logging.hpp"
 
+#include "AuthFactory.hpp"
 #include "Settings.hpp"
 
 using Dissent::Utils::Logging;
@@ -37,9 +38,7 @@ namespace Applications {
     Help = false;
 
     LeaderId = Id::Zero();
-    LocalId = Id::Zero();
     LocalNodeCount = 1;
-    SessionType = "null";
 
     QVariant peers = _settings->value(Param<Params::RemotePeers>());
     ParseUrlList("RemotePeer", peers, RemotePeers);
@@ -47,7 +46,8 @@ namespace Applications {
     QVariant endpoints = _settings->value(Param<Params::LocalEndPoints>());
     ParseUrlList("EndPoint", endpoints, LocalEndPoints);
 
-    DemoMode = _settings->value(Param<Params::DemoMode>(), false).toBool();
+    QString auth_mode = _settings->value(Param<Params::AuthMode>(), "null").toString();
+    AuthMode = AuthFactory::GetAuthType(auth_mode);
 
     if(_settings->contains(Param<Params::LocalNodeCount>())) {
       LocalNodeCount = _settings->value(Param<Params::LocalNodeCount>()).toInt();
@@ -67,7 +67,10 @@ namespace Applications {
     ExitTunnel = (ExitTunnelProxyUrl != QUrl()) || ExitTunnel;
 
     if(_settings->contains(Param<Params::SessionType>())) {
-      SessionType = _settings->value(Param<Params::SessionType>()).toString();
+      QString stype = _settings->value(Param<Params::SessionType>()).toString();
+      SessionType = SessionFactory::GetSessionType(stype);
+    } else {
+      SessionType = SessionFactory::NULL_ROUND;
     }
 
     if(_settings->contains(Param<Params::SubgroupPolicy>())) {
@@ -94,7 +97,10 @@ namespace Applications {
     }
 
     if(_settings->contains(Param<Params::LocalId>())) {
-      LocalId = Id(_settings->value(Param<Params::LocalId>()).toString());
+      QVariantList ids = _settings->value(Param<Params::LocalId>()).toList();
+      foreach(const QVariant &id, ids) {
+        LocalIds.append(Id(id.toString()));
+      }
     }
 
     if(_settings->contains(Param<Params::LeaderId>())) {
@@ -102,6 +108,16 @@ namespace Applications {
     }
 
     SuperPeer = _settings->value(Param<Params::SuperPeer>(), false).toBool();
+
+
+    PublicKeys = _settings->value(Param<Params::PublicKeys>()).toString();
+
+    if(_settings->contains(Param<Params::PrivateKey>())) {
+      QVariantList keys = _settings->value(Param<Params::PrivateKey>()).toList();
+      foreach(const QVariant &key, keys) {
+        PrivateKey.append(key.toString());
+      }
+    }
   }
 
   bool Settings::IsValid()
@@ -133,6 +149,24 @@ namespace Applications {
 
     if(SubgroupPolicy == -1) {
       _reason = "Invalid subgroup policy";
+      return false;
+    }
+
+    if(AuthMode == AuthFactory::INVALID) {
+      _reason = "Invalid auth_mode";
+      return false;
+    } else if(AuthFactory::RequiresKeys(AuthMode)) {
+      if(PublicKeys.isEmpty()) {
+        _reason = "Missing path to public keys";
+        return false;
+      } else if(PrivateKey.size() != LocalNodeCount) {
+        _reason = "Missing path to private key or sufficient private keys";
+        return false;
+      }
+    }
+
+    if(SessionType == SessionFactory::INVALID) {
+      _reason = "Invalid session type";
       return false;
     }
 
@@ -213,10 +247,14 @@ namespace Applications {
     _settings->setValue(Param<Params::LocalNodeCount>(), LocalNodeCount);
     _settings->setValue(Param<Params::WebServerUrl>(), WebServerUrl);
     _settings->setValue(Param<Params::Console>(), Console);
-    _settings->setValue(Param<Params::DemoMode>(), DemoMode);
+    _settings->setValue(Param<Params::AuthMode>(), AuthMode);
     _settings->setValue(Param<Params::Log>(), Log);
     _settings->setValue(Param<Params::Multithreading>(), Multithreading);
-    _settings->setValue(Param<Params::LocalId>(), LocalId.ToString());
+    QVariantList local_ids;
+    foreach(const Id &id, LocalIds) {
+      local_ids.append(id.ToString());
+    }
+    _settings->setValue(Param<Params::LocalId>(), local_ids);
     _settings->setValue(Param<Params::LeaderId>(), LeaderId.ToString());
     _settings->setValue(Param<Params::SubgroupPolicy>(),
         Group::PolicyTypeToString(SubgroupPolicy));
@@ -281,9 +319,9 @@ namespace Applications {
         "number of virtual nodes to start",
         QxtCommandOptions::ValueRequired);
 
-    options->add(Param<Params::DemoMode>(),
-        "start in demo mode",
-        QxtCommandOptions::NoValue);
+    options->add(Param<Params::AuthMode>(),
+        "the type of authentication",
+        QxtCommandOptions::ValueRequired);
 
     options->add(Param<Params::SessionType>(),
         "the type of session",
@@ -319,7 +357,7 @@ namespace Applications {
 
     options->add(Param<Params::LocalId>(),
         "160-bit base64 local id",
-        QxtCommandOptions::ValueRequired);
+        QxtCommandOptions::ValueRequired | QxtCommandOptions::AllowMultiple);
 
     options->add(Param<Params::LeaderId>(),
         "160-bit base64 leader id",
@@ -332,6 +370,14 @@ namespace Applications {
     options->add(Param<Params::SuperPeer>(),
         "sets this peer as a capable super peer",
         QxtCommandOptions::NoValue);
+
+    options->add(Param<Params::PrivateKey>(),
+        "a path to a private key",
+        QxtCommandOptions::ValueRequired | QxtCommandOptions::AllowMultiple);
+
+    options->add(Param<Params::PublicKeys>(),
+        "a path to a directory containing public keys (public keys end in \".pub\"",
+        QxtCommandOptions::ValueRequired);
 
     return options;
   }

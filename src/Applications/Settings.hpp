@@ -11,6 +11,9 @@
 #include "Connections/Id.hpp"
 #include "Identity/Group.hpp"
 
+#include "AuthFactory.hpp"
+#include "SessionFactory.hpp"
+
 namespace Dissent {
 namespace Applications {
   /**
@@ -77,12 +80,12 @@ namespace Applications {
       /**
        * Enable demo mode for evaluation / demo purposes
        */
-      bool DemoMode;
+      AuthFactory::AuthType AuthMode;
 
       /**
        * The type of anonymity session / round to construct
        */
-      QString SessionType;
+      SessionFactory::SessionType SessionType;
 
       /**
        * Logging type: stderr, stdout, file, or empty (disabled)
@@ -133,7 +136,7 @@ namespace Applications {
       /**
        * The id for the (first) local node, other nodes will be random
        */
-      Id LocalId;
+      QList<Id> LocalIds;
 
       /**
        * The id for the anonymity group's leader
@@ -150,6 +153,16 @@ namespace Applications {
        */
       bool SuperPeer;
 
+      /**
+       * List of private keys mapped the LocalIds
+       */
+      QList<QString> PrivateKey;
+
+      /**
+       * Path to a directory containing public keys
+       */
+      QString PublicKeys;
+
       bool Help;
 
       static const char* CParam(int id)
@@ -159,7 +172,7 @@ namespace Applications {
           "remote_peers",
           "endpoints",
           "local_nodes",
-          "demo_mode",
+          "auth_mode",
           "session_type",
           "log",
           "console",
@@ -171,7 +184,9 @@ namespace Applications {
           "local_id",
           "leader_id",
           "subgroup_policy",
-          "super_peer"
+          "super_peer",
+          "path_to_private_key",
+          "path_to_public_keys"
         };
         return params[id];
       }
@@ -183,7 +198,7 @@ namespace Applications {
             RemotePeers,
             LocalEndPoints,
             LocalNodeCount,
-            DemoMode,
+            AuthMode,
             SessionType,
             Log,
             Console,
@@ -195,7 +210,9 @@ namespace Applications {
             LocalId,
             LeaderId,
             SubgroupPolicy,
-            SuperPeer
+            SuperPeer,
+            PrivateKey,
+            PublicKeys
           };
       };
 

@@ -2,12 +2,16 @@
 #define DISSENT_APPLICATIONS_BASE_NODE_H_GUARD
 
 #include "Anonymity/Sessions/SessionManager.hpp"
+#include "Connections/Network.hpp"
 #include "Identity/PrivateIdentity.hpp"
 #include "Identity/Group.hpp"
 #include "Identity/GroupHolder.hpp"
 #include "Messaging/ISink.hpp"
 #include "Overlay/BaseOverlay.hpp"
 #include "Transports/Address.hpp"
+
+#include "AuthFactory.hpp"
+#include "SessionFactory.hpp"
 
 namespace Dissent {
 namespace Applications {
@@ -17,29 +21,36 @@ namespace Applications {
    */
   class Node {
     public:
-      typedef Identity::PrivateIdentity PrivateIdentity;
-      typedef Identity::Group Group;
-      typedef Identity::GroupHolder GroupHolder;
       typedef Anonymity::Sessions::SessionManager SessionManager;
       typedef Connections::Connection Connection;
       typedef Connections::Network Network;
+      typedef Crypto::AsymmetricKey AsymmetricKey;
+      typedef Crypto::KeyShare KeyShare;
+      typedef Identity::PrivateIdentity PrivateIdentity;
+      typedef Identity::Group Group;
+      typedef Identity::GroupHolder GroupHolder;
       typedef Messaging::ISink ISink;
       typedef Overlay::BaseOverlay BaseOverlay;
       typedef Transports::Address Address;
 
       typedef QSharedPointer<Node> (*CreateNode)(const PrivateIdentity &,
           const Group &, const QList<Address> &, const QList<Address> &,
-          const QSharedPointer<ISink> &, const QString &);
+          const QSharedPointer<ISink> &, SessionFactory::SessionType,
+          AuthFactory::AuthType, const QSharedPointer<KeyShare> &keys);
 
       static QSharedPointer<Node> CreateBasicGossip(const PrivateIdentity &ident,
           const Group &group, const QList<Address> &local,
           const QList<Address> &remote, const QSharedPointer<ISink> &sink,
-          const QString &session);
+          SessionFactory::SessionType session,
+          AuthFactory::AuthType auth = AuthFactory::NULL_AUTH,
+          const QSharedPointer<KeyShare> &keys = QSharedPointer<KeyShare>());
 
       static QSharedPointer<Node> CreateClientServer(const PrivateIdentity &ident,
           const Group &group, const QList<Address> &local,
           const QList<Address> &remote, const QSharedPointer<ISink> &sink,
-          const QString &session);
+          SessionFactory::SessionType session,
+          AuthFactory::AuthType auth = AuthFactory::NULL_AUTH,
+          const QSharedPointer<KeyShare> &keys = QSharedPointer<KeyShare>());
 
       /**
        * Constructor
@@ -51,7 +62,9 @@ namespace Applications {
           const QSharedPointer<BaseOverlay> &overlay,
           const QSharedPointer<Network> &network,
           const QSharedPointer<ISink> &sink,
-          const QString &type);
+          SessionFactory::SessionType stype,
+          AuthFactory::AuthType auth,
+          const QSharedPointer<KeyShare> &keys);
 
       /**
        * Destructor

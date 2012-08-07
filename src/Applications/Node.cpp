@@ -27,7 +27,9 @@ namespace Applications {
       const QSharedPointer<BaseOverlay> &overlay,
       const QSharedPointer<Network> &network,
       const QSharedPointer<ISink> &sink,
-      const QString &type) :
+      const SessionFactory::SessionType stype,
+      AuthFactory::AuthType auth,
+      const QSharedPointer<KeyShare> &keys) :
     _ident(ident),
     _group_holder(group_holder),
     _overlay(overlay),
@@ -35,7 +37,7 @@ namespace Applications {
     _sm(_overlay->GetRpcHandler()),
     _sink(sink)
   {
-    SessionFactory::GetInstance().Create(this, Id::Zero(), type);
+    SessionFactory::CreateSession(this, Id::Zero(), stype, auth, keys);
   }
 
   Node::~Node()
@@ -45,7 +47,8 @@ namespace Applications {
   QSharedPointer<Node> Node::CreateBasicGossip(const PrivateIdentity &ident,
       const Group &group, const QList<Address> &local,
       const QList<Address> &remote, const QSharedPointer<ISink> &sink,
-      const QString &session)
+      SessionFactory::SessionType session, AuthFactory::AuthType auth,
+      const QSharedPointer<KeyShare> &keys)
   {
     QSharedPointer<GroupHolder> gh(new GroupHolder(group));
     QSharedPointer<BaseOverlay> overlay(new BasicGossip(ident.GetLocalId(),
@@ -54,13 +57,14 @@ namespace Applications {
           overlay->GetConnectionManager(),
           overlay->GetRpcHandler()));
     return QSharedPointer<Node>(new Node(ident, gh, overlay,
-          network, sink, session));
+          network, sink, session, auth, keys));
   }
 
   QSharedPointer<Node> Node::CreateClientServer(const PrivateIdentity &ident,
       const Group &group, const QList<Address> &local,
       const QList<Address> &remote, const QSharedPointer<ISink> &sink,
-      const QString &session)
+      SessionFactory::SessionType session, AuthFactory::AuthType auth,
+      const QSharedPointer<KeyShare> &keys)
   {
     QSharedPointer<GroupHolder> gh(new GroupHolder(group));
     QSharedPointer<CSOverlay> overlay(new CSOverlay(ident.GetLocalId(),
@@ -72,7 +76,7 @@ namespace Applications {
           overlay->GetRpcHandler(),
           gh));
     return QSharedPointer<Node>(new Node(ident, gh, overlay,
-          network, sink, session));
+          network, sink, session, auth, keys));
   }
 }
 }

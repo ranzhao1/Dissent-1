@@ -25,6 +25,7 @@
 #include "Anonymity/Tolerant/MessageHistory.hpp"
 #include "Anonymity/Tolerant/TolerantBulkRound.hpp"
 
+#include "Applications/AuthFactory.hpp"
 #include "Applications/CommandLine.hpp"
 #include "Applications/ConsoleSink.hpp"
 #include "Applications/FileSink.hpp"
@@ -70,6 +71,7 @@
 #include "Crypto/Hash.hpp"
 #include "Crypto/Integer.hpp"
 #include "Crypto/IntegerData.hpp"
+#include "Crypto/KeyShare.hpp"
 #include "Crypto/Library.hpp"
 #include "Crypto/LRSPrivateKey.hpp"
 #include "Crypto/LRSPublicKey.hpp"
