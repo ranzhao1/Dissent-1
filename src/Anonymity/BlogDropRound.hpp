@@ -167,18 +167,18 @@ namespace Anonymity {
         public:
           State() : 
             params(Parameters::Fixed()),
-            anonymous_priv(params),
-            anonymous_pub(anonymous_priv) {}
+            anonymous_priv(new PrivateKey(params)),
+            anonymous_pub(new PublicKey(anonymous_priv)) {}
 
           virtual ~State() {}
 
           /* My blogdrop keys */
-          Parameters params;
-          PrivateKey anonymous_priv;
-          PublicKey anonymous_pub;
+          const QSharedPointer<const Parameters> params;
+          const QSharedPointer<const PrivateKey> anonymous_priv;
+          const QSharedPointer<const PublicKey> anonymous_pub;
 
           /* Set of all server PKs */
-          QHash<int,PublicKey> server_pks;
+          QHash<int, QSharedPointer<const PublicKey> > server_pks;
           QSharedPointer<PublicKeySet> server_pk_set;
 
           /* Plaintext output */
@@ -186,7 +186,7 @@ namespace Anonymity {
 
           QByteArray shuffle_data;
 
-          QList<PublicKey> anonymous_keys;
+          QList<QSharedPointer<PublicKey> > anonymous_keys;
           QHash<int, QByteArray> signatures;
 
           int my_idx;
@@ -203,8 +203,8 @@ namespace Anonymity {
       class ServerState : public State {
         public:
           ServerState() :
-            server_priv(params),
-            server_pub(server_priv) {}
+            server_priv(new PrivateKey(params)),
+            server_pub(new PublicKey(server_priv)) {}
 
           virtual ~ServerState() {}
 
@@ -212,17 +212,17 @@ namespace Anonymity {
           QSet<Id> allowed_clients;
 
           /* Blogdrop server keys */
-          PrivateKey server_priv;
-          PublicKey server_pub;
+          QSharedPointer<PrivateKey> server_priv;
+          QSharedPointer<PublicKey> server_pub;
 
           /* Serialized hash[id] = serialized list of serialized ciphertexts */
           QHash<Id,QByteArray> client_ciphertexts;
 
           /* list[slot][client] = ciphertext */
-          QList<QList<ClientCiphertext> > client_cobjs_by_slot;
+          QList<QList<QSharedPointer<const ClientCiphertext> > > client_cobjs_by_slot;
 
           /* list[slot] = one-time-keys */
-          QList<QList<PublicKey> > client_one_time_keys;
+          QList<QList<QSharedPointer<const PublicKey> > > client_one_time_keys;
           QList<QSharedPointer<PublicKeySet> > client_pk_sets;
 
           QByteArray my_commit;

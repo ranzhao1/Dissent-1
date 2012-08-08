@@ -25,8 +25,9 @@ namespace BlogDrop {
        * @param server_pks Server public keys
        * @param author_pub author public key
        */
-      explicit ClientCiphertext(const Parameters params, const PublicKeySet server_pks,
-          const PublicKey author_pub);
+      explicit ClientCiphertext(const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKeySet> server_pks,
+          const QSharedPointer<const PublicKey> author_pub);
 
       /**
        * Constructor: Initialize a ciphertext from a serialized bytearray
@@ -35,8 +36,10 @@ namespace BlogDrop {
        * @param author_pub author public key
        * @param the byte array
        */
-      explicit ClientCiphertext(const Parameters params, const PublicKeySet server_pks,
-          const PublicKey author_pub, const QByteArray &serialized);
+      explicit ClientCiphertext(const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKeySet> server_pks,
+          const QSharedPointer<const PublicKey> author_pub, 
+          const QByteArray &serialized);
 
       /**
        * Constructor: Initialize a ciphertext with an existing
@@ -46,8 +49,10 @@ namespace BlogDrop {
        * @param author_pub author public key
        * @param one_time_pub the client's one-time public key
        */
-      explicit ClientCiphertext(const Parameters params, const PublicKeySet server_pks,
-          const PublicKey author_pub, const PublicKey one_time_pub);
+      explicit ClientCiphertext(const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKeySet> server_pks,
+          const QSharedPointer<const PublicKey> author_pub, 
+          const QSharedPointer<const PublicKey> one_time_pub);
 
       /**
        * Destructor
@@ -59,7 +64,7 @@ namespace BlogDrop {
        * @param author_priv author private key used to generate proof
        * @param m author's plaintext message
        */
-      void SetAuthorProof(const PrivateKey &author_priv, const Plaintext &m);
+      void SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, const Plaintext &m);
 
       /**
        * Initialize elements proving correctness of ciphertext
@@ -77,7 +82,7 @@ namespace BlogDrop {
        */
       QByteArray GetByteArray() const;
 
-      inline PublicKey GetOneTimeKey() const { return _one_time_pub; }
+      inline const QSharedPointer<const PublicKey> GetOneTimeKey() const { return _one_time_pub; }
       inline Integer GetElement() const { return _element; }
       inline Integer GetChallenge1() const { return _challenge_1; }
       inline Integer GetChallenge2() const { return _challenge_2; }
@@ -90,12 +95,12 @@ namespace BlogDrop {
           const Integer &y1, const Integer &y2, const Integer &y3,
           const Integer &t1, const Integer &t2, const Integer &t3) const;
 
-      Parameters _params;
-      PublicKeySet _server_pks;
-      PublicKey _author_pub;
+      QSharedPointer<const Parameters> _params;
+      QSharedPointer<const PublicKeySet> _server_pks;
+      QSharedPointer<const PublicKey> _author_pub;
 
-      PrivateKey _one_time_priv;
-      PublicKey _one_time_pub;
+      QSharedPointer<const PrivateKey> _one_time_priv;
+      QSharedPointer<const PublicKey> _one_time_pub;
 
       Integer _element;
       Integer _challenge_1, _challenge_2;

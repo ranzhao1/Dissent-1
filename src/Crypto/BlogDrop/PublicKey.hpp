@@ -25,14 +25,22 @@ namespace BlogDrop {
        * Constructor: Initialize a public key matching a private key
        * @param key the key to use
        */
-      PublicKey(const PrivateKey key);
+      PublicKey(const QSharedPointer<const PrivateKey> key);
+      PublicKey(const PrivateKey &key);
 
       /**
        * Initialize an empty public key with these parameters
        * @params params group parameters
        * @params key serialized key
        */
-      PublicKey(const Parameters params, const QByteArray key);
+      PublicKey(const QSharedPointer<const Parameters> params, const QByteArray key);
+
+      /**
+       * Initialize a public key with this value
+       * @params params group parameters
+       * @params key integer key value
+       */
+      PublicKey(const QSharedPointer<const Parameters> params, const Integer key);
 
       /**
        * Destructor
@@ -42,7 +50,7 @@ namespace BlogDrop {
       /**
        * Get the parameters for this public key 
        */
-      Parameters GetParameters() const { return _params; }
+      const QSharedPointer<const Parameters> GetParameters() const { return _params; }
 
       /**
        * Get integer representing the key
@@ -63,7 +71,7 @@ namespace BlogDrop {
       /**
        * Is the key valid?
        */
-      inline bool IsValid() const { return _params.IsElement(_public_key); }
+      inline bool IsValid() const { return _params->IsElement(_public_key); }
 
       /**
        * Equality operator
@@ -71,12 +79,12 @@ namespace BlogDrop {
        */
       inline bool operator==(const PublicKey &other) const
       {
-        return (_params == other.GetParameters()) && (_public_key == other.GetInteger());
+        return (*_params == *(other.GetParameters())) && (_public_key == other.GetInteger());
       }
 
     private:
 
-      Parameters _params;
+      QSharedPointer<const Parameters> _params;
       Integer _public_key;
 
   };

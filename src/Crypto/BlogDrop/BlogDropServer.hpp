@@ -25,9 +25,9 @@ namespace BlogDrop {
        * @param author_pub author public key
        * @param server_priv server private key
        */
-      explicit BlogDropServer(const QSharedPointer<Parameters> params, 
-          const QSharedPointer<PublicKey> author_pub,
-          const QSharedPointer<PrivateKey> server_priv);
+      explicit BlogDropServer(const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKey> author_pub,
+          const QSharedPointer<const PrivateKey> server_priv);
 
       /**
        * Destructor
@@ -44,13 +44,13 @@ namespace BlogDrop {
        * Add a client ciphertext and return true if it is valid
        * @param c the ciphertext to add
        */
-      bool AddClientCiphertext(ClientCiphertext c);
+      bool AddClientCiphertext(QSharedPointer<const ClientCiphertext> c);
 
       /**
        * Reveal server ciphertext corresponding to added client
        * ciphertexts
        */
-      ServerCiphertext CloseBin() const;
+      QSharedPointer<ServerCiphertext> CloseBin() const;
 
       /**
        * Add a server ciphertext and return true if the added 
@@ -58,7 +58,8 @@ namespace BlogDrop {
        * @param from public key of the server who sent the ciphertext
        * @param c the server ciphertext to add
        */
-      bool AddServerCiphertext(const QSharedPointer<PublicKey> from, ServerCiphertext c);
+      bool AddServerCiphertext(const QSharedPointer<const PublicKey> from, 
+          QSharedPointer<const ServerCiphertext> c);
 
       /**
        * Reveal plaintext for a BlogDrop bin
@@ -70,17 +71,17 @@ namespace BlogDrop {
        * Get public key for this server
        */
       inline PublicKey GetPublicKey() const {
-        return PublicKey(*_server_priv);
+        return PublicKey(_server_priv);
       }
 
     private:
 
-      QSharedPointer<Parameters> _params;
-      QSharedPointer<PublicKey> _author_pub;
-      QSharedPointer<PrivateKey> _server_priv;
+      QSharedPointer<const Parameters> _params;
+      QSharedPointer<const PublicKey> _author_pub;
+      QSharedPointer<const PrivateKey> _server_priv;
 
-      QList<ClientCiphertext> _client_ciphertexts;
-      QList<ServerCiphertext> _server_ciphertexts;
+      QList<QSharedPointer<const ClientCiphertext> > _client_ciphertexts;
+      QList<QSharedPointer<const ServerCiphertext> > _server_ciphertexts;
   };
 }
 }

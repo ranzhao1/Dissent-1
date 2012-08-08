@@ -18,7 +18,7 @@ namespace BlogDrop {
       /**
        * Constructor: Initialize a random private key
        */
-      PrivateKey(const Parameters params);
+      PrivateKey(const QSharedPointer<const Parameters> params);
 
       /**
        * Destructor
@@ -33,11 +33,11 @@ namespace BlogDrop {
       /**
        * Return parameters used
        */
-      inline const Parameters &GetParameters() const { return _params; }
+      inline const QSharedPointer<const Parameters> GetParameters() const { return _params; }
 
     private:
 
-      Parameters _params;
+      QSharedPointer<const Parameters> _params;
       Integer _key;
 
   };

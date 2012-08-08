@@ -2,6 +2,7 @@
 #define DISSENT_CRYPTO_BLOGDROP_PUBLICKEY_SET_H_GUARD
 
 #include <QList>
+#include <QSharedPointer>
 
 #include "Crypto/Integer.hpp"
 #include "Parameters.hpp"
@@ -25,7 +26,8 @@ namespace BlogDrop {
        * @params params group parameters
        * @params keys keyset to use
        */
-      PublicKeySet(const Parameters params, const QList<PublicKey> &keys);
+      PublicKeySet(const QSharedPointer<const Parameters> params, 
+          const QList<QSharedPointer<const PublicKey> > &keys);
 
       /**
        * Destructor
@@ -39,7 +41,7 @@ namespace BlogDrop {
 
     private:
 
-      Parameters _params;
+      const QSharedPointer<const Parameters> _params;
 
       /**
        * Product of all public keys:

@@ -6,13 +6,15 @@ namespace Dissent {
 namespace Crypto {
 namespace BlogDrop {
 
-  ServerCiphertext::ServerCiphertext(const Parameters params, const PublicKeySet client_pks) :
+  ServerCiphertext::ServerCiphertext(const QSharedPointer<const Parameters> params, 
+      const QSharedPointer<const PublicKeySet> client_pks) :
     _params(params),
     _client_pks(client_pks)
   {
   }
 
-  ServerCiphertext::ServerCiphertext(const Parameters params, const PublicKeySet client_pks,
+  ServerCiphertext::ServerCiphertext(const QSharedPointer<const Parameters> params, 
+      const QSharedPointer<const PublicKeySet> client_pks,
       const QByteArray &serialized) :
     _params(params),
     _client_pks(client_pks)
@@ -32,40 +34,41 @@ namespace BlogDrop {
 
   }
 
-  void ServerCiphertext::SetProof(const PrivateKey &priv)
+  void ServerCiphertext::SetProof(const QSharedPointer<const PrivateKey> priv)
   {
     // element = (prod of client_pks)^-server_sk mod p
-    _element = _client_pks.GetInteger().Pow(priv.GetInteger(), _params.GetP()).ModInverse(_params.GetP());
+    _element = _client_pks->GetInteger().Pow(priv->GetInteger(), 
+        _params->GetP()).ModInverse(_params->GetP());
 
     Integer v, t1, t2;
       
     // v in [0,q) 
-    v = _params.RandomExponent();
+    v = _params->RandomExponent();
 
     // g1 = DH generator
     // g2 = product of client PKs
 
     // t1 = g1^v
-    t1 = _params.GetG().Pow(v, _params.GetP());
+    t1 = _params->GetG().Pow(v, _params->GetP());
 
     // t2 = g2^-v
-    t2 = _client_pks.GetInteger().Pow(v, _params.GetP());
-    t2 = t2.ModInverse(_params.GetP());
+    t2 = _client_pks->GetInteger().Pow(v, _params->GetP());
+    t2 = t2.ModInverse(_params->GetP());
 
     // y1 = server PK
     // y2 = server ciphertext
    
     // c = HASH(g1, g2, y1, y2, t1, t2) mod q
-    _challenge = Commit(_params.GetG(), _client_pks.GetInteger(),
+    _challenge = Commit(_params->GetG(), _client_pks->GetInteger(),
         PublicKey(priv).GetInteger(), _element,
         t1, t2);
 
     // r = v - cx == v - (chal)server_sk
-    _response = (v - (_challenge.MultiplyMod(priv.GetInteger(), _params.GetQ()))) % _params.GetQ();
+    _response = (v - (_challenge.MultiplyMod(priv->GetInteger(), _params->GetQ()))) % _params->GetQ();
 
   }
 
-  bool ServerCiphertext::VerifyProof(const PublicKey &pub) const
+  bool ServerCiphertext::VerifyProof(const QSharedPointer<const PublicKey> pub) const
   {
     // g1 = DH generator 
     // g2 = product of all client pub keys
@@ -74,9 +77,9 @@ namespace BlogDrop {
     // t'1 = g1^r  * y1^c
     // t'2 = g2^-r  * y2^c
 
-    if(!(_params.IsElement(pub.GetInteger()) &&
-      _params.IsElement(_client_pks.GetInteger()) &&
-      _params.IsElement(_element))) {
+    if(!(_params->IsElement(pub->GetInteger()) &&
+      _params->IsElement(_client_pks->GetInteger()) &&
+      _params->IsElement(_element))) {
       qDebug() << "Proof contains illegal group elements";
       return false;
     }
@@ -84,15 +87,15 @@ namespace BlogDrop {
     Integer g2, t1, t2;
 
     // t1 = g1^r * y1^c
-    t1 = _params.GetP().PowCascade(_params.GetG(), _response,
-        pub.GetInteger(), _challenge);
+    t1 = _params->GetP().PowCascade(_params->GetG(), _response,
+        pub->GetInteger(), _challenge);
 
     // t2 = g2^-r * y2^c
-    t2 = (_client_pks.GetInteger().Pow(_response, _params.GetP()).ModInverse(_params.GetP()) *
-        _element.Pow(_challenge, _params.GetP())) % _params.GetP();
+    t2 = (_client_pks->GetInteger().Pow(_response, _params->GetP()).ModInverse(_params->GetP()) *
+        _element.Pow(_challenge, _params->GetP())) % _params->GetP();
     
-    Integer tmp = Commit(_params.GetG(), _client_pks.GetInteger(),
-        pub.GetInteger(), _element,
+    Integer tmp = Commit(_params->GetG(), _client_pks->GetInteger(),
+        pub->GetInteger(), _element,
         t1, t2);
 
     return (tmp == _challenge);
@@ -106,9 +109,9 @@ namespace BlogDrop {
 
     hash->Restart();
 
-    hash->Update(_params.GetP().GetByteArray());
-    hash->Update(_params.GetQ().GetByteArray());
-    hash->Update(_params.GetG().GetByteArray());
+    hash->Update(_params->GetP().GetByteArray());
+    hash->Update(_params->GetQ().GetByteArray());
+    hash->Update(_params->GetG().GetByteArray());
 
     hash->Update(g1.GetByteArray());
     hash->Update(g2.GetByteArray());
@@ -119,7 +122,7 @@ namespace BlogDrop {
     hash->Update(t1.GetByteArray());
     hash->Update(t2.GetByteArray());
 
-    return Integer(hash->ComputeHash()) % _params.GetQ();
+    return Integer(hash->ComputeHash()) % _params->GetQ();
   }
 
   QByteArray ServerCiphertext::GetByteArray() const 

@@ -2,6 +2,7 @@
 #define DISSENT_CRYPTO_BLOGDROP_PLAINTEXT_H_GUARD
 
 #include <QByteArray>
+#include <QSharedPointer>
 #include "Crypto/Integer.hpp"
 #include "Parameters.hpp"
 
@@ -18,7 +19,7 @@ namespace BlogDrop {
 
       /** * Constructor
        */
-      Plaintext(const Parameters params);
+      Plaintext(const QSharedPointer<const Parameters> params);
 
       /**
        * Destructor
@@ -64,7 +65,7 @@ namespace BlogDrop {
 
     private:
 
-      Parameters _params;
+      const QSharedPointer<const Parameters> _params;
       Integer _m;
 
   };

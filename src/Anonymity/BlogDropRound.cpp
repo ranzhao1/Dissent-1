@@ -241,8 +241,8 @@ namespace Anonymity {
     QByteArray payload;
     stream >> payload;
 
-    _state->server_pks[server_idx] = PublicKey(_state->params, payload);
-    if(!_state->server_pks[server_idx].IsValid()) {
+    _state->server_pks[server_idx] = QSharedPointer<const PublicKey>(new PublicKey(_state->params, payload));
+    if(!_state->server_pks[server_idx]->IsValid()) {
       Stop("Got invalid public key--aborting");
       return;
     }
@@ -472,7 +472,7 @@ namespace Anonymity {
 
   QPair<QByteArray, bool> BlogDropRound::GetShuffleData(int)
   {
-    _state->shuffle_data = _state->anonymous_pub.GetByteArray();
+    _state->shuffle_data = _state->anonymous_pub->GetByteArray();
 
     return QPair<QByteArray, bool>(_state->shuffle_data, false);
   }
@@ -501,9 +501,9 @@ namespace Anonymity {
     for(int idx = 0; idx < count; idx++) {
       QPair<QSharedPointer<ISender>, QByteArray> pair(GetShuffleSink().At(idx));
 
-      PublicKey key(_state->params, pair.second);
+      QSharedPointer<PublicKey> key(new PublicKey(_state->params, pair.second));
 
-      if(!key.IsValid()) {
+      if(!key->IsValid()) {
         throw QRunTimeError("Invalid key in shuffle.");
       }
 
@@ -525,7 +525,7 @@ namespace Anonymity {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << SERVER_PUBLIC_KEY << GetRoundId() <<
-      _state_machine.GetPhase() << _server_state->server_pub.GetByteArray();
+      _state_machine.GetPhase() << _server_state->server_pub->GetByteArray();
 
     VerifiableBroadcast(payload);
   }
@@ -556,7 +556,7 @@ namespace Anonymity {
     for(int slot_idx=0; slot_idx < _state->n_clients; slot_idx++) {
       if(slot_idx == _state->my_idx) {
 
-        QPair<QByteArray, bool> pair = GetData(Plaintext::CanFit(_state->params));
+        QPair<QByteArray, bool> pair = GetData(Plaintext::CanFit(*_state->params));
         if(pair.first.size() > 0) {
           qDebug() << "Found a message of" << pair.first.size();
         }
@@ -566,11 +566,11 @@ namespace Anonymity {
 
         Q_ASSERT(rest.count() == 0);
 
-        ClientCiphertext c(_state->params, *_state->server_pk_set, _state->anonymous_keys[slot_idx]);
+        ClientCiphertext c(_state->params, _state->server_pk_set, _state->anonymous_keys[slot_idx]);
         c.SetAuthorProof(_state->anonymous_priv, m);
         ctexts.append(c.GetByteArray());
       } else {
-        ClientCiphertext c(_state->params, *_state->server_pk_set, _state->anonymous_keys[slot_idx]);
+        ClientCiphertext c(_state->params, _state->server_pk_set, _state->anonymous_keys[slot_idx]);
         c.SetProof();
         ctexts.append(c.GetByteArray());
       }
@@ -647,8 +647,8 @@ namespace Anonymity {
   {
     // For each slot
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      _server_state->client_cobjs_by_slot.append(QList<ClientCiphertext>());
-      _server_state->client_one_time_keys.append(QList<PublicKey>());
+      _server_state->client_cobjs_by_slot.append(QList<QSharedPointer<const ClientCiphertext> >());
+      _server_state->client_one_time_keys.append(QList<QSharedPointer<const PublicKey> >());
     }
 
     // For each user
@@ -666,15 +666,15 @@ namespace Anonymity {
 
       // For each slot
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        ClientCiphertext c(_state->params, *_state->server_pk_set, 
-            _state->anonymous_keys[slot_idx], ctexts[slot_idx]);
+        QSharedPointer<const ClientCiphertext> c(new ClientCiphertext(_state->params, _state->server_pk_set, 
+            _state->anonymous_keys[slot_idx], ctexts[slot_idx]));
 
-        if(!c.VerifyProof()) {
+        if(!c->VerifyProof()) {
           throw QRunTimeError("Member submitted invalid client ciphertext");
         }
 
         _server_state->client_cobjs_by_slot[slot_idx].append(c);
-        _server_state->client_one_time_keys[slot_idx].append(c.GetOneTimeKey());
+        _server_state->client_one_time_keys[slot_idx].append(c->GetOneTimeKey());
         //qDebug() << "Server" << GetLocalId() << "client pks " <<
         //  c.GetOneTimeKey().GetInteger().GetByteArray().toHex();
       }
@@ -688,7 +688,7 @@ namespace Anonymity {
       qDebug() << "Client pk set" <<slot_idx<< _server_state->client_pk_sets[slot_idx]->GetInteger().GetByteArray().toHex();
 
       // do stuff that sets _server_state->my_ciphertext
-      ServerCiphertext s(_state->params, *(_server_state->client_pk_sets[slot_idx]));
+      ServerCiphertext s(_state->params, _server_state->client_pk_sets[slot_idx]);
       s.SetProof(_server_state->server_priv);
 
       server_ctexts.append(s.GetByteArray());
@@ -733,7 +733,7 @@ namespace Anonymity {
       }
 
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        ServerCiphertext s(_state->params, *(_server_state->client_pk_sets[slot_idx]), server_list[slot_idx]);
+        ServerCiphertext s(_state->params, _server_state->client_pk_sets[slot_idx], server_list[slot_idx]);
           
         if(!s.VerifyProof(_state->server_pks[server_idx])) {
           throw QRunTimeError("Server submitted invalid ciphertext");
@@ -748,7 +748,7 @@ namespace Anonymity {
       Plaintext m(_state->params);
 
       for(int client_idx=0; client_idx<_state->n_clients; client_idx++) {
-        m.Reveal(_server_state->client_cobjs_by_slot[slot_idx][client_idx].GetElement());
+        m.Reveal(_server_state->client_cobjs_by_slot[slot_idx][client_idx]->GetElement());
       }
 
       for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {

@@ -1,6 +1,8 @@
 #ifndef DISSENT_CRYPTO_BLOGDROP_PARAMETERS_H_GUARD
 #define DISSENT_CRYPTO_BLOGDROP_PARAMETERS_H_GUARD
 
+#include <QSharedPointer>
+
 #include "Crypto/Integer.hpp"
 
 namespace Dissent {
@@ -17,17 +19,17 @@ namespace BlogDrop {
       /**
        * Constructor that generates new parameters
        */
-      static Parameters Generate();
+      static QSharedPointer<Parameters> Generate();
 
       /**
        * Constructor that uses fixed parameters
        */
-      static Parameters Fixed();
+      static QSharedPointer<Parameters> Fixed();
 
       /**
        * Constructor with zeroed parameters
        */
-      static Parameters Zero();
+      static QSharedPointer<Parameters> Zero();
 
       /**
        * Destructor

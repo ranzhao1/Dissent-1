@@ -22,7 +22,8 @@ namespace BlogDrop {
        * @param params Group parameters
        * @param client_pks Client public keys
        */
-      ServerCiphertext(const Parameters params, const PublicKeySet client_pks);
+      ServerCiphertext(const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKeySet> client_pks);
 
       /**
        * Constructor: Initialize a ciphertext from serialized version
@@ -30,7 +31,8 @@ namespace BlogDrop {
        * @param client_pks Client public keys
        * @param serialized serialized byte array
        */
-      ServerCiphertext(const Parameters params, const PublicKeySet client_pks,
+      ServerCiphertext(const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKeySet> client_pks,
           const QByteArray &serialized);
 
       /**
@@ -42,14 +44,14 @@ namespace BlogDrop {
        * Initialize elements proving correctness of ciphertext
        * @param Server private key used to generate proof
        */
-      void SetProof(const PrivateKey &priv);
+      void SetProof(const QSharedPointer<const PrivateKey> priv);
 
       /**
        * Check ciphertext proof
        * @param pub public key of server
        * @returns true if proof is okay
        */
-      bool VerifyProof(const PublicKey &pub) const;
+      bool VerifyProof(const QSharedPointer<const PublicKey> pub) const;
 
       /**
        * Get serialized version
@@ -66,8 +68,8 @@ namespace BlogDrop {
           const Integer &y1, const Integer &y2,
           const Integer &t1, const Integer &t2) const;
 
-      Parameters _params;
-      PublicKeySet _client_pks;
+      QSharedPointer<const Parameters> _params;
+      QSharedPointer<const PublicKeySet> _client_pks;
 
       Integer _element;
       Integer _challenge;

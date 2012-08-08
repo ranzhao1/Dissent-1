@@ -23,9 +23,9 @@ namespace BlogDrop {
        * @param server_pks Server public keys
        * @param author_pub author public key
        */
-      explicit BlogDropClient(const QSharedPointer<Parameters> params, 
-          const QSharedPointer<PublicKeySet> server_pks,
-          const QSharedPointer<PublicKey> author_pub);
+      explicit BlogDropClient(const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKeySet> server_pks,
+          const QSharedPointer<const PublicKey> author_pub);
 
       /**
        * Destructor
@@ -36,19 +36,19 @@ namespace BlogDrop {
       /**
        * Generate a client cover-traffic ciphertext
        */
-      ClientCiphertext GenerateCoverCiphertext() const;
+      QSharedPointer<ClientCiphertext> GenerateCoverCiphertext() const;
 
     protected: 
 
-      inline QSharedPointer<Parameters> GetParameters() const { return _params; }
-      inline QSharedPointer<PublicKeySet> GetServerKeys() const { return _server_pks; }
-      inline QSharedPointer<PublicKey> GetAuthorKey() const { return _author_pub; }
+      inline QSharedPointer<const Parameters> GetParameters() const { return _params; }
+      inline QSharedPointer<const PublicKeySet> GetServerKeys() const { return _server_pks; }
+      inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; }
 
     private:
 
-      QSharedPointer<Parameters> _params;
-      QSharedPointer<PublicKeySet> _server_pks;
-      QSharedPointer<PublicKey> _author_pub;
+      QSharedPointer<const Parameters> _params;
+      QSharedPointer<const PublicKeySet> _server_pks;
+      QSharedPointer<const PublicKey> _author_pub;
   };
 }
 }

@@ -5,7 +5,7 @@ namespace Dissent {
 namespace Crypto {
 namespace BlogDrop {
 
-  Plaintext::Plaintext(const Parameters params) :
+  Plaintext::Plaintext(const QSharedPointer<const Parameters> params) :
     _params(params),
     _m(1)
   {}
@@ -13,7 +13,7 @@ namespace BlogDrop {
   QByteArray Plaintext::Encode(const QByteArray &input)
   {
     // We can store p bytes minus 2 bytes for padding and one more to be safe
-    const int can_read = Plaintext::CanFit(_params);
+    const int can_read = Plaintext::CanFit(*_params);
 
     if(can_read < 1) qFatal("Illegal parameters");
 
@@ -33,7 +33,7 @@ namespace BlogDrop {
     for(unsigned char pad=0x00; pad < 0xff; pad++) {
       padded[last] = pad;
       _m = Integer(padded);
-      if(_params.IsElement(_m)) {
+      if(_params->IsElement(_m)) {
         okay = true;
         break;
       }
@@ -68,12 +68,12 @@ namespace BlogDrop {
 
   void Plaintext::SetRandom()
   {
-    _m = _params.RandomElement();
+    _m = _params->RandomElement();
   }
 
   void Plaintext::Reveal(const Integer &c)
   {
-    _m = _m.MultiplyMod(c, _params.GetP());
+    _m = _m.MultiplyMod(c, _params->GetP());
   }
 
 }

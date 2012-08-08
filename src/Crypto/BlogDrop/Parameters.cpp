@@ -6,13 +6,13 @@ namespace Dissent {
 namespace Crypto {
 namespace BlogDrop {
 
-  Parameters Parameters::Generate() 
+  QSharedPointer<Parameters> Parameters::Generate() 
   {
     qFatal("Generate not yet supported");
-    return Parameters(Integer(), Integer());
+    return QSharedPointer<Parameters>(new Parameters(Integer(), Integer()));
   }
 
-  Parameters Parameters::Fixed() 
+  QSharedPointer<Parameters> Parameters::Fixed() 
   {
 #ifdef DISSENT_TEST
     const QByteArray bytes_p = QByteArray::fromHex(
@@ -46,12 +46,12 @@ namespace BlogDrop {
     if(g.Pow((p-1)/2, g) == 1)
       qFatal("g does not generate G*_p");
 
-    return Parameters(p, g.Pow(2, p));
+    return QSharedPointer<Parameters>(new Parameters(p, g.Pow(2, p)));
   }
 
-  Parameters Parameters::Zero() 
+  QSharedPointer<Parameters> Parameters::Zero() 
   {
-    return Parameters(); 
+    return QSharedPointer<Parameters>(new Parameters()); 
   }
 
   Parameters::Parameters() {}

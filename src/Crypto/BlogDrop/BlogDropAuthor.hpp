@@ -18,9 +18,9 @@ namespace BlogDrop {
        * @param server_pks Server public keys
        * @param author_pub author public key
        */
-      explicit BlogDropAuthor(const QSharedPointer<Parameters> params, 
-          const QSharedPointer<PublicKeySet> server_pks,
-          const QSharedPointer<PrivateKey> author_priv);
+      explicit BlogDropAuthor(const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKeySet> server_pks,
+          const QSharedPointer<const PrivateKey> author_priv);
 
       /**
        * Destructor
@@ -33,7 +33,7 @@ namespace BlogDrop {
        * @param in the byte array to encode
        * @returns true on success
        */
-      bool GenerateAuthorCiphertext(ClientCiphertext &out, const QByteArray &in) const;
+      bool GenerateAuthorCiphertext(QSharedPointer<ClientCiphertext> &c, const QByteArray &in) const;
 
       /**
        * Maximum length of a plaintext message
@@ -44,7 +44,7 @@ namespace BlogDrop {
 
     private:
 
-      QSharedPointer<PrivateKey> _author_priv;
+      QSharedPointer<const PrivateKey> _author_priv;
   };
 }
 }
