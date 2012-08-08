@@ -507,7 +507,8 @@ namespace Anonymity {
   void CSBulkRound::ProcessDataShuffle()
   {
     if(GetShuffleSink().Count() != GetGroup().Count()) {
-      qFatal("Did not receive a descriptor from everyone.");
+      qFatal("Did not receive a descriptor from everyone, expected: %d, found %d.",
+          GetGroup().Count(), GetShuffleSink().Count());
     }
 
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
@@ -907,7 +908,7 @@ namespace Anonymity {
       
 #ifdef CSBR_SIGN_SLOTS
       QSharedPointer<AsymmetricKey> vkey(_state->anonymous_keys[owner]);
-      int sig_length = vkey->GetKeySize() / 8;
+      int sig_length = vkey->GetSignatureLength();
 #endif
 
       QByteArray msg_p = QByteArray::fromRawData(

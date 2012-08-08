@@ -164,6 +164,12 @@ namespace Anonymity {
 
       static const int MAX_GET = 4096;
 
+      virtual bool CSGroupCapable() const
+      {
+        CSBulkRound *nthis = const_cast<CSBulkRound *>(this);
+        return nthis->GetShuffleRound()->CSGroupCapable();
+      }
+
     protected:
       typedef Utils::Random Random;
 
@@ -380,7 +386,7 @@ namespace Anonymity {
       {
         Crypto::Library *lib = Crypto::CryptoFactory::GetInstance().GetLibrary();
 #ifdef CSBR_SIGN_SLOTS
-        int sig_length = _state->anonymous_keys[slot_idx]->GetKeySize() / 8;
+        int sig_length = _state->anonymous_keys[slot_idx]->GetSignatureLength();
 #else
         static int sig_length = QSharedPointer<Crypto::Hash>(lib->GetHashAlgorithm())->GetDigestSize();
 #endif
