@@ -325,25 +325,26 @@ namespace Tests {
     const int nservers = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     const int nclients = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     const int author_idx = Random::GetInstance().GetInt(0, nclients);
-    Parameters params = Parameters::Parameters::Fixed();
+    QSharedPointer<Parameters> params(new Parameters(Parameters::Parameters::Fixed()));
 
     // Generate an author PK
-    PrivateKey author_priv(params);
-    const PublicKey author_pk(author_priv);
+    QSharedPointer<PrivateKey> author_priv(new PrivateKey(*params));
+    const QSharedPointer<PublicKey> author_pk(new PublicKey(*author_priv));
 
     // Generate list of server pks
     QList<PublicKey> server_pks;
     QList<PrivateKey> server_sks;
     QList<BlogDropServer> servers;
     for(int i=0; i<nservers; i++) {
-      PrivateKey priv(params);
+      PrivateKey priv(*params);
       server_sks.append(priv);
       PublicKey pub(priv);
       server_pks.append(pub);
 
-      servers.append(BlogDropServer(params, author_pk, priv));
+      servers.append(BlogDropServer(params, author_pk, 
+            QSharedPointer<PrivateKey>(new PrivateKey(priv))));
     }
-    PublicKeySet server_pk_set(params, server_pks);
+    QSharedPointer<PublicKeySet> server_pk_set(new PublicKeySet(*params, server_pks));
 
     // Get a random plaintext
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
@@ -372,7 +373,8 @@ namespace Tests {
     for(int i=0; i<nservers; i++) {
       ServerCiphertext s = servers[i].CloseBin();
       for(int j=0; j<nservers; j++) {
-        ASSERT_TRUE(servers[j].AddServerCiphertext(servers[i].GetPublicKey(), s));
+        ASSERT_TRUE(servers[j].AddServerCiphertext(
+              QSharedPointer<PublicKey>(new PublicKey(servers[i].GetPublicKey())), s));
       }
     }
 

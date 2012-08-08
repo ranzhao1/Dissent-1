@@ -18,8 +18,9 @@ namespace BlogDrop {
        * @param server_pks Server public keys
        * @param author_pub author public key
        */
-      explicit BlogDropAuthor(const Parameters params, const PublicKeySet server_pks,
-          const PrivateKey author_priv);
+      explicit BlogDropAuthor(const QSharedPointer<Parameters> params, 
+          const QSharedPointer<PublicKeySet> server_pks,
+          const QSharedPointer<PrivateKey> author_priv);
 
       /**
        * Destructor
@@ -38,12 +39,12 @@ namespace BlogDrop {
        * Maximum length of a plaintext message
        */
       inline int MaxPlaintextLength() const {
-        return Plaintext::CanFit(GetParameters());
+        return Plaintext::CanFit(*GetParameters());
       }
 
     private:
 
-      PrivateKey _author_priv;
+      QSharedPointer<PrivateKey> _author_priv;
   };
 }
 }

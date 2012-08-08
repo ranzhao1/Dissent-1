@@ -2,6 +2,7 @@
 #define DISSENT_CRYPTO_BLOGDROP_SERVER_H_GUARD
 
 #include <QList>
+#include <QSharedPointer>
 
 #include "ClientCiphertext.hpp"
 #include "Parameters.hpp"
@@ -24,8 +25,9 @@ namespace BlogDrop {
        * @param author_pub author public key
        * @param server_priv server private key
        */
-      explicit BlogDropServer(const Parameters params, const PublicKey author_pub,
-          const PrivateKey server_priv);
+      explicit BlogDropServer(const QSharedPointer<Parameters> params, 
+          const QSharedPointer<PublicKey> author_pub,
+          const QSharedPointer<PrivateKey> server_priv);
 
       /**
        * Destructor
@@ -56,7 +58,7 @@ namespace BlogDrop {
        * @param from public key of the server who sent the ciphertext
        * @param c the server ciphertext to add
        */
-      bool AddServerCiphertext(const PublicKey &from, ServerCiphertext c);
+      bool AddServerCiphertext(const QSharedPointer<PublicKey> from, ServerCiphertext c);
 
       /**
        * Reveal plaintext for a BlogDrop bin
@@ -68,14 +70,14 @@ namespace BlogDrop {
        * Get public key for this server
        */
       inline PublicKey GetPublicKey() const {
-        return PublicKey(_server_priv);
+        return PublicKey(*_server_priv);
       }
 
     private:
 
-      Parameters _params;
-      PublicKey _author_pub;
-      PrivateKey _server_priv;
+      QSharedPointer<Parameters> _params;
+      QSharedPointer<PublicKey> _author_pub;
+      QSharedPointer<PrivateKey> _server_priv;
 
       QList<ClientCiphertext> _client_ciphertexts;
       QList<ServerCiphertext> _server_ciphertexts;

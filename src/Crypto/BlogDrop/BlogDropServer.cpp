@@ -5,8 +5,9 @@ namespace Dissent {
 namespace Crypto {
 namespace BlogDrop {
 
-  BlogDropServer::BlogDropServer(const Parameters params, const PublicKey author_pub,
-      const PrivateKey server_priv) :
+  BlogDropServer::BlogDropServer(const QSharedPointer<Parameters> params, 
+      const QSharedPointer<PublicKey> author_pub,
+      const QSharedPointer<PrivateKey> server_priv) :
     _params(params),
     _author_pub(author_pub),
     _server_priv(server_priv)
@@ -34,23 +35,23 @@ namespace BlogDrop {
       keys.append(_client_ciphertexts[i].GetOneTimeKey());
     }
 
-    PublicKeySet client_pks(_params, keys);
+    PublicKeySet client_pks(*_params, keys);
 
-    ServerCiphertext s(_params, client_pks);
-    s.SetProof(_server_priv);
+    ServerCiphertext s(*_params, client_pks);
+    s.SetProof(*_server_priv);
     return s;
   }
 
-  bool BlogDropServer::AddServerCiphertext(const PublicKey &from, ServerCiphertext s) 
+  bool BlogDropServer::AddServerCiphertext(const QSharedPointer<PublicKey> from, ServerCiphertext s) 
   {
-    if(!s.VerifyProof(from)) return false;
+    if(!s.VerifyProof(*from)) return false;
     _server_ciphertexts.append(s);
     return true;
   }
 
   bool BlogDropServer::RevealPlaintext(QByteArray &out) const
   {
-    Plaintext m(_params);
+    Plaintext m(*_params);
     for(int client_idx=0; client_idx<_client_ciphertexts.count(); client_idx++)
     {
       m.Reveal(_client_ciphertexts[client_idx].GetElement());
