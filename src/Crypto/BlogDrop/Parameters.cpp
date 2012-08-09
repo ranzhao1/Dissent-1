@@ -54,13 +54,15 @@ namespace BlogDrop {
     return QSharedPointer<Parameters>(new Parameters()); 
   }
 
-  Parameters::Parameters() {}
+  Parameters::Parameters() :
+    _n_elements(ElementsPerCiphertext) {}
 
   Parameters::Parameters(const Integer p, const Integer g):
     _p(p),
     _q((p-1)/2),
     _g(g),
-    _p_sqrt((p+1)/4) 
+    _p_sqrt((p+1)/4),
+    _n_elements(ElementsPerCiphertext)
   {
     Q_ASSERT(AreProbablyValid());
   }

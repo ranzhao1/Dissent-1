@@ -16,6 +16,11 @@ namespace BlogDrop {
 
     public:
 
+      /** 
+       * Number of group elements in a ciphertext
+       */
+      static const int ElementsPerCiphertext = 10;
+
       /**
        * Constructor that generates new parameters
        */
@@ -56,12 +61,14 @@ namespace BlogDrop {
       inline const Integer GetQ() const { return _q; }
       inline const Integer GetG() const { return _g; }
       inline const Integer GetPSqrt() const { return _p_sqrt; }
+      inline int GetNElements() const { return _n_elements; }
 
       inline bool operator==(const Parameters &other) const {
         return (_p == other.GetP() &&
             _q == other.GetQ() &&
             _g == other.GetG() &&
-            _p_sqrt == other.GetPSqrt());
+            _p_sqrt == other.GetPSqrt() &&
+            _n_elements == other.GetNElements());
       }
 
       /**
@@ -104,6 +111,10 @@ namespace BlogDrop {
        */
       Integer _p_sqrt; 
 
+      /**
+       * Number of ciphertext elements in a single ciphertext
+       */
+      const int _n_elements;
   };
 }
 }
