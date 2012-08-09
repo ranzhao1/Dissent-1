@@ -36,13 +36,7 @@ namespace BlogDrop {
       /**
        * Generate a client cover-traffic ciphertext
        */
-      QSharedPointer<ClientCiphertext> GenerateCoverCiphertext() const;
-
-      /**
-       * Read a serialized ciphertext 
-       * @param in the serialized ciphertext
-       */
-      QSharedPointer<ClientCiphertext> ReadCiphertext(const QByteArray &in) const;
+      QByteArray GenerateCoverCiphertext() const;
 
     protected: 
 

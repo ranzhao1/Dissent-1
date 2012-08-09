@@ -46,7 +46,7 @@ namespace BlogDrop {
        * Add a client ciphertext and return true if it is valid
        * @param c the ciphertext to add
        */
-      bool AddClientCiphertext(QSharedPointer<const ClientCiphertext> c);
+      bool AddClientCiphertext(const QList<QSharedPointer<const ClientCiphertext> > &c);
 
       /**
        * Add a client ciphertext and return true if it is valid
@@ -58,20 +58,22 @@ namespace BlogDrop {
        * Reveal server ciphertext corresponding to added client
        * ciphertexts
        */
-      QSharedPointer<ServerCiphertext> CloseBin();
+      QByteArray CloseBin();
 
       /**
        * Add a server ciphertext and return true if the added 
        * ciphertext is valid
+       * WARNING : You must call CloseBin() before calling this method
        * @param from public key of the server who sent the ciphertext
        * @param c the server ciphertext to add
        */
       bool AddServerCiphertext(const QSharedPointer<const PublicKey> from, 
-          QSharedPointer<const ServerCiphertext> c);
+          const QList<QSharedPointer<const ServerCiphertext> > &c);
 
       /**
        * Add a server ciphertext and return true if the added 
        * ciphertext is valid
+       * WARNING : You must call CloseBin() before calling this method
        * @param from public key of the server who sent the ciphertext
        * @param in the serializd server ciphertext to add
        */
@@ -87,8 +89,8 @@ namespace BlogDrop {
       /**
        * Get public key for this server
        */
-      inline PublicKey GetPublicKey() const {
-        return PublicKey(_server_priv);
+      inline QSharedPointer<const PublicKey> GetPublicKey() const {
+        return QSharedPointer<const PublicKey>(new PublicKey(_server_priv));
       }
 
     private:
@@ -98,10 +100,12 @@ namespace BlogDrop {
       QSharedPointer<const PublicKey> _author_pub;
       QSharedPointer<const PrivateKey> _server_priv;
 
-      QList<QSharedPointer<const ClientCiphertext> > _client_ciphertexts;
-      QList<QSharedPointer<const ServerCiphertext> > _server_ciphertexts;
+      /* list[client][element] = ciphertext */
+      QList<QList<QSharedPointer<const ClientCiphertext> > > _client_ciphertexts;
+      QList<QList<QSharedPointer<const ServerCiphertext> > > _server_ciphertexts;
 
-      QSharedPointer<PublicKeySet> _client_pks;
+      /* list[element] = pk_set */
+      QList<QSharedPointer<PublicKeySet> > _client_pks;
   };
 }
 }

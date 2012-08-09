@@ -334,12 +334,11 @@ namespace Tests {
     // Generate list of server pks
     QList<QSharedPointer<const PublicKey> > server_pks;
     QList<QSharedPointer<const PrivateKey> > server_sks;
-      for(int i=0; i<nservers; i++) {
+    for(int i=0; i<nservers; i++) {
       QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
       QSharedPointer<const PublicKey> pub(new PublicKey(priv));
       server_sks.append(priv);
       server_pks.append(pub);
-
     }
 
     QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, server_pks));
@@ -360,7 +359,7 @@ namespace Tests {
 
     // Generate client ciphertext and give it to all servers
     for(int client_idx=0; client_idx<nclients; client_idx++) {
-      QSharedPointer<ClientCiphertext> c = BlogDropClient(params, server_pk_set, 
+      QByteArray c = BlogDropClient(params, server_pk_set, 
             author_pk).GenerateCoverCiphertext();
 
       if(client_idx == author_idx) {
@@ -373,11 +372,13 @@ namespace Tests {
     }
 
     // Generate server ciphertext and pass it to all servers
+    QList<QByteArray> s;
     for(int i=0; i<nservers; i++) {
-      QSharedPointer<ServerCiphertext> s = servers[i].CloseBin();
+      s.append(servers[i].CloseBin());
+    }
+    for(int i=0; i<nservers; i++) {
       for(int j=0; j<nservers; j++) {
-        ASSERT_TRUE(servers[j].AddServerCiphertext(
-              QSharedPointer<const PublicKey>(new PublicKey(servers[i].GetPublicKey())), s));
+        ASSERT_TRUE(servers[j].AddServerCiphertext(servers[i].GetPublicKey(), s[i]));
       }
     }
 

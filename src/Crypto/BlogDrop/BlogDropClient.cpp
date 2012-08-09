@@ -14,18 +14,21 @@ namespace BlogDrop {
   {
   }
 
-  QSharedPointer<ClientCiphertext> BlogDropClient::GenerateCoverCiphertext() const 
+  QByteArray BlogDropClient::GenerateCoverCiphertext() const 
   {
-    QSharedPointer<ClientCiphertext> c(new ClientCiphertext(_params, _server_pks, _author_pub));
-    c->SetProof();
-    return c;
+    QList<QByteArray> list;
+    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
+      QSharedPointer<ClientCiphertext> c(new ClientCiphertext(_params, _server_pks, _author_pub));
+      c->SetProof();
+      list.append(c->GetByteArray());
+    }
+ 
+    QByteArray out;
+    QDataStream stream(&out, QIODevice::WriteOnly);
+    stream << list;
+    return out;
   }
 
-  QSharedPointer<ClientCiphertext> BlogDropClient::ReadCiphertext(const QByteArray &in) const
-  {
-    QSharedPointer<ClientCiphertext> c(new ClientCiphertext(_params, _server_pks, _author_pub, in));
-    return c;
-  }
 }
 }
 }

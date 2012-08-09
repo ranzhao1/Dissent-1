@@ -19,7 +19,7 @@ namespace BlogDrop {
       /** 
        * Number of group elements in a ciphertext
        */
-      static const int ElementsPerCiphertext = 10;
+      static const int ElementsPerCiphertext = 1;
 
       /**
        * Constructor that generates new parameters

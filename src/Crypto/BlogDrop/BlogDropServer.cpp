@@ -23,63 +23,110 @@ namespace BlogDrop {
     _client_pks.clear();
   }
 
-  bool BlogDropServer::AddClientCiphertext(QSharedPointer<const ClientCiphertext> c) 
+  bool BlogDropServer::AddClientCiphertext(const QList<QSharedPointer<const ClientCiphertext> > &c) 
   {
-    if(!c->VerifyProof()) return false;
+    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
+      if(!c[element_idx]->VerifyProof()) return false;
+    }
     _client_ciphertexts.append(c);
     return true;
   }
 
   bool BlogDropServer::AddClientCiphertext(const QByteArray &in) 
   {
-    QSharedPointer<ClientCiphertext> c(new ClientCiphertext(_params, _server_pk_set, _author_pub, in));
-    return AddClientCiphertext(c);
-  }
+    QList<QByteArray> list;
+    QList<QSharedPointer<const ClientCiphertext> > ciphers;
+    QDataStream stream(in);
+    
+    stream >> list;
 
-  QSharedPointer<ServerCiphertext> BlogDropServer::CloseBin() 
-  {
-    QList<QSharedPointer<const PublicKey> > keys;
-    for(int i=0; i<_client_ciphertexts.count(); i++)
-    {
-      keys.append(_client_ciphertexts[i]->GetOneTimeKey());
+    if(list.count() != _params->GetNElements()) return false;
+
+    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
+      ciphers.append(QSharedPointer<const ClientCiphertext>(
+            new ClientCiphertext(_params, _server_pk_set, _author_pub, list[element_idx])));
     }
 
-    _client_pks = QSharedPointer<PublicKeySet>(new PublicKeySet(_params, keys));
+    return AddClientCiphertext(ciphers);
+  }
 
-    QSharedPointer<ServerCiphertext> s(new ServerCiphertext(_params, _client_pks));
-    s->SetProof(_server_priv);
-    return s;
+  QByteArray BlogDropServer::CloseBin() 
+  {
+    QList<QByteArray> ciphers;
+
+    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
+
+      QList<QSharedPointer<const PublicKey> > keys;
+      for(int client_idx=0; client_idx<_client_ciphertexts.count(); client_idx++)
+      {
+        keys.append(_client_ciphertexts[client_idx][element_idx]->GetOneTimeKey());
+      }
+
+      _client_pks.append(QSharedPointer<PublicKeySet>(new PublicKeySet(_params, keys)));
+
+      QSharedPointer<ServerCiphertext> s(new ServerCiphertext(_params, _client_pks[element_idx]));
+      s->SetProof(_server_priv);
+      ciphers.append(s->GetByteArray());
+    }
+
+    QByteArray out;
+    QDataStream stream(&out, QIODevice::WriteOnly);
+    stream << ciphers;
+
+    return out;
   }
 
   bool BlogDropServer::AddServerCiphertext(QSharedPointer<const PublicKey> from, 
-      QSharedPointer<const ServerCiphertext> s) 
+      const QList<QSharedPointer<const ServerCiphertext> > &s) 
   {
-    if(!s->VerifyProof(from)) return false;
+    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
+      if(!s[element_idx]->VerifyProof(from)) return false;
+    }
     _server_ciphertexts.append(s);
+
     return true;
   }
 
   bool BlogDropServer::AddServerCiphertext(QSharedPointer<const PublicKey> from, 
       const QByteArray &in) 
   {
-    QSharedPointer<ServerCiphertext> s(new ServerCiphertext(_params, _client_pks, in));
-    return AddServerCiphertext(from, s);
+    QList<QByteArray> list;
+    QList<QSharedPointer<const ServerCiphertext> > ciphers;
+    QDataStream stream(in);
+    
+    stream >> list;
+
+    if(list.count() != _params->GetNElements()) return false;
+
+    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
+      ciphers.append(QSharedPointer<const ServerCiphertext>(
+            new ServerCiphertext(_params, _client_pks[element_idx], list[element_idx])));
+    }
+
+    return AddServerCiphertext(from, ciphers);
   }
 
   bool BlogDropServer::RevealPlaintext(QByteArray &out) const
   {
-    Plaintext m(_params);
-    for(int client_idx=0; client_idx<_client_ciphertexts.count(); client_idx++)
-    {
-      m.Reveal(_client_ciphertexts[client_idx]->GetElement());
+
+    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
+      QByteArray text;
+      Plaintext m(_params);
+      for(int client_idx=0; client_idx<_client_ciphertexts.count(); client_idx++)
+      {
+        m.Reveal(_client_ciphertexts[client_idx][element_idx]->GetElement());
+      }
+
+      for(int server_idx=0; server_idx<_server_ciphertexts.count(); server_idx++)
+      {
+        m.Reveal(_server_ciphertexts[server_idx][element_idx]->GetElement());
+      }
+
+      if(!m.Decode(text)) return false;
+      out += text;
     }
 
-    for(int server_idx=0; server_idx<_server_ciphertexts.count(); server_idx++)
-    {
-      m.Reveal(_server_ciphertexts[server_idx]->GetElement());
-    }
-
-    return m.Decode(out);
+    return true;
   }
 
 }

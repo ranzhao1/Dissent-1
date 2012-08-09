@@ -576,7 +576,7 @@ namespace Anonymity {
   {
     QList<QByteArray> ctexts;
 
-    QSharedPointer<ClientCiphertext> c;
+    QByteArray c;
     for(int slot_idx=0; slot_idx < _state->n_clients; slot_idx++) {
       if(slot_idx == _state->my_idx) {
 
@@ -592,7 +592,7 @@ namespace Anonymity {
         c = _state->blogdrop_clients[slot_idx]->GenerateCoverCiphertext();
       }
 
-      ctexts.append(c->GetByteArray());
+      ctexts.append(c);
     }
 
     QByteArray out;
@@ -687,7 +687,7 @@ namespace Anonymity {
 
     QList<QByteArray> server_ctexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      server_ctexts.append(_server_state->blogdrop_servers[slot_idx]->CloseBin()->GetByteArray());
+      server_ctexts.append(_server_state->blogdrop_servers[slot_idx]->CloseBin());
     }
 
     QDataStream stream(&(_server_state->my_ciphertext), QIODevice::WriteOnly);

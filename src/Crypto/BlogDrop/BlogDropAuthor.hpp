@@ -33,13 +33,13 @@ namespace BlogDrop {
        * @param in the byte array to encode
        * @returns true on success
        */
-      bool GenerateAuthorCiphertext(QSharedPointer<ClientCiphertext> &c, const QByteArray &in) const;
+      bool GenerateAuthorCiphertext(QByteArray &out, const QByteArray &in) const;
 
       /**
        * Maximum length of a plaintext message
        */
       inline int MaxPlaintextLength() const {
-        return Plaintext::CanFit(GetParameters());
+        return (GetParameters()->GetNElements()*Plaintext::CanFit(GetParameters()));
       }
 
     private:

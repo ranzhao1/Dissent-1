@@ -13,18 +13,27 @@ namespace BlogDrop {
   {
   }
 
-  bool BlogDropAuthor::GenerateAuthorCiphertext(QSharedPointer<ClientCiphertext> &out,
+  bool BlogDropAuthor::GenerateAuthorCiphertext(QByteArray &out,
       const QByteArray &in) const
   {
     if(in.count() > MaxPlaintextLength()) return false;
 
-    Plaintext m(GetParameters()); 
-    QByteArray extra = m.Encode(in);
-    if(extra.count()) return false;
+    QByteArray data = in;
+    QList<QByteArray> list;
+    for(int element_idx=0; element_idx<GetParameters()->GetNElements(); element_idx++) {
+      Plaintext m(GetParameters()); 
+      data = m.Encode(data);
 
-    out = QSharedPointer<ClientCiphertext>(new ClientCiphertext(GetParameters(), 
-          GetServerKeys(), GetAuthorKey()));
-    out->SetAuthorProof(_author_priv, m);
+      ClientCiphertext c(GetParameters(), GetServerKeys(), GetAuthorKey());
+      c.SetAuthorProof(_author_priv, m);
+      list.append(c.GetByteArray());
+    }
+
+    if(data.count()) return false;
+
+    QDataStream stream(&out, QIODevice::WriteOnly);
+    stream << list;
+
     return true;
   }
 
