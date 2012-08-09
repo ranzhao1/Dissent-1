@@ -13,7 +13,7 @@ namespace BlogDrop {
   QByteArray Plaintext::Encode(const QByteArray &input)
   {
     // We can store p bytes minus 2 bytes for padding and one more to be safe
-    const int can_read = Plaintext::CanFit(*_params);
+    const int can_read = Plaintext::CanFit(_params);
 
     if(can_read < 1) qFatal("Illegal parameters");
 

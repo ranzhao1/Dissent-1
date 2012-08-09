@@ -38,6 +38,12 @@ namespace BlogDrop {
        */
       QSharedPointer<ClientCiphertext> GenerateCoverCiphertext() const;
 
+      /**
+       * Read a serialized ciphertext 
+       * @param in the serialized ciphertext
+       */
+      QSharedPointer<ClientCiphertext> ReadCiphertext(const QByteArray &in) const;
+
     protected: 
 
       inline QSharedPointer<const Parameters> GetParameters() const { return _params; }

@@ -334,17 +334,20 @@ namespace Tests {
     // Generate list of server pks
     QList<QSharedPointer<const PublicKey> > server_pks;
     QList<QSharedPointer<const PrivateKey> > server_sks;
-    QList<BlogDropServer> servers;
-    for(int i=0; i<nservers; i++) {
+      for(int i=0; i<nservers; i++) {
       QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
       QSharedPointer<const PublicKey> pub(new PublicKey(priv));
       server_sks.append(priv);
       server_pks.append(pub);
 
-      servers.append(BlogDropServer(params, author_pk, priv));
     }
 
     QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, server_pks));
+
+    QList<BlogDropServer> servers;
+    for(int i=0; i<nservers; i++) {
+      servers.append(BlogDropServer(params, server_pk_set, author_pk, server_sks[i]));
+    }
 
     // Get a random plaintext
     Library *lib = CryptoFactory::GetInstance().GetLibrary();

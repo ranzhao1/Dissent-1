@@ -21,6 +21,11 @@ namespace BlogDrop {
     return c;
   }
 
+  QSharedPointer<ClientCiphertext> BlogDropClient::ReadCiphertext(const QByteArray &in) const
+  {
+    QSharedPointer<ClientCiphertext> c(new ClientCiphertext(_params, _server_pks, _author_pub, in));
+    return c;
+  }
 }
 }
 }

@@ -3,7 +3,9 @@
 
 #include <QMetaEnum>
 
-#include "Crypto/BlogDrop/ClientCiphertext.hpp"
+#include "Crypto/BlogDrop/BlogDropAuthor.hpp"
+#include "Crypto/BlogDrop/BlogDropClient.hpp"
+#include "Crypto/BlogDrop/BlogDropServer.hpp"
 #include "Crypto/BlogDrop/Parameters.hpp"
 #include "Crypto/BlogDrop/PrivateKey.hpp"
 #include "Crypto/BlogDrop/PublicKey.hpp"
@@ -27,7 +29,9 @@ namespace Anonymity {
     public:
       friend class RoundStateMachine<BlogDropRound>;
 
-      typedef Crypto::BlogDrop::ClientCiphertext ClientCiphertext;
+      typedef Crypto::BlogDrop::BlogDropAuthor BlogDropAuthor;
+      typedef Crypto::BlogDrop::BlogDropClient BlogDropClient;
+      typedef Crypto::BlogDrop::BlogDropServer BlogDropServer;
       typedef Crypto::BlogDrop::Parameters Parameters;
       typedef Crypto::BlogDrop::PrivateKey PrivateKey;
       typedef Crypto::BlogDrop::PublicKey PublicKey;
@@ -179,14 +183,18 @@ namespace Anonymity {
 
           /* Set of all server PKs */
           QHash<int, QSharedPointer<const PublicKey> > server_pks;
-          QSharedPointer<PublicKeySet> server_pk_set;
+          QSharedPointer<const PublicKeySet> server_pk_set;
+          QList<QSharedPointer<const PublicKey> > slot_pks;
+
+          /* Blogdrop ciphertext generators */
+          QSharedPointer<BlogDropAuthor> blogdrop_author;
+          QList<QSharedPointer<BlogDropClient> > blogdrop_clients;
 
           /* Plaintext output */
           QByteArray cleartext;
 
           QByteArray shuffle_data;
 
-          QList<QSharedPointer<PublicKey> > anonymous_keys;
           QHash<int, QByteArray> signatures;
 
           int my_idx;
@@ -215,15 +223,11 @@ namespace Anonymity {
           QSharedPointer<PrivateKey> server_priv;
           QSharedPointer<PublicKey> server_pub;
 
+          /* Blogdrop server bins */
+          QList<QSharedPointer<BlogDropServer> > blogdrop_servers;
+
           /* Serialized hash[id] = serialized list of serialized ciphertexts */
           QHash<Id,QByteArray> client_ciphertexts;
-
-          /* list[slot][client] = ciphertext */
-          QList<QList<QSharedPointer<const ClientCiphertext> > > client_cobjs_by_slot;
-
-          /* list[slot] = one-time-keys */
-          QList<QList<QSharedPointer<const PublicKey> > > client_one_time_keys;
-          QList<QSharedPointer<PublicKeySet> > client_pk_sets;
 
           QByteArray my_commit;
           QByteArray my_ciphertext;

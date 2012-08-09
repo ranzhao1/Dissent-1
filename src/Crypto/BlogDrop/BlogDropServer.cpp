@@ -6,9 +6,11 @@ namespace Crypto {
 namespace BlogDrop {
 
   BlogDropServer::BlogDropServer(const QSharedPointer<const Parameters> params, 
+      const QSharedPointer<const PublicKeySet> server_pk_set,
       const QSharedPointer<const PublicKey> author_pub,
       const QSharedPointer<const PrivateKey> server_priv) :
     _params(params),
+    _server_pk_set(server_pk_set),
     _author_pub(author_pub),
     _server_priv(server_priv)
   {
@@ -18,6 +20,7 @@ namespace BlogDrop {
   {
     _client_ciphertexts.clear();
     _server_ciphertexts.clear();
+    _client_pks.clear();
   }
 
   bool BlogDropServer::AddClientCiphertext(QSharedPointer<const ClientCiphertext> c) 
@@ -27,7 +30,13 @@ namespace BlogDrop {
     return true;
   }
 
-  QSharedPointer<ServerCiphertext> BlogDropServer::CloseBin() const
+  bool BlogDropServer::AddClientCiphertext(const QByteArray &in) 
+  {
+    QSharedPointer<ClientCiphertext> c(new ClientCiphertext(_params, _server_pk_set, _author_pub, in));
+    return AddClientCiphertext(c);
+  }
+
+  QSharedPointer<ServerCiphertext> BlogDropServer::CloseBin() 
   {
     QList<QSharedPointer<const PublicKey> > keys;
     for(int i=0; i<_client_ciphertexts.count(); i++)
@@ -35,9 +44,9 @@ namespace BlogDrop {
       keys.append(_client_ciphertexts[i]->GetOneTimeKey());
     }
 
-    const QSharedPointer<const PublicKeySet> client_pks(new PublicKeySet(_params, keys));
+    _client_pks = QSharedPointer<PublicKeySet>(new PublicKeySet(_params, keys));
 
-    QSharedPointer<ServerCiphertext> s(new ServerCiphertext(_params, client_pks));
+    QSharedPointer<ServerCiphertext> s(new ServerCiphertext(_params, _client_pks));
     s->SetProof(_server_priv);
     return s;
   }
@@ -48,6 +57,13 @@ namespace BlogDrop {
     if(!s->VerifyProof(from)) return false;
     _server_ciphertexts.append(s);
     return true;
+  }
+
+  bool BlogDropServer::AddServerCiphertext(QSharedPointer<const PublicKey> from, 
+      const QByteArray &in) 
+  {
+    QSharedPointer<ServerCiphertext> s(new ServerCiphertext(_params, _client_pks, in));
+    return AddServerCiphertext(from, s);
   }
 
   bool BlogDropServer::RevealPlaintext(QByteArray &out) const

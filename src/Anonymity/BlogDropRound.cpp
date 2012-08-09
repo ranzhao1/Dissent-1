@@ -1,6 +1,5 @@
 #include "Crypto/Hash.hpp"
 #include "Crypto/BlogDrop/ClientCiphertext.hpp"
-#include "Crypto/BlogDrop/Plaintext.hpp"
 #include "Crypto/BlogDrop/ServerCiphertext.hpp"
 #include "Identity/PublicIdentity.hpp"
 #include "Utils/Random.hpp"
@@ -213,9 +212,10 @@ namespace Anonymity {
     if(_server_state) {
       _server_state->client_ciphertexts.clear();
       _server_state->server_ciphertexts.clear();
-      _server_state->client_cobjs_by_slot.clear();
-      _server_state->client_one_time_keys.clear();
-      _server_state->client_pk_sets.clear();
+
+      for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+        _server_state->blogdrop_servers[slot_idx]->ClearBin();
+      }
     }
 
     if(_stop_next) {
@@ -501,19 +501,21 @@ namespace Anonymity {
     for(int idx = 0; idx < count; idx++) {
       QPair<QSharedPointer<ISender>, QByteArray> pair(GetShuffleSink().At(idx));
 
-      QSharedPointer<PublicKey> key(new PublicKey(_state->params, pair.second));
+      QSharedPointer<const PublicKey> key(new PublicKey(_state->params, pair.second));
 
       if(!key->IsValid()) {
         throw QRunTimeError("Invalid key in shuffle.");
       }
 
       if(_state->shuffle_data == pair.second) {
-        _state->my_idx = _state->anonymous_keys.count();
+        _state->my_idx = idx;
       }
-      _state->anonymous_keys.append(key);
+
+      _state->slot_pks.append(key);
+
     }
 
-    if(_state->anonymous_keys.count() != _state->n_clients) {
+    if(_state->slot_pks.count() != _state->n_clients) {
       throw QRunTimeError("Did not receive a key from all clients");
     }
 
@@ -532,8 +534,29 @@ namespace Anonymity {
 
   void BlogDropRound::PrepareForBulk()
   {
-    _state->server_pk_set = QSharedPointer<PublicKeySet>(
+    _state->server_pk_set = QSharedPointer<const PublicKeySet>(
         new PublicKeySet(_state->params, _state->server_pks.values()));
+    _state->blogdrop_author = QSharedPointer<BlogDropAuthor>(
+        new BlogDropAuthor(_state->params, _state->server_pk_set, _state->anonymous_priv));
+
+    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+      QSharedPointer<BlogDropClient> c(new BlogDropClient(_state->params,
+        _state->server_pk_set, _state->slot_pks[slot_idx])); 
+      _state->blogdrop_clients.append(c);
+    }
+
+    if(IsServer()) {
+      for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+        QSharedPointer<BlogDropServer> s(new BlogDropServer(_state->params,
+          _state->server_pk_set, _state->slot_pks[slot_idx], 
+          _server_state->server_priv)); 
+        _server_state->blogdrop_servers.append(s);
+      }
+    }
+
+    // Dont need to hold the keys once the BlogDropClients
+    // are initialized
+    _state->slot_pks.clear();
 
     _state_machine.StateComplete();
     Utils::PrintResourceUsage(ToString() + " " + "beginning bulk");
@@ -553,27 +576,23 @@ namespace Anonymity {
   {
     QList<QByteArray> ctexts;
 
+    QSharedPointer<ClientCiphertext> c;
     for(int slot_idx=0; slot_idx < _state->n_clients; slot_idx++) {
       if(slot_idx == _state->my_idx) {
 
-        QPair<QByteArray, bool> pair = GetData(Plaintext::CanFit(*_state->params));
+        QPair<QByteArray, bool> pair = GetData(Plaintext::CanFit(_state->params));
         if(pair.first.size() > 0) {
           qDebug() << "Found a message of" << pair.first.size();
         }
+        
+        if(!_state->blogdrop_author->GenerateAuthorCiphertext(c, pair.first)) 
+          throw QRunTimeError("Could not generate author ciphertext");
 
-        Plaintext m(_state->params);
-        QByteArray rest = m.Encode(pair.first);
-
-        Q_ASSERT(rest.count() == 0);
-
-        ClientCiphertext c(_state->params, _state->server_pk_set, _state->anonymous_keys[slot_idx]);
-        c.SetAuthorProof(_state->anonymous_priv, m);
-        ctexts.append(c.GetByteArray());
       } else {
-        ClientCiphertext c(_state->params, _state->server_pk_set, _state->anonymous_keys[slot_idx]);
-        c.SetProof();
-        ctexts.append(c.GetByteArray());
+        c = _state->blogdrop_clients[slot_idx]->GenerateCoverCiphertext();
       }
+
+      ctexts.append(c->GetByteArray());
     }
 
     QByteArray out;
@@ -645,12 +664,6 @@ namespace Anonymity {
 
   void BlogDropRound::GenerateServerCiphertext()
   {
-    // For each slot
-    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      _server_state->client_cobjs_by_slot.append(QList<QSharedPointer<const ClientCiphertext> >());
-      _server_state->client_one_time_keys.append(QList<QSharedPointer<const PublicKey> >());
-    }
-
     // For each user
     for(QHash<Id, QByteArray>::const_iterator i=_server_state->client_ciphertexts.begin();
         i!=_server_state->client_ciphertexts.end();
@@ -666,32 +679,15 @@ namespace Anonymity {
 
       // For each slot
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        QSharedPointer<const ClientCiphertext> c(new ClientCiphertext(_state->params, _state->server_pk_set, 
-            _state->anonymous_keys[slot_idx], ctexts[slot_idx]));
-
-        if(!c->VerifyProof()) {
+        if(!_server_state->blogdrop_servers[slot_idx]->AddClientCiphertext(ctexts[slot_idx])) {
           throw QRunTimeError("Member submitted invalid client ciphertext");
         }
-
-        _server_state->client_cobjs_by_slot[slot_idx].append(c);
-        _server_state->client_one_time_keys[slot_idx].append(c->GetOneTimeKey());
-        //qDebug() << "Server" << GetLocalId() << "client pks " <<
-        //  c.GetOneTimeKey().GetInteger().GetByteArray().toHex();
       }
     }
 
     QList<QByteArray> server_ctexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      _server_state->client_pk_sets.append(QSharedPointer<PublicKeySet>(
-          new PublicKeySet(_state->params, _server_state->client_one_time_keys[slot_idx])));
-
-      qDebug() << "Client pk set" <<slot_idx<< _server_state->client_pk_sets[slot_idx]->GetInteger().GetByteArray().toHex();
-
-      // do stuff that sets _server_state->my_ciphertext
-      ServerCiphertext s(_state->params, _server_state->client_pk_sets[slot_idx]);
-      s.SetProof(_server_state->server_priv);
-
-      server_ctexts.append(s.GetByteArray());
+      server_ctexts.append(_server_state->blogdrop_servers[slot_idx]->CloseBin()->GetByteArray());
     }
 
     QDataStream stream(&(_server_state->my_ciphertext), QIODevice::WriteOnly);
@@ -717,12 +713,6 @@ namespace Anonymity {
 
   void BlogDropRound::SubmitValidation()
   {
-    /* list[slot_idx][server_idx] = ciphertext */
-    QList<QList<ServerCiphertext> > server_by_slot;
-    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      server_by_slot.append(QList<ServerCiphertext>());
-    }
-
     for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {
       QList<QByteArray> server_list;
       QDataStream stream(_server_state->server_ciphertexts[server_idx]);
@@ -733,36 +723,24 @@ namespace Anonymity {
       }
 
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        ServerCiphertext s(_state->params, _server_state->client_pk_sets[slot_idx], server_list[slot_idx]);
-          
-        if(!s.VerifyProof(_state->server_pks[server_idx])) {
-          throw QRunTimeError("Server submitted invalid ciphertext");
+        if(!_server_state->blogdrop_servers[slot_idx]->AddServerCiphertext(_state->server_pks[server_idx],
+              server_list[slot_idx])) {
+            throw QRunTimeError("Server submitted invalid ciphertext");
         }
-
-        server_by_slot[slot_idx].append(s);
       }
     }
 
     QList<QByteArray> plaintexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      Plaintext m(_state->params);
 
-      for(int client_idx=0; client_idx<_state->n_clients; client_idx++) {
-        m.Reveal(_server_state->client_cobjs_by_slot[slot_idx][client_idx]->GetElement());
+      QByteArray plain;
+      if(!_server_state->blogdrop_servers[slot_idx]->RevealPlaintext(plain)) {
+        throw QRunTimeError("Could not decode plaintext message. Maybe bad anon author?");
       }
 
-      for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {
-        m.Reveal(server_by_slot[slot_idx][server_idx].GetElement());
-      }
+      plaintexts.append(plain);
 
-      QByteArray out;
-      if(!m.Decode(out)) {
-        throw QRunTimeError("Could not decode plaintext message");
-      }
-
-      plaintexts.append(out);
-
-      qDebug() << "Decoding message" << out.toHex();
+      qDebug() << "Decoding message" << plain.toHex();
     }
 
     QDataStream pstream(&(_state->cleartext), QIODevice::WriteOnly);
