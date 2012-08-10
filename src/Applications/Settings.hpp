@@ -231,6 +231,8 @@ namespace Applications {
       QUrl TryParseUrl(const QString &string_rep, const QString &scheme);
 
       bool _use_file;
+      bool _file_error;
+
       QSharedPointer<QSettings> _settings;
       QString _reason;
   };

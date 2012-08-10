@@ -127,11 +127,6 @@ namespace Applications {
 
   bool Settings::IsValid()
   {
-    if(_use_file && (_settings->status() != QSettings::NoError)) {
-      _reason = "File error";
-      return false;
-    }
-
     if(LocalEndPoints.count() == 0) {
       _reason = "No locally defined end points";
       return false;
