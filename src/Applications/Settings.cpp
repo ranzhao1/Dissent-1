@@ -269,20 +269,25 @@ namespace Applications {
   {
     QSharedPointer<QxtCommandOptions> options = GetOptions();
     options->parse(params);
-    QSharedPointer<QSettings> settings;
+    QSharedPointer<QSettings> settings(new QSettings());
     bool file = (options->positional().count() > 0);
 
-    if(file) {
-      settings = QSharedPointer<QSettings>(
-          new QSettings(options->positional()[0], QSettings::IniFormat));
-    } else {
-      settings = QSharedPointer<QSettings>(new QSettings());
-      // Bug in other platforms?? I do not know...
-      settings->clear();
-      if(params.size() == 1) {
-        settings->setValue(Param<Params::Help>(), true);
-      }
+    // Bug in other platforms?? I do not know...
+    settings->clear();
+    if(params.size() == 1) {
+      settings->setValue(Param<Params::Help>(), true);
     }
+
+    // Copy file settings into memory so that file does not
+    // get overwritten with command line settings
+    if(file) {
+      QSettings fsettings(options->positional()[0], QSettings::IniFormat);
+      const QStringList keys = fsettings.allKeys();
+      for(int key_idx=0; key_idx<keys.count(); key_idx++) {
+        const QString key = keys[key_idx];
+        settings->setValue(key, fsettings.value(key));
+      }
+    } 
 
     QMultiHash<QString, QVariant> kv_params = options->parameters();
 
