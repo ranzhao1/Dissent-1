@@ -66,7 +66,7 @@ namespace Applications {
       static QHash<QString, SessionType> BuildStringToTypeHash()
       {
         QHash<QString, SessionType> hash;
-        for(int idx = NULL_ROUND; idx <= TOLERANT_BULK; idx++) {
+        for(int idx = NULL_ROUND; idx <= BLOGDROP; idx++) {
           hash[SessionNames(idx)] = static_cast<SessionType>(idx);
         }
         return hash;
