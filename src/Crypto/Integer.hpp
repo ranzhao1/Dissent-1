@@ -59,6 +59,11 @@ namespace Crypto {
       }
 
       /**
+       * Destructor
+       */
+      virtual ~Integer() {}
+
+      /**
        * returns a random integer data
        * @param bit_count the amount of bits in the integer
        * @param mod the modulus of the integer
