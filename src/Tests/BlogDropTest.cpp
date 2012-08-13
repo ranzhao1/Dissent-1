@@ -321,7 +321,8 @@ namespace Tests {
     ASSERT_EQ(m.GetInteger(), out.GetInteger());
   }
 
-  TEST(BlogDrop, EndToEnd) {
+  void EndToEndOnce()
+  {
     const int nservers = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     const int nclients = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     const int author_idx = Random::GetInstance().GetInt(0, nclients);
@@ -357,6 +358,11 @@ namespace Tests {
     QByteArray msg(auth.MaxPlaintextLength(), 0);
     rand->GenerateBlock(msg);
 
+    QList<QList<QByteArray> > for_servers;
+    for(int server_idx=0; server_idx<nservers; server_idx++) {
+      for_servers.append(QList<QByteArray>());
+    }
+
     // Generate client ciphertext and give it to all servers
     for(int client_idx=0; client_idx<nclients; client_idx++) {
       QByteArray c = BlogDropClient(params, server_pk_set, 
@@ -367,8 +373,12 @@ namespace Tests {
       }
 
       for(int server_idx=0; server_idx<nservers; server_idx++) {
-        ASSERT_TRUE(servers[server_idx].AddClientCiphertext(c));
+        for_servers[server_idx].append(c);
       }
+    }
+
+    for(int server_idx=0; server_idx<nservers; server_idx++) {
+      servers[server_idx].AddClientCiphertexts(for_servers[server_idx]);
     }
 
     // Generate server ciphertext and pass it to all servers
@@ -388,6 +398,24 @@ namespace Tests {
       ASSERT_TRUE(servers[i].RevealPlaintext(out));
       ASSERT_EQ(msg, out);
     }
+  }
+
+  TEST(BlogDrop, EndToEndNoThreads) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType t = cf.GetThreadingType();
+    
+    cf.SetThreading(CryptoFactory::SingleThreaded);
+    EndToEndOnce();
+    cf.SetThreading(t);
+  }
+
+  TEST(BlogDrop, EndToEndThreads) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType t = cf.GetThreadingType();
+    
+    cf.SetThreading(CryptoFactory::MultiThreaded);
+    EndToEndOnce();
+    cf.SetThreading(t);
   }
 }
 }

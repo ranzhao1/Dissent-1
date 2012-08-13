@@ -1,4 +1,4 @@
-
+#include <QtCore>
 #include "BlogDropServer.hpp"
 
 namespace Dissent {
@@ -23,31 +23,60 @@ namespace BlogDrop {
     _client_pks.clear();
   }
 
-  bool BlogDropServer::AddClientCiphertext(const QList<QSharedPointer<const ClientCiphertext> > &c) 
-  {
-    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
-      if(!c[element_idx]->VerifyProof()) return false;
-    }
-    _client_ciphertexts.append(c);
-    return true;
-  }
-
-  bool BlogDropServer::AddClientCiphertext(const QByteArray &in) 
+  void BlogDropServer::UnpackClientCiphertext(const QByteArray &in,
+          QList<QSharedPointer<const ClientCiphertext> > &out) const
   {
     QList<QByteArray> list;
-    QList<QSharedPointer<const ClientCiphertext> > ciphers;
+
     QDataStream stream(in);
-    
     stream >> list;
 
-    if(list.count() != _params->GetNElements()) return false;
-
     for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
-      ciphers.append(QSharedPointer<const ClientCiphertext>(
+      out.append(QSharedPointer<const ClientCiphertext>(
             new ClientCiphertext(_params, _server_pk_set, _author_pub, list[element_idx])));
     }
+  }
 
-    return AddClientCiphertext(ciphers);
+  void BlogDropServer::AddClientCiphertexts(const QList<QByteArray> &in) 
+  {
+    if(!in.count()) qWarning() << "Added empty client ciphertext list";
+
+    // list_of_lists[client_idx][element_idx]
+    QList<QList<QSharedPointer<const ClientCiphertext> > > list_of_lists;
+
+    // Unpack each ciphertext
+    for(int client_idx=0; client_idx<in.count(); client_idx++) {
+      QList<QSharedPointer<const ClientCiphertext> > l;
+      UnpackClientCiphertext(in[client_idx], l);
+      if(l.count() != _params->GetNElements()) {
+        qWarning() << "Skipping ciphertext with incorrect length";
+        continue;
+      }
+      list_of_lists.append(l);
+    }
+
+    CryptoFactory::ThreadingType t = CryptoFactory::GetInstance().GetThreadingType(); 
+    if(t == CryptoFactory::MultiThreaded) {
+      
+      QList<QList<QSharedPointer<const ClientCiphertext> > > valid = QtConcurrent::blockingFiltered(list_of_lists, 
+          &ClientCiphertext::VerifyProofs);  
+
+      if(valid.count() != list_of_lists.count())
+          qWarning() << "Skipping invalid ciphertexts";
+      _client_ciphertexts += valid;
+      
+    } else if(t == CryptoFactory::SingleThreaded) {
+      // Verify each set of ciphertexts
+      for(int client_idx=0; client_idx<list_of_lists.count(); client_idx++) {
+        const bool ret = ClientCiphertext::VerifyProofs(list_of_lists[client_idx]);
+        if(ret) _client_ciphertexts.append(list_of_lists[client_idx]);
+        else {
+          qWarning() << "Skipping invalid ciphertext";
+        }
+      }
+    } else {
+      qFatal("Unknown threading type");
+    }
   }
 
   QByteArray BlogDropServer::CloseBin() 
@@ -77,17 +106,6 @@ namespace BlogDrop {
   }
 
   bool BlogDropServer::AddServerCiphertext(QSharedPointer<const PublicKey> from, 
-      const QList<QSharedPointer<const ServerCiphertext> > &s) 
-  {
-    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
-      if(!s[element_idx]->VerifyProof(from)) return false;
-    }
-    _server_ciphertexts.append(s);
-
-    return true;
-  }
-
-  bool BlogDropServer::AddServerCiphertext(QSharedPointer<const PublicKey> from, 
       const QByteArray &in) 
   {
     QList<QByteArray> list;
@@ -103,7 +121,12 @@ namespace BlogDrop {
             new ServerCiphertext(_params, _client_pks[element_idx], list[element_idx])));
     }
 
-    return AddServerCiphertext(from, ciphers);
+    for(int element_idx=0; element_idx<_params->GetNElements(); element_idx++) {
+      if(!ciphers[element_idx]->VerifyProof(from)) return false;
+    }
+    _server_ciphertexts.append(ciphers);
+
+    return true;
   }
 
   bool BlogDropServer::RevealPlaintext(QByteArray &out) const

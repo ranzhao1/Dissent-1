@@ -43,32 +43,18 @@ namespace BlogDrop {
       void ClearBin(); 
 
       /**
-       * Add a client ciphertext and return true if it is valid
-       * @param c the ciphertext to add
+       * Add a list of client ciphertexts. Silently discards invalid
+       * ciphertexts. Uses threading (where available) to speed up
+       * the proof verification process.
+       * @param in the list of ciphertexts to add
        */
-      bool AddClientCiphertext(const QList<QSharedPointer<const ClientCiphertext> > &c);
-
-      /**
-       * Add a client ciphertext and return true if it is valid
-       * @param in the ciphertext to add
-       */
-      bool AddClientCiphertext(const QByteArray &in);
+      void AddClientCiphertexts(const QList<QByteArray> &in);
 
       /**
        * Reveal server ciphertext corresponding to added client
        * ciphertexts
        */
       QByteArray CloseBin();
-
-      /**
-       * Add a server ciphertext and return true if the added 
-       * ciphertext is valid
-       * WARNING : You must call CloseBin() before calling this method
-       * @param from public key of the server who sent the ciphertext
-       * @param c the server ciphertext to add
-       */
-      bool AddServerCiphertext(const QSharedPointer<const PublicKey> from, 
-          const QList<QSharedPointer<const ServerCiphertext> > &c);
 
       /**
        * Add a server ciphertext and return true if the added 
@@ -94,6 +80,8 @@ namespace BlogDrop {
       }
 
     private:
+      void UnpackClientCiphertext(const QByteArray &in,
+          QList<QSharedPointer<const ClientCiphertext> > &out) const;
 
       QSharedPointer<const Parameters> _params;
       QSharedPointer<const PublicKeySet> _server_pk_set;

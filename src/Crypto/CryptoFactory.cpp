@@ -25,6 +25,7 @@ namespace Crypto {
 
   void CryptoFactory::SetThreading(ThreadingType type)
   {
+    _threading_type = type;
     switch(type) {
       case MultiThreaded:
         _onion.reset(new ThreadedOnionEncryptor());

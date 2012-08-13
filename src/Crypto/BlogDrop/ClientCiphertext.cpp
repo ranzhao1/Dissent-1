@@ -1,4 +1,5 @@
 
+#include <QtCore>
 #include "Crypto/CryptoFactory.hpp"
 #include "ClientCiphertext.hpp"
 
@@ -220,6 +221,31 @@ namespace BlogDrop {
     QDataStream stream(&out, QIODevice::WriteOnly);
     stream << list;
     return out;
+  }
+  
+  bool ClientCiphertext::VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c)
+  {
+    CryptoFactory::ThreadingType t = CryptoFactory::GetInstance().GetThreadingType();
+
+    if(t == CryptoFactory::SingleThreaded) {
+      for(int idx=0; idx<c.count(); idx++) {
+        if(!c[idx]->VerifyProof()) return false;
+      }
+    } else if(t == CryptoFactory::MultiThreaded) {
+      QList<bool> results = QtConcurrent::blockingMapped(c, &VerifyOnce);
+      for(int idx=0; idx<c.count(); idx++) {
+        if(!results[idx]) return false;
+      }
+    } else {
+      qFatal("Unknown threading type");
+    }
+
+    return true;
+  }
+
+  bool ClientCiphertext::VerifyOnce(QSharedPointer<const ClientCiphertext> c) 
+  {
+    return c->VerifyProof();
   }
 }
 }

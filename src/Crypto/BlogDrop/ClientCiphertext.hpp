@@ -89,7 +89,16 @@ namespace BlogDrop {
       inline Integer GetResponse1() const { return _response_1; }
       inline Integer GetResponse2() const { return _response_2; }
 
+      /**
+       * Verify a set of proofs. Uses threading if available, so this might
+       * be much faster than verifying each proof in turn
+       * param c list of ciphertexts
+       */
+      static bool VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c);
+
     private:
+
+      static bool VerifyOnce(QSharedPointer<const ClientCiphertext> c); 
 
       Integer Commit(const Integer &g1, const Integer &g2, const Integer &g3,
           const Integer &y1, const Integer &y2, const Integer &y3,

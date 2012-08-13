@@ -664,6 +664,12 @@ namespace Anonymity {
 
   void BlogDropRound::GenerateServerCiphertext()
   {
+    // by_slot[slot_idx][client_idx] = ciphertext
+    QList<QList<QByteArray> > by_slot;
+    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+      by_slot.append(QList<QByteArray>());
+    }
+
     // For each user
     for(QHash<Id, QByteArray>::const_iterator i=_server_state->client_ciphertexts.begin();
         i!=_server_state->client_ciphertexts.end();
@@ -679,14 +685,13 @@ namespace Anonymity {
 
       // For each slot
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        if(!_server_state->blogdrop_servers[slot_idx]->AddClientCiphertext(ctexts[slot_idx])) {
-          throw QRunTimeError("Member submitted invalid client ciphertext");
-        }
+        by_slot[slot_idx].append(ctexts[slot_idx]);
       }
     }
 
     QList<QByteArray> server_ctexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+      _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx]);
       server_ctexts.append(_server_state->blogdrop_servers[slot_idx]->CloseBin());
     }
 
