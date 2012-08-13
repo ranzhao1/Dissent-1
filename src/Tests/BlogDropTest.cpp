@@ -79,8 +79,8 @@ namespace Tests {
     QByteArray output;
     EXPECT_TRUE(p.Decode(output));
     EXPECT_TRUE(output.count() > 0);
-    EXPECT_TRUE(output.count() < params->GetP().GetByteCount());
-    EXPECT_TRUE(output.count() > (params->GetP().GetByteCount()-5));
+    EXPECT_TRUE(output.count() < params->GetQ().GetByteCount());
+    EXPECT_TRUE(output.count() > (params->GetQ().GetByteCount()-5));
     EXPECT_EQ(msg, output+leftover);
   }
 
