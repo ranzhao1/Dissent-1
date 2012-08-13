@@ -55,7 +55,7 @@ namespace BlogDrop {
        * Number of bytes that can fit in a plaintext
        */
       inline static int CanFit(const QSharedPointer<const Parameters> params) {
-        return params->GetP().GetByteCount() - 4;
+        return params->GetQ().GetByteCount() - 4;
       }
 
       /**
