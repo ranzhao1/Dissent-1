@@ -1,17 +1,19 @@
 #include "DissentTest.hpp"
+#include <cryptopp/ecp.h>
+#include <cryptopp/nbtheory.h>
 
 namespace Dissent {
 namespace Tests {
-  TEST(BlogDrop, ParamsFixed) 
+  TEST(BlogDrop, ParamsTesting) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
 
     EXPECT_EQ(Integer(1), params->GetG().Pow(params->GetQ(), params->GetP()));
   }
 
   TEST(BlogDrop, ParamsIsElement) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
 
     for(int i=0; i<100; i++) {
       EXPECT_TRUE(params->IsElement(params->RandomElement()));
@@ -20,7 +22,7 @@ namespace Tests {
 
   TEST(BlogDrop, ParamsRandomExponent) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
 
     for(int i=0; i<100; i++) {
       EXPECT_TRUE(params->IsElement(params->GetG().Pow(
@@ -30,7 +32,7 @@ namespace Tests {
 
   TEST(BlogDrop, ParamsNotElement) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
 
     int count = 0;
     for(int i=0; i<100; i++) {
@@ -42,7 +44,7 @@ namespace Tests {
 
   TEST(BlogDrop, PlaintextEmpty) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
     Plaintext p(params);
     QByteArray out;
     EXPECT_FALSE(p.Decode(out));
@@ -51,7 +53,7 @@ namespace Tests {
 
   TEST(BlogDrop, PlaintextShort) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
     Plaintext p(params);
 
     QByteArray shorts("shorts");
@@ -64,7 +66,7 @@ namespace Tests {
 
   TEST(BlogDrop, PlaintextRandom) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
     Plaintext p(params);
 
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
@@ -86,7 +88,7 @@ namespace Tests {
 
   TEST(BlogDrop, Keys) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
 
     PrivateKey priv(params);
     Integer x = priv.GetInteger();
@@ -104,7 +106,7 @@ namespace Tests {
   TEST(BlogDrop, PublicKeySet) 
   {
     const int nkeys = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
 
     QList<QSharedPointer<const PublicKey> > keys;
     Integer prod = 1;
@@ -124,7 +126,7 @@ namespace Tests {
   {
     for(int t=0; t<10; t++) {
       const int nkeys = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-      QSharedPointer<const Parameters> params = Parameters::Parameters::Fixed();
+      QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
 
       QList<QSharedPointer<const PublicKey> > client_pks;
       for(int i=0; i<nkeys; i++) {
@@ -150,7 +152,7 @@ namespace Tests {
   }
 
   void TestClientOnce() {
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
 
     // Generate an author PK
     QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
@@ -195,7 +197,7 @@ namespace Tests {
   }
 
   void TestAuthorOnce() {
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
 
     // Generate an author PK
     QSharedPointer<const PrivateKey> author_priv(new PrivateKey(params));
@@ -243,7 +245,7 @@ namespace Tests {
   }
   
   TEST(BlogDrop, Reveal) {
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
 
     // Generate an author PK
     QSharedPointer<const PrivateKey> author_priv(new PrivateKey(params));
@@ -326,7 +328,7 @@ namespace Tests {
     const int nservers = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     const int nclients = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     const int author_idx = Random::GetInstance().GetInt(0, nclients);
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
 
     // Generate an author PK
     const QSharedPointer<const PrivateKey> author_priv(new PrivateKey(params));
@@ -419,6 +421,7 @@ namespace Tests {
   }
 
   TEST(BlogDrop, BenchmarkIntegerGroup) {
+    // Use full parameters (not testing)
     QSharedPointer<const Parameters> params = Parameters::Parameters::Fixed();
 
     // Get random integer a in [1, q)
@@ -426,17 +429,11 @@ namespace Tests {
 
     // a = take b^a 
     Integer b = params->GetG();
-    for(int i=0; i<10000; i++) {
+    for(int i=0; i<1000; i++) {
       b = b.Pow(a, params->GetP());
       EXPECT_TRUE(a>0);
     }
   }
-
-  /*****
-   * Saving this code if we ever want to use EC groups. It requires
-   * these inclues:
-        #include <cryptopp/ecp.h>
-        #include <cryptopp/nbtheory.h>
 
   TEST(BlogDrop, BenchmarkEllipticCurveGroup) {
     // RFC 5903 - 256-bit curve
@@ -465,10 +462,10 @@ namespace Tests {
 
     // a = take g^a 
     CryptoPP::ECPPoint point_b = g;
-    for(int i=0; i<40000; i++) {
+    for(int i=0; i<4000; i++) {
       point_b = ecp.ScalarMultiply(point_b, exp_a);
     }
   }
-  */
+
 }
 }

@@ -27,6 +27,11 @@ namespace BlogDrop {
       static QSharedPointer<Parameters> Generate();
 
       /**
+       * Constructor that uses small parameters for testing
+       */
+      static QSharedPointer<Parameters> Testing();
+
+      /**
        * Constructor that uses fixed parameters
        */
       static QSharedPointer<Parameters> Fixed();
