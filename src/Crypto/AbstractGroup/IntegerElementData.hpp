@@ -16,10 +16,13 @@ namespace AbstractGroup {
 
       virtual ~IntegerElementData() {}
 
-      virtual inline bool IsEqual(const ElementData *other) const
-      { 
-        qDebug() << _integer.GetByteArray().toHex() << "," << GetInteger(other).GetByteArray().toHex();
-        return (_integer == GetInteger(other));
+      /**
+       * Equality operator
+       * @param other the ElementData to compare
+       */
+      virtual bool operator==(const ElementData *other) const
+      {
+        return _integer == GetInteger(other);
       }
 
       inline static Integer GetInteger(const ElementData *data)
@@ -33,6 +36,11 @@ namespace AbstractGroup {
         }
 
         return Integer();
+      }
+
+      virtual inline QByteArray GetByteArray() const 
+      {
+        return _integer.GetByteArray();
       }
 
     private:

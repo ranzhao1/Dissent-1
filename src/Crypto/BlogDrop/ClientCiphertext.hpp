@@ -1,6 +1,7 @@
 #ifndef DISSENT_CRYPTO_BLOGDROP_CLIENT_CIPHERTEXT_H_GUARD
 #define DISSENT_CRYPTO_BLOGDROP_CLIENT_CIPHERTEXT_H_GUARD
 
+#include "Crypto/AbstractGroup/Element.hpp"
 #include "Crypto/Integer.hpp"
 #include "Parameters.hpp"
 #include "Plaintext.hpp"
@@ -17,6 +18,8 @@ namespace BlogDrop {
   class ClientCiphertext {
 
     public:
+
+      typedef Dissent::Crypto::AbstractGroup::Element Element;
 
       /**
        * Constructor: Initialize a ciphertext with a fresh
@@ -83,7 +86,7 @@ namespace BlogDrop {
       QByteArray GetByteArray() const;
 
       inline const QSharedPointer<const PublicKey> GetOneTimeKey() const { return _one_time_pub; }
-      inline Integer GetElement() const { return _element; }
+      inline Element GetElement() const { return _element; }
       inline Integer GetChallenge1() const { return _challenge_1; }
       inline Integer GetChallenge2() const { return _challenge_2; }
       inline Integer GetResponse1() const { return _response_1; }
@@ -100,9 +103,9 @@ namespace BlogDrop {
 
       static bool VerifyOnce(QSharedPointer<const ClientCiphertext> c); 
 
-      Integer Commit(const Integer &g1, const Integer &g2, const Integer &g3,
-          const Integer &y1, const Integer &y2, const Integer &y3,
-          const Integer &t1, const Integer &t2, const Integer &t3) const;
+      Integer Commit(const Element &g1, const Element &g2, const Element &g3,
+          const Element &y1, const Element &y2, const Element &y3,
+          const Element &t1, const Element &t2, const Element &t3) const;
 
       QSharedPointer<const Parameters> _params;
       QSharedPointer<const PublicKeySet> _server_pks;
@@ -111,7 +114,7 @@ namespace BlogDrop {
       QSharedPointer<const PrivateKey> _one_time_priv;
       QSharedPointer<const PublicKey> _one_time_pub;
 
-      Integer _element;
+      Element _element;
       Integer _challenge_1, _challenge_2;
       Integer _response_1, _response_2;
   };

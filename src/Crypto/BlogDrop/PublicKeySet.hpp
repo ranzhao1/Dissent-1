@@ -4,7 +4,7 @@
 #include <QList>
 #include <QSharedPointer>
 
-#include "Crypto/Integer.hpp"
+#include "Crypto/AbstractGroup/Element.hpp"
 #include "Parameters.hpp"
 #include "PublicKey.hpp"
 
@@ -21,6 +21,8 @@ namespace BlogDrop {
 
     public:
 
+      typedef Dissent::Crypto::AbstractGroup::Element Element;
+
       /**
        * Constructor: Initialize using a QSet of keys
        * @params params group parameters
@@ -35,9 +37,9 @@ namespace BlogDrop {
       virtual ~PublicKeySet() {}
 
       /**
-       * Get integer representing the keyset
+       * Get element representing the keyset
        */
-      const Integer GetInteger() const { return _key; }
+      const Element GetElement() const { return _key; }
 
     private:
 
@@ -47,7 +49,7 @@ namespace BlogDrop {
        * Product of all public keys:
        *   key = (g^x0)(g^x1)...(g^xN)
        */
-      Integer _key;
+      Element _key;
   };
 }
 }

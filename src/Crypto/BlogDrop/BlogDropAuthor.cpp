@@ -16,13 +16,19 @@ namespace BlogDrop {
   bool BlogDropAuthor::GenerateAuthorCiphertext(QByteArray &out,
       const QByteArray &in) const
   {
-    if(in.count() > MaxPlaintextLength()) return false;
+    const int can_fit = Plaintext::CanFit(GetParameters());
+    if(in.count() > MaxPlaintextLength()) {
+      qWarning() << "Plaintext is too long";
+      return false; 
+    }
 
     QByteArray data = in;
     QList<QByteArray> list;
     for(int element_idx=0; element_idx<GetParameters()->GetNElements(); element_idx++) {
       Plaintext m(GetParameters()); 
-      data = m.Encode(data);
+      m.Encode(data.left(can_fit));
+
+      if(data.count()) data = data.mid(can_fit);
 
       ClientCiphertext c(GetParameters(), GetServerKeys(), GetAuthorKey());
       c.SetAuthorProof(_author_priv, m);

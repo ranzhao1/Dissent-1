@@ -9,9 +9,9 @@ namespace BlogDrop {
       const QList<QSharedPointer<const PublicKey> > &keys) :
     _params(params)
   {
-    _key = 1;
+    _key = _params->GetGroup()->GetIdentity();
     for(int i=0; i<keys.count(); i++) {
-      _key = _key.MultiplyMod(keys[i]->GetInteger(), params->GetP());
+      _key = _params->GetGroup()->Multiply(_key, keys[i]->GetElement());
     }
   }
 

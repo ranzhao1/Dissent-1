@@ -170,7 +170,7 @@ namespace Anonymity {
       class State {
         public:
           State() : 
-            params(Parameters::Fixed()),
+            params(Parameters::IntegerProductionFixed()),
             anonymous_priv(new PrivateKey(params)),
             anonymous_pub(new PublicKey(anonymous_priv)) {}
 

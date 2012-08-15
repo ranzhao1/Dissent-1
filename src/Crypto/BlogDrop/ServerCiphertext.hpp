@@ -1,6 +1,7 @@
 #ifndef DISSENT_CRYPTO_BLOGDROP_SERVER_CIPHERTEXT_H_GUARD
 #define DISSENT_CRYPTO_BLOGDROP_SERVER_CIPHERTEXT_H_GUARD
 
+#include "Crypto/AbstractGroup/Element.hpp"
 #include "Crypto/Integer.hpp"
 #include "Parameters.hpp"
 #include "PrivateKey.hpp"
@@ -16,6 +17,8 @@ namespace BlogDrop {
   class ServerCiphertext {
 
     public:
+
+      typedef Dissent::Crypto::AbstractGroup::Element Element;
 
       /**
        * Constructor: Initialize a ciphertext
@@ -58,20 +61,20 @@ namespace BlogDrop {
        */
       QByteArray GetByteArray() const;
 
-      inline Integer GetElement() const { return _element; }
+      inline Element GetElement() const { return _element; }
       inline Integer GetChallenge() const { return _challenge; }
       inline Integer GetResponse() const { return _response; }
 
     private:
 
-      Integer Commit(const Integer &g1, const Integer &g2, 
-          const Integer &y1, const Integer &y2,
-          const Integer &t1, const Integer &t2) const;
+      Integer Commit(const Element &g1, const Element &g2, 
+          const Element &y1, const Element &y2,
+          const Element &t1, const Element &t2) const;
 
       QSharedPointer<const Parameters> _params;
       QSharedPointer<const PublicKeySet> _client_pks;
 
-      Integer _element;
+      Element _element;
       Integer _challenge;
       Integer _response;
   };

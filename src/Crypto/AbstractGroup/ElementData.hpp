@@ -17,7 +17,13 @@ namespace AbstractGroup {
        */
       virtual ~ElementData() {}
 
-      virtual bool IsEqual(const ElementData *other) const = 0;
+      /**
+       * Equality operator
+       * @param other the ElementData to compare
+       */
+      virtual bool operator==(const ElementData *other) const = 0;
+
+      virtual QByteArray GetByteArray() const = 0;
 
     protected:
 

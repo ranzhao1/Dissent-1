@@ -3,7 +3,7 @@
 
 #include <QByteArray>
 #include <QSharedPointer>
-#include "Crypto/Integer.hpp"
+#include "Crypto/AbstractGroup/Element.hpp"
 #include "Parameters.hpp"
 
 namespace Dissent {
@@ -17,6 +17,8 @@ namespace BlogDrop {
 
     public:
 
+      typedef Dissent::Crypto::AbstractGroup::Element Element;
+
       /** * Constructor
        */
       Plaintext(const QSharedPointer<const Parameters> params);
@@ -29,9 +31,8 @@ namespace BlogDrop {
       /**
        * Encode ByteArray into BlogDrop plaintext
        * @param input QByteArray to encode
-       * @returns Parts of bytearray that overflowed
        */
-      QByteArray Encode(const QByteArray &input); 
+      void Encode(const QByteArray &input); 
 
       /**
        * Decode a plaintext element into a QByteArray
@@ -49,24 +50,24 @@ namespace BlogDrop {
       /**
        * Return integer representing this plaintext
        */
-      inline Integer GetInteger() const { return _m; }
+      inline Element GetElement() const { return _m; }
 
       /**
        * Number of bytes that can fit in a plaintext
        */
       inline static int CanFit(const QSharedPointer<const Parameters> params) {
-        return params->GetQ().GetByteCount() - 4;
+        return params->GetGroup()->BytesPerElement();
       }
 
       /**
        * Reveal a plaintext by combining ciphertext elements
        */
-      void Reveal(const Integer &c);
+      void Reveal(const Element &c);
 
     private:
 
       const QSharedPointer<const Parameters> _params;
-      Integer _m;
+      Element _m;
 
   };
 

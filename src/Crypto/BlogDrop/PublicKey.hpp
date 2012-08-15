@@ -1,7 +1,7 @@
 #ifndef DISSENT_CRYPTO_BLOGDROP_PUBLICKEY_H_GUARD
 #define DISSENT_CRYPTO_BLOGDROP_PUBLICKEY_H_GUARD
 
-#include "Crypto/Integer.hpp"
+#include "Crypto/AbstractGroup/Element.hpp"
 #include "Parameters.hpp"
 #include "PrivateKey.hpp"
 
@@ -15,6 +15,8 @@ namespace BlogDrop {
   class PublicKey {
 
     public:
+
+      typedef Dissent::Crypto::AbstractGroup::Element Element;
 
       /**
        * Initialize and empty public key
@@ -33,14 +35,14 @@ namespace BlogDrop {
        * @params params group parameters
        * @params key serialized key
        */
-      PublicKey(const QSharedPointer<const Parameters> params, const QByteArray key);
+      PublicKey(const QSharedPointer<const Parameters> params, const QByteArray &key);
 
       /**
        * Initialize a public key with this value
        * @params params group parameters
        * @params key integer key value
        */
-      PublicKey(const QSharedPointer<const Parameters> params, const Integer key);
+      PublicKey(const QSharedPointer<const Parameters> params, const Element key);
 
       /**
        * Destructor
@@ -53,15 +55,15 @@ namespace BlogDrop {
       const QSharedPointer<const Parameters> GetParameters() const { return _params; }
 
       /**
-       * Get integer representing the key
+       * Get element representing the key
        */
-      Integer GetInteger() const { return _public_key; }
+      Element GetElement() const { return _public_key; }
 
       /**
        * Sets key to specified integer
-       * @param i integer to set
+       * @param e element to set
        */
-      void SetInteger(Integer i) { _public_key = i; }
+      void SetElement(Element e) { _public_key = e; }
 
       /**
        * Get serialized version of the integer
@@ -71,7 +73,7 @@ namespace BlogDrop {
       /**
        * Is the key valid?
        */
-      inline bool IsValid() const { return _params->IsElement(_public_key); }
+      inline bool IsValid() const { return _params->GetGroup()->IsElement(_public_key); }
 
       /**
        * Equality operator
@@ -79,18 +81,18 @@ namespace BlogDrop {
        */
       inline bool operator==(const PublicKey &other) const
       {
-        return (*_params == *(other.GetParameters())) && (_public_key == other.GetInteger());
+        return (_public_key == other.GetElement());
       }
 
     private:
 
       QSharedPointer<const Parameters> _params;
-      Integer _public_key;
+      Element _public_key;
 
   };
 
   inline uint qHash(const PublicKey &key) { 
-    return qHash(key.GetInteger().GetByteArray());
+    return qHash(key.GetElement().GetByteArray());
   }
 }
 }

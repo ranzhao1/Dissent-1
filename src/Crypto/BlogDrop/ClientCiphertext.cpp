@@ -15,7 +15,8 @@ namespace BlogDrop {
     _author_pub(author_pub),
     _one_time_priv(new PrivateKey(_params)),
     _one_time_pub(new PublicKey(_one_time_priv)),
-    _element(_server_pks->GetInteger().Pow(_one_time_priv->GetInteger(), _params->GetP())) 
+    _element(_params->GetGroup()->Exponentiate(_server_pks->GetElement(),
+          _one_time_priv->GetInteger())) 
   {
   }
 
@@ -36,8 +37,8 @@ namespace BlogDrop {
       return; 
     }
 
-    _one_time_pub = QSharedPointer<const PublicKey>(new PublicKey(params, Integer(list[0])));
-    _element = Integer(list[1]);
+    _one_time_pub = QSharedPointer<const PublicKey>(new PublicKey(params, list[0]));
+    _element = _params->GetGroup()->ElementFromByteArray(list[1]);
     _challenge_1 = Integer(list[2]);
     _challenge_2 = Integer(list[3]);
     _response_1 = Integer(list[4]);
@@ -57,7 +58,7 @@ namespace BlogDrop {
 
   void ClientCiphertext::SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, const Plaintext &m)
   {
-    _element = _element.MultiplyMod(m.GetInteger(), _params->GetP());
+    _element = _params->GetGroup()->Multiply(_element, m.GetElement());
 
     // g1 = Product of server PKs, A = g1^a = client ciphertext elm,  a = client SK
     // g2 = DH key generator,      B = g2^b = client PK,              b = client SK
@@ -68,38 +69,41 @@ namespace BlogDrop {
     // v2 = random element mod q
 
     Integer f, v1, v2;
-    f = _params->RandomExponent();
-    v1 = _params->RandomExponent();
-    v2 = _params->RandomExponent();
+    f = _params->GetGroup()->RandomExponent();
+    v1 = _params->GetGroup()->RandomExponent();
+    v2 = _params->GetGroup()->RandomExponent();
 
-    Integer t1, t2, t3;
+    const Element g = _params->GetGroup()->GetGenerator();
+    const Integer q = _params->GetGroup()->GetOrder();
+
+    Element t1, t2, t3;
 
     // t1 = A^f * g1^v1
-    t1 = _params->GetP().PowCascade(_element, f, _server_pks->GetInteger(), v1);
+    t1 = _params->GetGroup()->CascadeExponentiate(_element, f, 
+        _server_pks->GetElement(), v1);
 
     // t2 = B^f * g2^v1
-    t2 = _params->GetP().PowCascade(_one_time_pub->GetInteger(), f, 
-        _params->GetG(), v1);
+    t2 = _params->GetGroup()->CascadeExponentiate(_one_time_pub->GetElement(), f, g, v1);
 
     // t3 = g3^v2
-    t3 = _params->GetG().Pow(v2, _params->GetP());
+    t3 = _params->GetGroup()->Exponentiate(g, v2);
 
     // chal1 = f
     _challenge_1 = f;
 
     // chal2 = H(g1, g2, g3, y1, y2, y3, t1, t2, t3) - f
-    Integer hash = Commit(_server_pks->GetInteger(), _params->GetG(), _params->GetG(),
-        _element, _one_time_pub->GetInteger(), _author_pub->GetInteger(),
+    Integer hash = Commit(_server_pks->GetElement(), g, g,
+        _element, _one_time_pub->GetElement(), _author_pub->GetElement(),
         t1, t2, t3);
 
-    _challenge_2 = (hash - f) % _params->GetQ();
+    _challenge_2 = (hash - f) % q;
    
     // resp1 = v1
     _response_1 = v1;
 
     // resp2 = v2 - (chal2 * c)
     _response_2 = (v2 - (_challenge_2.MultiplyMod(author_priv->GetInteger(), 
-            _params->GetQ()))) % _params->GetQ();
+            q))) % q;
   }
 
   void ClientCiphertext::SetProof()
@@ -113,35 +117,37 @@ namespace BlogDrop {
     // v2 = random element mod q
 
     Integer f, v1, v2;
-    f = _params->RandomExponent();
-    v1 = _params->RandomExponent();
-    v2 = _params->RandomExponent();
+    f = _params->GetGroup()->RandomExponent();
+    v1 = _params->GetGroup()->RandomExponent();
+    v2 = _params->GetGroup()->RandomExponent();
 
-    Integer t1, t2, t3;
+    const Element g = _params->GetGroup()->GetGenerator();
+    const Integer q = _params->GetGroup()->GetOrder();
+
+    Element t1, t2, t3;
 
     // t1 = g1^v1
-    t1 = _server_pks->GetInteger().Pow(v1, _params->GetP());
+    t1 = _params->GetGroup()->Exponentiate(_server_pks->GetElement(), v1);
 
     // t2 = g2^v1
-    t2 = _params->GetG().Pow(v1, _params->GetP());
+    t2 = _params->GetGroup()->Exponentiate(g, v1);
 
     // t3 = C^f * g3^v2
-    t3 = _params->GetP().PowCascade(_author_pub->GetInteger(), f, 
-      _params->GetG(), v2);
+    t3 = _params->GetGroup()->CascadeExponentiate(_author_pub->GetElement(), f, g, v2);
 
     // h = H(g1, g2, g3, y1, y2, y3, t1, t2, t3)
     // chal_1 = h - f1 (mod q)
-    _challenge_1 = Commit(_server_pks->GetInteger(), _params->GetG(), _params->GetG(),
-        _element, _one_time_pub->GetInteger(), _author_pub->GetInteger(),
+    _challenge_1 = Commit(_server_pks->GetElement(), g, g,
+        _element, _one_time_pub->GetElement(), _author_pub->GetElement(),
         t1, t2, t3);
-    _challenge_1 = (_challenge_1 - f) % _params->GetQ();
+    _challenge_1 = (_challenge_1 - f) % q;
 
     // chal_2 = f
     _challenge_2 = f;
 
     // resp_1 = v1 - (chal_1 * a)
     _response_1 = (v1 - (_challenge_1.MultiplyMod(_one_time_priv->GetInteger(), 
-            _params->GetQ()))) % _params->GetQ();
+            q))) % q;
 
     // resp_2 = v2
     _response_2 = v2;
@@ -153,41 +159,41 @@ namespace BlogDrop {
     // g2 = DH key generator,      B = g2^b = client PK,              b = client SK
     // g3 = DH key generator,      C = g3^c = author PK,              c = author SK
 
-    if(!(_params->IsElement(_one_time_pub->GetInteger()) &&
-          _params->IsElement(_element))) return false;
+    if(!(_params->GetGroup()->IsElement(_one_time_pub->GetElement()) &&
+          _params->GetGroup()->IsElement(_element))) return false;
 
-    Integer t1, t2, t3;
+    Element t1, t2, t3;
+    const Element g = _params->GetGroup()->GetGenerator();
+    const Integer q = _params->GetGroup()->GetOrder();
 
     // t1 = A^chal1 * g1^resp1
-    t1 = _params->GetP().PowCascade(_element, _challenge_1, 
-        _server_pks->GetInteger(), _response_1);
+    t1 = _params->GetGroup()->CascadeExponentiate(_element, _challenge_1, 
+        _server_pks->GetElement(), _response_1);
 
     // t2 = B^chal1 * g2^resp1
-    t2 = _params->GetP().PowCascade(_one_time_pub->GetInteger(), _challenge_1,
-        _params->GetG(), _response_1);
+    t2 = _params->GetGroup()->CascadeExponentiate(_one_time_pub->GetElement(), _challenge_1,
+        g, _response_1);
 
     // t3 = C^chal2 * g3^resp2
-    t3 = _params->GetP().PowCascade(_author_pub->GetInteger(), _challenge_2, 
-        _params->GetG(), _response_2);
+    t3 = _params->GetGroup()->CascadeExponentiate(_author_pub->GetElement(), _challenge_2, 
+        g, _response_2);
 
-    Integer hash = Commit(_server_pks->GetInteger(), _params->GetG(), _params->GetG(),
-        _element, _one_time_pub->GetInteger(), _author_pub->GetInteger(),
+    Integer hash = Commit(_server_pks->GetElement(), g, g, 
+        _element, _one_time_pub->GetElement(), _author_pub->GetElement(),
         t1, t2, t3);
 
-    Integer sum = (_challenge_1 + _challenge_2) % _params->GetQ();
+    Integer sum = (_challenge_1 + _challenge_2) % q;
     return (sum == hash);
   }
 
-  Integer ClientCiphertext::Commit(const Integer &g1, const Integer &g2, const Integer &g3,
-      const Integer &y1, const Integer &y2, const Integer &y3,
-      const Integer &t1, const Integer &t2, const Integer &t3) const
+  Integer ClientCiphertext::Commit(const Element &g1, const Element &g2, const Element &g3,
+      const Element &y1, const Element &y2, const Element &y3,
+      const Element &t1, const Element &t2, const Element &t3) const
   {
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     hash->Restart();
 
-    hash->Update(_params->GetP().GetByteArray());
-    hash->Update(_params->GetQ().GetByteArray());
-    hash->Update(_params->GetG().GetByteArray());
+    hash->Update(_params->GetGroup()->GetByteArray());
 
     hash->Update(g1.GetByteArray());
     hash->Update(g2.GetByteArray());
@@ -201,7 +207,7 @@ namespace BlogDrop {
     hash->Update(t2.GetByteArray());
     hash->Update(t3.GetByteArray());
 
-    return Integer(hash->ComputeHash()) % _params->GetQ();
+    return Integer(hash->ComputeHash()) % _params->GetGroup()->GetOrder();
   }
 
   QByteArray ClientCiphertext::GetByteArray() const 

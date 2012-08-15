@@ -7,7 +7,7 @@ namespace BlogDrop {
 
   PrivateKey::PrivateKey(const QSharedPointer<const Parameters> params) :
     _params(params),
-    _key(params->RandomExponent())
+    _key(params->GetGroup()->RandomExponent())
   {
   }
 

@@ -1,4 +1,5 @@
 
+#include "Crypto/AbstractGroup/Element.hpp"
 #include "Crypto/CryptoFactory.hpp"
 #include "ServerCiphertext.hpp"
 
@@ -28,7 +29,7 @@ namespace BlogDrop {
       return; 
     }
 
-    _element = Integer(list[0]);
+    _element = _params->GetGroup()->ElementFromByteArray(list[0]);
     _challenge = Integer(list[1]);
     _response = Integer(list[2]);
 
@@ -37,34 +38,39 @@ namespace BlogDrop {
   void ServerCiphertext::SetProof(const QSharedPointer<const PrivateKey> priv)
   {
     // element = (prod of client_pks)^-server_sk mod p
-    _element = _client_pks->GetInteger().Pow(priv->GetInteger(), 
-        _params->GetP()).ModInverse(_params->GetP());
+    _element = _params->GetGroup()->Exponentiate(
+          _client_pks->GetElement(), priv->GetInteger()); 
+    _element = _params->GetGroup()->Inverse(_element);
 
-    Integer v, t1, t2;
+    Integer v; 
+    Element t1, t2;
+
+    const Element g = _params->GetGroup()->GetGenerator();
+    const Integer q = _params->GetGroup()->GetOrder();
       
     // v in [0,q) 
-    v = _params->RandomExponent();
+    v = _params->GetGroup()->RandomExponent();
 
     // g1 = DH generator
     // g2 = product of client PKs
 
     // t1 = g1^v
-    t1 = _params->GetG().Pow(v, _params->GetP());
+    t1 = _params->GetGroup()->Exponentiate(g, v);
 
     // t2 = g2^-v
-    t2 = _client_pks->GetInteger().Pow(v, _params->GetP());
-    t2 = t2.ModInverse(_params->GetP());
+    t2 = _params->GetGroup()->Exponentiate(_client_pks->GetElement(), v);
+    t2 = _params->GetGroup()->Inverse(t2);
 
     // y1 = server PK
     // y2 = server ciphertext
    
     // c = HASH(g1, g2, y1, y2, t1, t2) mod q
-    _challenge = Commit(_params->GetG(), _client_pks->GetInteger(),
-        PublicKey(priv).GetInteger(), _element,
+    _challenge = Commit(g, _client_pks->GetElement(),
+        PublicKey(priv).GetElement(), _element,
         t1, t2);
 
     // r = v - cx == v - (chal)server_sk
-    _response = (v - (_challenge.MultiplyMod(priv->GetInteger(), _params->GetQ()))) % _params->GetQ();
+    _response = (v - (_challenge.MultiplyMod(priv->GetInteger(), q))) % q;
 
   }
 
@@ -77,41 +83,44 @@ namespace BlogDrop {
     // t'1 = g1^r  * y1^c
     // t'2 = g2^-r  * y2^c
 
-    if(!(_params->IsElement(pub->GetInteger()) &&
-      _params->IsElement(_client_pks->GetInteger()) &&
-      _params->IsElement(_element))) {
+    if(!(_params->GetGroup()->IsElement(pub->GetElement()) &&
+      _params->GetGroup()->IsElement(_client_pks->GetElement()) &&
+      _params->GetGroup()->IsElement(_element))) {
       qDebug() << "Proof contains illegal group elements";
       return false;
     }
 
-    Integer g2, t1, t2;
+    Element t1, t2;
+
+    const Element g = _params->GetGroup()->GetGenerator();
+    const Integer q = _params->GetGroup()->GetOrder();
 
     // t1 = g1^r * y1^c
-    t1 = _params->GetP().PowCascade(_params->GetG(), _response,
-        pub->GetInteger(), _challenge);
+    t1 = _params->GetGroup()->CascadeExponentiate(g, _response,
+        pub->GetElement(), _challenge);
 
     // t2 = g2^-r * y2^c
-    t2 = (_client_pks->GetInteger().Pow(_response, _params->GetP()).ModInverse(_params->GetP()) *
-        _element.Pow(_challenge, _params->GetP())) % _params->GetP();
+    t2 = _params->GetGroup()->Exponentiate(_client_pks->GetElement(), _response);
+    t2 = _params->GetGroup()->Inverse(t2);
+    Element t2_tmp = _params->GetGroup()->Exponentiate(_element, _challenge);
+    t2 = _params->GetGroup()->Multiply(t2, t2_tmp);
     
-    Integer tmp = Commit(_params->GetG(), _client_pks->GetInteger(),
-        pub->GetInteger(), _element,
+    Integer tmp = Commit(g, _client_pks->GetElement(),
+        pub->GetElement(), _element,
         t1, t2);
 
     return (tmp == _challenge);
   }
 
-  Integer ServerCiphertext::Commit(const Integer &g1, const Integer &g2, 
-      const Integer &y1, const Integer &y2,
-      const Integer &t1, const Integer &t2) const
+  Integer ServerCiphertext::Commit(const Element &g1, const Element &g2, 
+      const Element &y1, const Element &y2,
+      const Element &t1, const Element &t2) const
   {
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
 
     hash->Restart();
 
-    hash->Update(_params->GetP().GetByteArray());
-    hash->Update(_params->GetQ().GetByteArray());
-    hash->Update(_params->GetG().GetByteArray());
+    hash->Update(_params->GetGroup()->GetByteArray());
 
     hash->Update(g1.GetByteArray());
     hash->Update(g2.GetByteArray());
@@ -122,7 +131,7 @@ namespace BlogDrop {
     hash->Update(t1.GetByteArray());
     hash->Update(t2.GetByteArray());
 
-    return Integer(hash->ComputeHash()) % _params->GetQ();
+    return Integer(hash->ComputeHash()) % _params->GetGroup()->GetOrder();
   }
 
   QByteArray ServerCiphertext::GetByteArray() const 

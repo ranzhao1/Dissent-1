@@ -4,129 +4,89 @@
 
 namespace Dissent {
 namespace Tests {
-  TEST(BlogDrop, ParamsTesting) 
+
+  TEST(BlogDrop, IntegerPlaintextEmpty) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
-
-    EXPECT_EQ(Integer(1), params->GetG().Pow(params->GetQ(), params->GetP()));
-  }
-
-  TEST(BlogDrop, ParamsIsElement) 
-  {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
-
-    for(int i=0; i<100; i++) {
-      EXPECT_TRUE(params->IsElement(params->RandomElement()));
-    }
-  }
-
-  TEST(BlogDrop, ParamsRandomExponent) 
-  {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
-
-    for(int i=0; i<100; i++) {
-      EXPECT_TRUE(params->IsElement(params->GetG().Pow(
-              params->RandomExponent(), params->GetP())));
-    }
-  }
-
-  TEST(BlogDrop, ParamsNotElement) 
-  {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
-
-    int count = 0;
-    for(int i=0; i<100; i++) {
-      if(params->IsElement(Integer::GetRandomInteger(0, params->GetP()))) count++;
-    }
-
-    EXPECT_TRUE(count > 30 && count < 70);
-  }
-
-  TEST(BlogDrop, PlaintextEmpty) 
-  {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
     Plaintext p(params);
     QByteArray out;
     EXPECT_FALSE(p.Decode(out));
     EXPECT_EQ(QByteArray(), out);
   }
 
-  TEST(BlogDrop, PlaintextShort) 
+  TEST(BlogDrop, IntegerPlaintextShort) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
     Plaintext p(params);
 
     QByteArray shorts("shorts");
-    EXPECT_EQ(QByteArray(), p.Encode(shorts));
+    p.Encode(shorts);
 
     QByteArray out;
     EXPECT_TRUE(p.Decode(out));
     EXPECT_EQ(shorts, out);
   }
 
-  TEST(BlogDrop, PlaintextRandom) 
+  TEST(BlogDrop, IntegerPlaintextRandom) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
     Plaintext p(params);
 
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
 
-    QByteArray msg(2048, 0);
+    QByteArray msg(Plaintext::CanFit(params), 0);
     rand->GenerateBlock(msg);
 
-    QByteArray leftover = p.Encode(msg);
-    EXPECT_TRUE(leftover.count() < msg.count());
+    p.Encode(msg);
 
     QByteArray output;
     EXPECT_TRUE(p.Decode(output));
     EXPECT_TRUE(output.count() > 0);
-    EXPECT_TRUE(output.count() < params->GetQ().GetByteCount());
-    EXPECT_TRUE(output.count() > (params->GetQ().GetByteCount()-5));
-    EXPECT_EQ(msg, output+leftover);
+    EXPECT_TRUE(output.count() < params->GetGroup()->GetOrder().GetByteCount());
+    EXPECT_TRUE(output.count() > (params->GetGroup()->GetOrder().GetByteCount()-5));
+    EXPECT_EQ(msg, output);
   }
 
   TEST(BlogDrop, Keys) 
   {
-    QSharedPointer<Parameters> params = Parameters::Parameters::Testing();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
 
     PrivateKey priv(params);
     Integer x = priv.GetInteger();
 
     PublicKey pub(priv);
-    Integer gx = pub.GetInteger();
+    Element gx = pub.GetElement();
 
-    ASSERT_TRUE(x < params->GetQ());
+    ASSERT_TRUE(x < params->GetGroup()->GetOrder());
     ASSERT_TRUE(x > 0);
-    ASSERT_TRUE(gx < params->GetP());
-    ASSERT_TRUE(gx > 0);
-    ASSERT_EQ(gx, params->GetG().Pow(x, params->GetP()));
+    ASSERT_EQ(gx, params->GetGroup()->Exponentiate(params->GetGroup()->GetGenerator(), x));
   }
 
   TEST(BlogDrop, PublicKeySet) 
   {
     const int nkeys = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
 
     QList<QSharedPointer<const PublicKey> > keys;
-    Integer prod = 1;
+    Element prod = params->GetGroup()->GetIdentity();
     for(int i=0; i<nkeys; i++) {
       QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
       QSharedPointer<const PublicKey> pub(new PublicKey(priv));
       keys.append(pub);
 
-      prod = (prod * pub->GetInteger()) % params->GetP();
+      prod = params->GetGroup()->Multiply(prod, pub->GetElement());
     }
 
     PublicKeySet keyset(params, keys);
-    ASSERT_EQ(prod, keyset.GetInteger());
+    ASSERT_EQ(prod, keyset.GetElement());
   }
 
   TEST(BlogDrop, ServerCiphertext) 
   {
     for(int t=0; t<10; t++) {
       const int nkeys = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-      QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
+      QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
 
       QList<QSharedPointer<const PublicKey> > client_pks;
       for(int i=0; i<nkeys; i++) {
@@ -143,8 +103,9 @@ namespace Tests {
       ServerCiphertext c(params, client_pk_set);
       c.SetProof(server_sk);
 
-      Integer expected = client_pk_set->GetInteger().Pow(server_sk->GetInteger(), 
-          params->GetP()).ModInverse(params->GetP());
+      Element expected = params->GetGroup()->Exponentiate(client_pk_set->GetElement(), 
+          server_sk->GetInteger());
+      expected = params->GetGroup()->Inverse(expected);
       ASSERT_EQ(expected, c.GetElement());
 
       ASSERT_TRUE(c.VerifyProof(server_pk));
@@ -152,7 +113,7 @@ namespace Tests {
   }
 
   void TestClientOnce() {
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
 
     // Generate an author PK
     QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
@@ -173,10 +134,11 @@ namespace Tests {
     ClientCiphertext c(params, server_pk_set, author_pk);
     c.SetProof();
 
-    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < params->GetQ());
-    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < params->GetQ());
-    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < params->GetQ());
-    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < params->GetQ());
+    const Integer q = params->GetGroup()->GetOrder();
+    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
+    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < q);
+    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < q);
+    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < q);
 
     // Make sure all values are distinct
     QSet<QByteArray> set;
@@ -197,7 +159,7 @@ namespace Tests {
   }
 
   void TestAuthorOnce() {
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
 
     // Generate an author PK
     QSharedPointer<const PrivateKey> author_priv(new PrivateKey(params));
@@ -221,10 +183,11 @@ namespace Tests {
     ClientCiphertext c(params, server_pk_set, author_pk);
     c.SetAuthorProof(author_priv, m);
 
-    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < params->GetQ());
-    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < params->GetQ());
-    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < params->GetQ());
-    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < params->GetQ());
+    const Integer q = params->GetGroup()->GetOrder();
+    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
+    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < q);
+    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < q);
+    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < q);
 
     // Make sure all values are distinct
     QSet<QByteArray> set;
@@ -245,7 +208,7 @@ namespace Tests {
   }
   
   TEST(BlogDrop, Reveal) {
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
 
     // Generate an author PK
     QSharedPointer<const PrivateKey> author_priv(new PrivateKey(params));
@@ -289,10 +252,11 @@ namespace Tests {
 
     QSharedPointer<const PublicKeySet> client_pk_set(new PublicKeySet(params, client_pks));
 
-    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < params->GetQ());
-    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < params->GetQ());
-    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < params->GetQ());
-    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < params->GetQ());
+    const Integer q = params->GetGroup()->GetOrder();
+    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
+    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < q);
+    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < q);
+    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < q);
 
     // Make sure all values are distinct
     QSet<QByteArray> set;
@@ -320,7 +284,7 @@ namespace Tests {
       out.Reveal(cover[i].GetElement());
     }
 
-    ASSERT_EQ(m.GetInteger(), out.GetInteger());
+    ASSERT_EQ(m.GetElement(), out.GetElement());
   }
 
   void EndToEndOnce()
@@ -328,7 +292,7 @@ namespace Tests {
     const int nservers = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     const int nclients = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     const int author_idx = Random::GetInstance().GetInt(0, nclients);
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Testing();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();
 
     // Generate an author PK
     const QSharedPointer<const PrivateKey> author_priv(new PrivateKey(params));
@@ -422,16 +386,15 @@ namespace Tests {
 
   TEST(BlogDrop, BenchmarkIntegerGroup) {
     // Use full parameters (not testing)
-    QSharedPointer<const Parameters> params = Parameters::Parameters::Fixed();
+    QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerProductionFixed();
 
     // Get random integer a in [1, q)
-    Integer a = params->RandomExponent();
+    Integer a = params->GetGroup()->RandomExponent();
 
     // a = take b^a 
-    Integer b = params->GetG();
+    Element b = params->GetGroup()->GetGenerator();
     for(int i=0; i<1000; i++) {
-      b = b.Pow(a, params->GetP());
-      EXPECT_TRUE(a>0);
+      b = params->GetGroup()->Exponentiate(b, a);
     }
   }
 
