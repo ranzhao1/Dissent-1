@@ -195,17 +195,17 @@ namespace BlogDrop {
 
     hash->Update(_params->GetGroup()->GetByteArray());
 
-    hash->Update(g1.GetByteArray());
-    hash->Update(g2.GetByteArray());
-    hash->Update(g3.GetByteArray());
+    hash->Update(_params->GetGroup()->ElementToByteArray(g1));
+    hash->Update(_params->GetGroup()->ElementToByteArray(g2));
+    hash->Update(_params->GetGroup()->ElementToByteArray(g3));
 
-    hash->Update(y1.GetByteArray());
-    hash->Update(y2.GetByteArray());
-    hash->Update(y3.GetByteArray());
+    hash->Update(_params->GetGroup()->ElementToByteArray(y1));
+    hash->Update(_params->GetGroup()->ElementToByteArray(y2));
+    hash->Update(_params->GetGroup()->ElementToByteArray(y3));
 
-    hash->Update(t1.GetByteArray());
-    hash->Update(t2.GetByteArray());
-    hash->Update(t3.GetByteArray());
+    hash->Update(_params->GetGroup()->ElementToByteArray(t1));
+    hash->Update(_params->GetGroup()->ElementToByteArray(t2));
+    hash->Update(_params->GetGroup()->ElementToByteArray(t3));
 
     return Integer(hash->ComputeHash()) % _params->GetGroup()->GetOrder();
   }
@@ -215,7 +215,7 @@ namespace BlogDrop {
     QList<QByteArray> list;
 
     list.append(_one_time_pub->GetByteArray());
-    list.append(_element.GetByteArray());
+    list.append(_params->GetGroup()->ElementToByteArray(_element));
     list.append(_challenge_1.GetByteArray());
     list.append(_challenge_2.GetByteArray());
     list.append(_response_1.GetByteArray());

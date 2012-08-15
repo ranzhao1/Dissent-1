@@ -99,6 +99,8 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/ThreadedOnionEncryptor.hpp \
            src/Crypto/Serialization.hpp \
            src/Crypto/AbstractGroup/AbstractGroup.hpp \
+           src/Crypto/AbstractGroup/ECElementData.hpp \
+           src/Crypto/AbstractGroup/ECGroup.hpp \
            src/Crypto/AbstractGroup/Element.hpp \
            src/Crypto/AbstractGroup/ElementData.hpp \
            src/Crypto/AbstractGroup/IntegerElementData.hpp \
@@ -273,6 +275,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/OnionEncryptor.cpp \
            src/Crypto/ThreadedOnionEncryptor.cpp \
            src/Crypto/AbstractGroup/IntegerGroup.cpp \
+           src/Crypto/AbstractGroup/ECGroup.cpp \
            src/Crypto/BlogDrop/BlogDropAuthor.cpp \
            src/Crypto/BlogDrop/BlogDropClient.cpp \
            src/Crypto/BlogDrop/BlogDropServer.cpp \

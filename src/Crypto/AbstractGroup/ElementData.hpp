@@ -30,11 +30,6 @@ namespace AbstractGroup {
        */
       virtual bool operator==(const ElementData *other) const = 0;
 
-      /**
-       * Get a serialized version of this element
-       */
-      virtual QByteArray GetByteArray() const = 0;
-
   };
 }
 }

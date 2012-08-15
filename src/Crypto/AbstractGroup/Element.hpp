@@ -33,14 +33,6 @@ namespace AbstractGroup {
       virtual ~Element() {}
 
       /**
-       * Get a serialized version of this element
-       */
-      inline QByteArray GetByteArray() const
-      {
-        return _data->GetByteArray();
-      }
-
-      /**
        * Equality operator
        * @param other the Element to compare
        */

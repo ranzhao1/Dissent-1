@@ -163,9 +163,9 @@ namespace AbstractGroup {
  
   bool IntegerGroup::DecodeBytes(const Element &a, QByteArray &out) const
   {
-    QByteArray data = a.GetByteArray();
+    QByteArray data = ElementToByteArray(a);
     if(data.count() < 3) {
-      qWarning() << "Tried to decode invalid plaintext (too short):" << a.GetByteArray().toHex();
+      qWarning() << "Tried to decode invalid plaintext (too short):" << data.toHex();
       return false;
     }
 

@@ -53,14 +53,6 @@ namespace AbstractGroup {
         return Integer();
       }
 
-      /**
-       * Get a byte array representing this element
-       */
-      virtual inline QByteArray GetByteArray() const 
-      {
-        return _integer.GetByteArray();
-      }
-
     private:
 
       Integer _integer;
