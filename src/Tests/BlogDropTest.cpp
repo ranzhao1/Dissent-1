@@ -463,7 +463,7 @@ namespace Tests {
     // a = take g^a 
     CryptoPP::ECPPoint point_b = g;
     for(int i=0; i<4000; i++) {
-      point_b = ecp.ScalarMultiply(point_b, exp_a);
+      point_b = ecp.Multiply(exp_a, point_b);
     }
   }
 

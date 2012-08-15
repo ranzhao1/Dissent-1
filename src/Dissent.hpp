@@ -84,6 +84,11 @@
 #include "Crypto/OnionEncryptor.hpp"
 #include "Crypto/Serialization.hpp"
 #include "Crypto/ThreadedOnionEncryptor.hpp"
+#include "Crypto/AbstractGroup/AbstractGroup.hpp"
+#include "Crypto/AbstractGroup/Element.hpp"
+#include "Crypto/AbstractGroup/ElementData.hpp"
+#include "Crypto/AbstractGroup/IntegerElementData.hpp"
+#include "Crypto/AbstractGroup/IntegerGroup.hpp"
 #include "Crypto/BlogDrop/BlogDropAuthor.hpp"
 #include "Crypto/BlogDrop/BlogDropClient.hpp"
 #include "Crypto/BlogDrop/BlogDropServer.hpp"
@@ -201,6 +206,7 @@ using namespace Dissent::Applications;
 using namespace Dissent::ClientServer;
 using namespace Dissent::Connections;
 using namespace Dissent::Crypto;
+using namespace Dissent::Crypto::AbstractGroup;
 using namespace Dissent::Crypto::BlogDrop;
 using namespace Dissent::Identity::Authentication;
 using namespace Dissent::Identity;
