@@ -8,16 +8,33 @@ namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
 
+  /**
+   * This is a wrapper class representing an
+   * element of an algebraic group.
+   */
   class Element {
 
     public:
 
+      /**
+       * Constructor - NULL element
+       */
       Element() {}
 
+      /**
+       * Constructor
+       * @data ElementData to use
+       */
       explicit Element(ElementData *data) : _data(data) {}
 
+      /**
+       * Destructor
+       */
       virtual ~Element() {}
 
+      /**
+       * Get a serialized version of this element
+       */
       inline QByteArray GetByteArray() const
       {
         return _data->GetByteArray();
@@ -32,6 +49,10 @@ namespace AbstractGroup {
         return _data->operator==(other._data.constData());
       }
 
+      /**
+       * UNSAFE: Get a pointer to the data for this
+       * element. 
+       */
       inline const ElementData *GetData() const { return _data.constData(); }
 
     private:

@@ -7,10 +7,17 @@ namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
 
+  /**
+   * This is an abstract base class holding data for
+   * group elements
+   */
   class ElementData : public QSharedData {
     public:
-      
-      explicit ElementData() {}
+    
+      /**
+       * Constructor
+       */
+      ElementData() {}
 
       /**
        * Destructor
@@ -23,11 +30,10 @@ namespace AbstractGroup {
        */
       virtual bool operator==(const ElementData *other) const = 0;
 
+      /**
+       * Get a serialized version of this element
+       */
       virtual QByteArray GetByteArray() const = 0;
-
-    protected:
-
-    private:
 
   };
 }

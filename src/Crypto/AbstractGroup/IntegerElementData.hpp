@@ -8,12 +8,23 @@ namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
 
+  /**
+   * This is an element of a multiplicative group
+   * of integers. It just holds a single Integer.
+   */
   class IntegerElementData : public ElementData {
 
     public:
 
+      /**
+       * Constructor
+       * @param integer integer to use for this element
+       */
       IntegerElementData(Integer integer) : _integer(integer) {}
 
+      /**
+       * Destructor
+       */
       virtual ~IntegerElementData() {}
 
       /**
@@ -25,6 +36,10 @@ namespace AbstractGroup {
         return _integer == GetInteger(other);
       }
 
+      /**
+       * Get the Integer associated with this ElementData
+       * @param data data element to query
+       */
       inline static Integer GetInteger(const ElementData *data)
       {
         const IntegerElementData *elmdata =
@@ -38,6 +53,9 @@ namespace AbstractGroup {
         return Integer();
       }
 
+      /**
+       * Get a byte array representing this element
+       */
       virtual inline QByteArray GetByteArray() const 
       {
         return _integer.GetByteArray();
