@@ -61,7 +61,7 @@ namespace Crypto {
       /**
        * Destructor
        */
-      virtual ~Integer() {}
+      ~Integer() {}
 
       /**
        * returns a random integer data
