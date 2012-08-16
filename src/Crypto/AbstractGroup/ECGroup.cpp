@@ -1,4 +1,6 @@
 
+#include <cryptopp/nbtheory.h>
+
 #include "ECElementData.hpp"
 #include "ECGroup.hpp"
 
@@ -9,13 +11,16 @@ namespace AbstractGroup {
   ECGroup::ECGroup(Integer p, Integer q, Integer a, Integer b, Integer gx, Integer gy) :
       _curve(ToCryptoInt(p), ToCryptoInt(a), ToCryptoInt(b)),
       _q(q),
-      _g(ToCryptoInt(gx), ToCryptoInt(gy))
+      _g(ToCryptoInt(gx), ToCryptoInt(gy)),
+      _field_bytes(p.GetByteArray().count())
     {
       qDebug() << " p" << p.GetByteArray().toHex(); 
       qDebug() << " a" << a.GetByteArray().toHex(); 
       qDebug() << " b" << b.GetByteArray().toHex(); 
       qDebug() << "gx" << gx.GetByteArray().toHex(); 
       qDebug() << "gy" << gy.GetByteArray().toHex(); 
+
+      Q_ASSERT(ToCryptoInt(p) == _curve.FieldSize());
     };
 
 
@@ -104,58 +109,88 @@ namespace AbstractGroup {
     return ECElementData::GetPoint(e.GetData());
   }
 
-  Element ECGroup::EncodeBytes(const QByteArray &) const
+  Element ECGroup::EncodeBytes(const QByteArray &in) const
   {
     /*
-    // We can store p bytes minus 2 bytes for padding and one more to be safe
-    const int can_read = BytesPerElement();
+    * See the article 
+    *  "Encoding And Decoding  of  a Message in the 
+    *  Implementation of Elliptic Curve Cryptography 
+    *  using Koblitz’s Method" for details on how this works.
+    * 
+    * k == MessageSerializationParameter defines the percentage
+    * chance that we won't be able to encode a given message
+    * in a given elliptic curve point. The failure probability
+    * is 2^(-k).
+    *
+    * We can store b = log_2(p/k) bytes in every 
+    * elliptic curve point, where p is the security
+    * parameter (prime size) of the elliptic curve.
+    *
+    * For p = 2^256, k = 256, b = 224 (minus 2 padding bytes)
+    */
 
-    if(can_read < 1) qFatal("Illegal parameters");
-    if(in.count() > can_read) qFatal("Cannot encode: string is too long");
-
-    // Add initial 0xff byte and trailing 0x00 byte
-    QByteArray padded;
-    padded.append(0xff);
-    padded.append(in.left(can_read));
-    padded.append((char)0x00);
-    padded.append(0xff);
-
-    // Change byte of padded string until the
-    // integer represented by the byte arry is a quadratic
-    // residue. We need to be sure that every plaintext
-    // message is a quadratic residue modulo p
-    const int last = padded.count()-2;
-
-    for(unsigned char pad=0x00; pad < 0xff; pad++) {
-      padded[last] = pad;
-
-      Element element(new IntegerElementData(Integer(padded)));
-      if(IsElement(element)) {
-        return element;
-      }
+    if(in.count() > BytesPerElement()) {
+      qFatal("Failed to serialize over-sized string");
     }
 
-    qFatal("Could not encode message as quadratic residue");
-    */
+    // Holds the data to be encoded plus a leading and a trailing
+    // 0xFF byte
+    QByteArray data;
+    data.append(0xff);
+    data += in;
+    data.append(0xff);
+
+    // r is an encoding of the string in a big integer
+    CryptoPP::Integer r(("0x"+data.toHex()).constData());
+
+    qDebug() << "r" << Integer(new CppIntegerData(r)).GetByteArray().toHex();
+    
+    Q_ASSERT(r < _curve.FieldSize());
+
+    Element point;
+    CryptoPP::Integer x, y;
+    for(int i=0; i<_k; i++) {
+      // x = rk + i mod p
+      x = ((r*_k)+i);
+
+      Q_ASSERT(x < _curve.FieldSize());
+
+      if(SolveForY(x, point)) {
+        return point;
+      } 
+    }
+
+    qFatal("Failed to find point");
     return Element(new ECElementData(CryptoPP::ECPPoint()));
   }
  
   bool ECGroup::DecodeBytes(const Element &a, QByteArray &out) const
   {
-    QByteArray data = ElementToByteArray(a);
-    if(data.count() < 3) {
-      qWarning() << "Tried to decode invalid plaintext (too short):" << data.toHex();
+    // output value = floor( x/k )
+    CryptoPP::Integer x = GetPoint(a).x;
+   
+    // x = floor(x/k)
+    CryptoPP::Integer remainder, quotient;
+    CryptoPP::Integer::Divide(remainder, quotient, x, CryptoPP::Integer(_k));
+
+    Integer intdata(new CppIntegerData(quotient));
+
+    QByteArray data = intdata.GetByteArray(); 
+
+    if(data.count() < 2) {
+      qWarning() << "Data is too short";
       return false;
     }
 
-    const unsigned char cfirst = data[0];
-    const unsigned char clast = data.right(1)[0];
-    if(cfirst != 0xff || clast != 0xff) {
-      qWarning() << "Tried to decode invalid plaintext (bad padding)";
+    const unsigned char c = 0xff;
+    const unsigned char d0 = data[0];
+    const unsigned char dlast = data[data.count()-1];
+    if((d0 != c) || (dlast != c)) {
+      qWarning() << "Data has improper padding";
       return false;
     }
 
-    out = data.mid(1, data.count()-3);
+    out = data.mid(1, data.count()-2);
     return true;
   }
 
@@ -163,8 +198,11 @@ namespace AbstractGroup {
   {
     qDebug() << IsElement(GetGenerator());
     qDebug() << IsIdentity(Exponentiate(GetGenerator(), GetOrder()));
+
     return IsElement(GetGenerator()) && 
-      IsIdentity(Exponentiate(GetGenerator(), GetOrder()));
+      IsIdentity(Exponentiate(GetGenerator(), GetOrder())) &&
+      CryptoPP::IsPrime(_curve.FieldSize()) &&
+      CryptoPP::IsPrime(ToCryptoInt(GetOrder()));
   }
 
   QByteArray ECGroup::GetByteArray() const
@@ -177,6 +215,43 @@ namespace AbstractGroup {
       << FromCryptoInt(_curve.GetB()).GetByteArray();
 
     return out;
+  }
+
+  bool ECGroup::SolveForY(const CryptoPP::Integer &x, Element &point) const
+  {
+    // y^2 = x^3 + ax + b (mod p)
+
+    CryptoPP::ModularArithmetic arith(_curve.FieldSize());
+
+    // tmp = x
+    CryptoPP::Integer tmp = x;
+
+    // tmp = x^2
+    tmp = arith.Square(tmp);
+
+    // tmp = x^2 + a
+    tmp = arith.Add(tmp, _curve.GetA());
+
+    // tmp = x (x^2 + a) == (x^3 + ax)
+    tmp = arith.Multiply(tmp, x);
+
+    // tmp = x^3 + ax + b
+    tmp = arith.Add(tmp, _curve.GetB());
+   
+    // does there exist y such that (y^2 = x^3 + ax + b) mod p ?
+
+    // jacobi symbol is 1 if tmp is a non-trivial 
+    // quadratic residue mod p
+    bool solved = (CryptoPP::Jacobi(tmp, _curve.FieldSize()) == 1);
+
+    if(solved) {
+      const CryptoPP::Integer y = CryptoPP::ModularSquareRoot(tmp, _curve.FieldSize());
+
+      point = Element(new ECElementData(CryptoPP::ECPPoint(x, y)));
+      Q_ASSERT(IsElement(point));
+    }
+
+    return solved;
   }
 
 }

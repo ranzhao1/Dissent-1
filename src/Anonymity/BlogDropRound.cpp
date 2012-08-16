@@ -701,6 +701,7 @@ namespace Anonymity {
 
   void BlogDropRound::GenerateServerCommit()
   {
+    qFatal("Each server should submit its own client ciphertext");
     qFatal("Fix this: should send a hash of the final ciphertext set!");
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QSharedPointer<Hash> hashalgo(lib->GetHashAlgorithm());

@@ -134,7 +134,9 @@ namespace AbstractGroup {
        * encoded in a single group element
        */
       virtual int BytesPerElement() const {
-        return 0;
+        // Bytes in field minus bytes in parameter k
+        // minus two padding bytes
+        return (_field_bytes - _k_bytes - 2);
       }
 
       /**
@@ -186,9 +188,24 @@ namespace AbstractGroup {
         return Integer(new CppIntegerData(i));
       }
 
+      /** 
+       * Try to solve EC equation for y given x
+       * @param x coordinate to try
+       * @param point returned ECP point if solution found
+       * @returns true if found solution
+       */
+      bool SolveForY(const CryptoPP::Integer &x, Element &point) const;
+
       CryptoPP::ECP _curve;
       Integer _q;
       CryptoPP::ECPPoint _g;
+
+      /** Size of field (p) in bytes */
+      const int _field_bytes; 
+
+      /** Serialization parameters */
+      static const int _k_bytes = 1;
+      static const int _k = (1 << (_k_bytes*8));
 
   };
 
