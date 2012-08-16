@@ -8,10 +8,10 @@
 namespace Dissent {
 namespace Tests {
 
-  // If this is bigger than ~50, test 
+  // If this is bigger than ~20, test 
   // messages won't fit into BlogDrop test-size group
   // elements
-  static const int TEST_MESSAGE_LENGTH = 50;
+  static const int TEST_MESSAGE_LENGTH = 24;
 
   typedef bool (*BadGuyCB)(Round *);
 
