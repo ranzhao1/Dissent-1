@@ -39,7 +39,7 @@ namespace BlogDrop {
        * Maximum length of a plaintext message
        */
       inline int MaxPlaintextLength() const {
-        return (GetParameters()->GetNElements()*Plaintext::CanFit(GetParameters()));
+        return Plaintext::CanFit(GetParameters());
       }
 
     private:

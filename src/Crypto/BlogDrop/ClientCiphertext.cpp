@@ -227,24 +227,25 @@ namespace BlogDrop {
     return out;
   }
   
-  bool ClientCiphertext::VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c)
+  QSet<int> ClientCiphertext::VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c)
   {
     CryptoFactory::ThreadingType t = CryptoFactory::GetInstance().GetThreadingType();
+    QSet<int> valid;
 
     if(t == CryptoFactory::SingleThreaded) {
       for(int idx=0; idx<c.count(); idx++) {
-        if(!c[idx]->VerifyProof()) return false;
+        if(c[idx]->VerifyProof()) valid.insert(idx);
       }
     } else if(t == CryptoFactory::MultiThreaded) {
       QList<bool> results = QtConcurrent::blockingMapped(c, &VerifyOnce);
       for(int idx=0; idx<c.count(); idx++) {
-        if(!results[idx]) return false;
+        if(results[idx]) valid.insert(idx);
       }
     } else {
       qFatal("Unknown threading type");
     }
 
-    return true;
+    return valid;
   }
 
   bool ClientCiphertext::VerifyOnce(QSharedPointer<const ClientCiphertext> c) 

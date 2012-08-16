@@ -48,7 +48,7 @@ namespace BlogDrop {
        * the proof verification process.
        * @param in the list of ciphertexts to add
        */
-      void AddClientCiphertexts(const QList<QByteArray> &in);
+      bool AddClientCiphertexts(const QList<QByteArray> &in);
 
       /**
        * Reveal server ciphertext corresponding to added client
@@ -80,20 +80,17 @@ namespace BlogDrop {
       }
 
     private:
-      void UnpackClientCiphertext(const QByteArray &in,
-          QList<QSharedPointer<const ClientCiphertext> > &out) const;
 
       QSharedPointer<const Parameters> _params;
       QSharedPointer<const PublicKeySet> _server_pk_set;
       QSharedPointer<const PublicKey> _author_pub;
       QSharedPointer<const PrivateKey> _server_priv;
 
-      /* list[client][element] = ciphertext */
-      QList<QList<QSharedPointer<const ClientCiphertext> > > _client_ciphertexts;
-      QList<QList<QSharedPointer<const ServerCiphertext> > > _server_ciphertexts;
+      /* list[client] = ciphertext */
+      QList<QSharedPointer<const ClientCiphertext> > _client_ciphertexts;
+      QList<QSharedPointer<const ServerCiphertext> > _server_ciphertexts;
 
-      /* list[element] = pk_set */
-      QList<QSharedPointer<PublicKeySet> > _client_pks;
+      QSharedPointer<PublicKeySet> _client_pks;
   };
 }
 }

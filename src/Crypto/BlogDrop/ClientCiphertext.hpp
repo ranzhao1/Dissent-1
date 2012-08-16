@@ -1,6 +1,7 @@
 #ifndef DISSENT_CRYPTO_BLOGDROP_CLIENT_CIPHERTEXT_H_GUARD
 #define DISSENT_CRYPTO_BLOGDROP_CLIENT_CIPHERTEXT_H_GUARD
 
+#include <QSet>
 #include "Crypto/AbstractGroup/Element.hpp"
 #include "Crypto/Integer.hpp"
 #include "Parameters.hpp"
@@ -95,9 +96,10 @@ namespace BlogDrop {
       /**
        * Verify a set of proofs. Uses threading if available, so this might
        * be much faster than verifying each proof in turn
-       * param c list of ciphertexts
+       * @param c list of ciphertexts
+       * @returns set of indices of valid proofs
        */
-      static bool VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c);
+      static QSet<int> VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c);
 
     private:
 
