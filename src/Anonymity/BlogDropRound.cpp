@@ -39,8 +39,8 @@ namespace Anonymity {
     _state_machine.AddState(PROCESS_DATA_SHUFFLE, -1, 0,
         &BlogDropRound::ProcessDataShuffle);
     _state_machine.AddTransition(SHUFFLING, PROCESS_DATA_SHUFFLE);
-    _state_machine.AddTransition(PROCESS_DATA_SHUFFLE, CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS);
-    _state_machine.AddTransition(CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS, 
+    _state_machine.AddTransition(PROCESS_DATA_SHUFFLE, WAIT_FOR_SERVER_PUBLIC_KEYS);
+    _state_machine.AddTransition(WAIT_FOR_SERVER_PUBLIC_KEYS, 
         PREPARE_FOR_BULK);
 
     _state_machine.AddTransition(OFFLINE, SHUFFLING);
@@ -53,7 +53,7 @@ namespace Anonymity {
     }
 
     _state->n_servers = GetGroup().GetSubgroup().Count();
-    _state->n_clients = GetGroup().Count();// - _state->n_servers;
+    _state->n_clients = GetGroup().Count();
   }
 
   void BlogDropRound::InitServer()
@@ -75,7 +75,7 @@ namespace Anonymity {
       _server_state->allowed_clients.insert(con->GetRemoteId());
     }
 
-    _state_machine.AddState(CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS,
+    _state_machine.AddState(WAIT_FOR_SERVER_PUBLIC_KEYS,
         SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey,
         &BlogDropRound::SubmitServerPublicKey);
 
@@ -87,9 +87,9 @@ namespace Anonymity {
         SERVER_CLIENT_LIST, &BlogDropRound::HandleServerClientList,
         &BlogDropRound::SubmitClientList);
 
-    _state_machine.AddState(SERVER_WAIT_FOR_SERVER_COMMITS,
-        SERVER_COMMIT, &BlogDropRound::HandleServerCommit,
-        &BlogDropRound::SubmitServerCommit);
+    _state_machine.AddState(SERVER_WAIT_FOR_SERVER_CLIENT_LIST_HASHES,
+        SERVER_CLIENT_LIST_HASH, &BlogDropRound::HandleServerClientListHash,
+        &BlogDropRound::SubmitServerClientListHash);
 
     _state_machine.AddState(SERVER_WAIT_FOR_SERVER_CIPHERTEXT,
         SERVER_CIPHERTEXT, &BlogDropRound::HandleServerCiphertext,
@@ -107,8 +107,8 @@ namespace Anonymity {
     _state_machine.AddTransition(SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
         SERVER_WAIT_FOR_CLIENT_LISTS);
     _state_machine.AddTransition(SERVER_WAIT_FOR_CLIENT_LISTS,
-        SERVER_WAIT_FOR_SERVER_COMMITS);
-    _state_machine.AddTransition(SERVER_WAIT_FOR_SERVER_COMMITS,
+        SERVER_WAIT_FOR_SERVER_CLIENT_LIST_HASHES);
+    _state_machine.AddTransition(SERVER_WAIT_FOR_SERVER_CLIENT_LIST_HASHES,
         SERVER_WAIT_FOR_SERVER_CIPHERTEXT);
     _state_machine.AddTransition(SERVER_WAIT_FOR_SERVER_CIPHERTEXT,
         SERVER_WAIT_FOR_SERVER_VALIDATION);
@@ -134,7 +134,7 @@ namespace Anonymity {
       }
     }
 
-    _state_machine.AddState(CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS,
+    _state_machine.AddState(WAIT_FOR_SERVER_PUBLIC_KEYS,
         SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey);
     _state_machine.AddState(CLIENT_WAIT_FOR_CLEARTEXT,
         SERVER_CLEARTEXT, &BlogDropRound::HandleServerCleartext,
@@ -155,14 +155,18 @@ namespace Anonymity {
   void BlogDropRound::VerifiableBroadcastToServers(const QByteArray &data)
   {
     Q_ASSERT(IsServer());
+
+    QByteArray msg = data + GetSigningKey()->Sign(data);
     foreach(const PublicIdentity &pi, GetGroup().GetSubgroup()) {
-      VerifiableSend(pi.GetId(), data);
+      GetNetwork()->Send(pi.GetId(), msg);
     }
   }
 
   void BlogDropRound::VerifiableBroadcastToClients(const QByteArray &data)
   {
     Q_ASSERT(IsServer());
+
+    QByteArray msg = data + GetSigningKey()->Sign(data);
     foreach(const QSharedPointer<Connection> &con,
         GetNetwork()->GetConnectionManager()->
         GetConnectionTable().GetConnections())
@@ -173,7 +177,7 @@ namespace Anonymity {
         continue;
       }
 
-      VerifiableSend(con->GetRemoteId(), data);
+      GetNetwork()->Send(con->GetRemoteId(), msg);
     }
   }
 
@@ -340,12 +344,15 @@ namespace Anonymity {
     QSet<Id> mykeys = _server_state->client_ciphertexts.keys().toSet();
     QSet<Id> theirkeys = remote_ctexts.keys().toSet();
 
-    if((mykeys & theirkeys).count() != 0 && from != GetLocalId()) {
-      throw QRunTimeError("Client submitted ciphertexts to multiple servers");
-    }
-
     // Don't add in our own ciphertexts, since we already have them
     if(from != GetLocalId()) {
+
+      // For now, we only allow clients to submit the same ciphertext
+      // to a single server
+      if((mykeys & theirkeys).count() != 0) {
+        throw QRunTimeError("Client submitted ciphertexts to multiple servers");
+      }
+
       _server_state->client_ciphertexts.unite(remote_ctexts);
     }
 
@@ -359,7 +366,7 @@ namespace Anonymity {
     }
   }
 
-  void BlogDropRound::HandleServerCommit(const Id &from, QDataStream &stream)
+  void BlogDropRound::HandleServerClientListHash(const Id &from, QDataStream &stream)
   {
     if(!IsServer()) {
       throw QRunTimeError("Not a server");
@@ -370,17 +377,23 @@ namespace Anonymity {
     Q_ASSERT(_server_state);
 
     if(_server_state->handled_servers.contains(from)) {
-      throw QRunTimeError("Already have commit");
+      throw QRunTimeError("Already have client list hash");
     }
 
-    QByteArray commit;
-    stream >> commit;
+    QByteArray client_list_hash;
+    stream >> client_list_hash;
+
+    if(client_list_hash != _server_state->my_client_list_hash)
+    {
+      qDebug() << "Mine" << _server_state->my_client_list_hash.toHex()
+        << "Other" << client_list_hash.toHex();
+      throw QRunTimeError("Other client list does not match mine.");
+    }
 
     _server_state->handled_servers.insert(from);
-    _server_state->server_commits[GetGroup().GetSubgroup().GetIndex(from)] = commit;
 
     qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
-      ": received commit from" << GetGroup().GetIndex(from) <<
+      ": received client list hash from" << GetGroup().GetIndex(from) <<
       from.ToString() << "Have" << _server_state->handled_servers.count()
       << "expecting" << GetGroup().GetSubgroup().Count();
 
@@ -405,16 +418,6 @@ namespace Anonymity {
 
     QByteArray ciphertext;
     stream >> ciphertext;
-
-    Library *lib = CryptoFactory::GetInstance().GetLibrary();
-    QSharedPointer<Hash> hashalgo(lib->GetHashAlgorithm());
-    QByteArray commit = hashalgo->ComputeHash(ciphertext);
-
-    if(commit != _server_state->server_commits[
-        GetGroup().GetSubgroup().GetIndex(from)])
-    {
-      throw QRunTimeError("Does not match commit.");
-    }
 
     _server_state->handled_servers.insert(from);
     _server_state->server_ciphertexts[GetGroup().GetSubgroup().GetIndex(from)] = ciphertext;
@@ -574,13 +577,14 @@ namespace Anonymity {
 
   QByteArray BlogDropRound::GenerateClientCiphertext()
   {
+    const int maxlen = _state->blogdrop_author->MaxPlaintextLength();
     QList<QByteArray> ctexts;
 
     QByteArray c;
     for(int slot_idx=0; slot_idx < _state->n_clients; slot_idx++) {
       if(slot_idx == _state->my_idx) {
 
-        QPair<QByteArray, bool> pair = GetData(Plaintext::CanFit(_state->params));
+        QPair<QByteArray, bool> pair = GetData(maxlen);
         if(pair.first.size() > 0) {
           qDebug() << "Found a message of" << pair.first.size();
         }
@@ -640,7 +644,6 @@ namespace Anonymity {
     // Add my own ciphertext to the set
     _server_state->client_ciphertexts[GetLocalId()] = GenerateClientCiphertext();
 
-    // XXX should verify all ciphertexts before sending them out?
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << SERVER_CLIENT_LIST << GetRoundId() <<
@@ -649,15 +652,14 @@ namespace Anonymity {
     VerifiableBroadcastToServers(payload);
   }
 
-  void BlogDropRound::SubmitServerCommit()
+  void BlogDropRound::SubmitServerClientListHash()
   {
     GenerateServerCiphertext();
-    GenerateServerCommit();
 
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
-    stream << SERVER_COMMIT << GetRoundId() <<
-      _state_machine.GetPhase() << _server_state->my_commit;
+    stream << SERVER_CLIENT_LIST_HASH << GetRoundId() <<
+      _state_machine.GetPhase() << _server_state->my_client_list_hash;
 
     VerifiableBroadcastToServers(payload);
   }
@@ -671,12 +673,10 @@ namespace Anonymity {
     }
 
     // For each user
-    for(QHash<Id, QByteArray>::const_iterator i=_server_state->client_ciphertexts.begin();
-        i!=_server_state->client_ciphertexts.end();
-        i++) {
+    foreach(const Id& id, _server_state->client_ciphertexts.keys()) {
 
       QList<QByteArray> ctexts;
-      QDataStream stream(_server_state->client_ciphertexts[i.key()]);
+      QDataStream stream(_server_state->client_ciphertexts[id]);
       stream >> ctexts;
 
       if(ctexts.count() != _state->n_clients) {
@@ -689,6 +689,18 @@ namespace Anonymity {
       }
     }
 
+    // Sort byte arrays so that hashes match across servers
+    QList<QByteArray> values = _server_state->client_ciphertexts.values();
+    qSort(values);
+
+    QByteArray to_hash;
+    QDataStream ctexts(&to_hash, QIODevice::WriteOnly);
+    ctexts << values;
+
+    Library *lib = CryptoFactory::GetInstance().GetLibrary();
+    QSharedPointer<Hash> hashalgo(lib->GetHashAlgorithm());
+    _server_state->my_client_list_hash = hashalgo->ComputeHash(to_hash);
+
     QList<QByteArray> server_ctexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
       _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx]);
@@ -697,15 +709,6 @@ namespace Anonymity {
 
     QDataStream stream(&(_server_state->my_ciphertext), QIODevice::WriteOnly);
     stream << server_ctexts;
-  }
-
-  void BlogDropRound::GenerateServerCommit()
-  {
-    qFatal("Each server should submit its own client ciphertext");
-    qFatal("Fix this: should send a hash of the final ciphertext set!");
-    Library *lib = CryptoFactory::GetInstance().GetLibrary();
-    QSharedPointer<Hash> hashalgo(lib->GetHashAlgorithm());
-    _server_state->my_commit = hashalgo->ComputeHash(_server_state->my_ciphertext);
   }
 
   void BlogDropRound::SubmitServerCiphertext()

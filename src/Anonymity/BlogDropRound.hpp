@@ -41,7 +41,7 @@ namespace Anonymity {
         CLIENT_CIPHERTEXT = 0,
         SERVER_PUBLIC_KEY,
         SERVER_CLIENT_LIST,
-        SERVER_COMMIT,
+        SERVER_CLIENT_LIST_HASH,
         SERVER_CIPHERTEXT,
         SERVER_VALIDATION,
         SERVER_CLEARTEXT,
@@ -51,12 +51,12 @@ namespace Anonymity {
         OFFLINE = 0,
         SHUFFLING,
         PROCESS_DATA_SHUFFLE,
-        CLIENT_WAIT_FOR_SERVER_PUBLIC_KEYS,
+        WAIT_FOR_SERVER_PUBLIC_KEYS,
         PREPARE_FOR_BULK,
         CLIENT_WAIT_FOR_CLEARTEXT,
         SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
         SERVER_WAIT_FOR_CLIENT_LISTS,
-        SERVER_WAIT_FOR_SERVER_COMMITS,
+        SERVER_WAIT_FOR_SERVER_CLIENT_LIST_HASHES,
         SERVER_WAIT_FOR_SERVER_CIPHERTEXT,
         SERVER_WAIT_FOR_SERVER_VALIDATION,
         SERVER_PUSH_CLEARTEXT,
@@ -229,11 +229,10 @@ namespace Anonymity {
           /* Serialized hash[id] = serialized list of serialized ciphertexts */
           QHash<Id,QByteArray> client_ciphertexts;
 
-          QByteArray my_commit;
+          QByteArray my_client_list_hash;
           QByteArray my_ciphertext;
 
           QSet<Id> handled_servers;
-          QHash<int, QByteArray> server_commits;
           QHash<int, QByteArray> server_ciphertexts;
       };
 
@@ -303,11 +302,11 @@ namespace Anonymity {
       void HandleServerClientList(const Id &from, QDataStream &stream);
 
       /**
-       * Server handles other server commit messages
+       * Server handles other server hash messages
        * @param from sender of the message
        * @param stream message
        */
-      void HandleServerCommit(const Id &from, QDataStream &stream);
+      void HandleServerClientListHash(const Id &from, QDataStream &stream);
 
       /**
        * Server handles other server ciphertext messages
@@ -339,10 +338,9 @@ namespace Anonymity {
       void SubmitClientCiphertext();
       void SetOnlineClients();
       void SubmitClientList();
-      void SubmitServerCommit();
+      void SubmitServerClientListHash();
       void SubmitServerCiphertext();
       void GenerateServerCiphertext();
-      void GenerateServerCommit();
       QByteArray GenerateClientCiphertext();
       void SubmitValidation();
       void PushCleartext();
