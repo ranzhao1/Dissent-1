@@ -17,7 +17,6 @@ namespace BlogDrop {
     public:
 
       typedef Dissent::Crypto::AbstractGroup::AbstractGroup AbstractGroup;
-      typedef Dissent::Crypto::AbstractGroup::IntegerGroup IntegerGroup;
       typedef Dissent::Crypto::AbstractGroup::Element Element;
 
       /** 
@@ -26,14 +25,21 @@ namespace BlogDrop {
       static const int ElementsPerCiphertext = 1;
 
       /**
-       * Constructor that uses small integer parameters for testing
+       * Constructor that uses 512-bit integer group (for testing)
        */
       static QSharedPointer<Parameters> IntegerTestingFixed();
 
       /**
-       * Constructor that uses fixed parameters
+       * Constructor that uses 1024-bit fixed integer group 
        */
       static QSharedPointer<Parameters> IntegerProductionFixed();
+
+      /**
+       * Constructor that uses 256-bit fixed EC group 
+       * (Supposedly 256-bit ECs are equivalent to 3072-bit 
+       * RSA/DH groups)
+       */
+      static QSharedPointer<Parameters> ECProductionFixed();
       
       /**
        * Constructor that has empty/invalid parameters

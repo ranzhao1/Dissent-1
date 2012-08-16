@@ -10,7 +10,13 @@ namespace AbstractGroup {
       _curve(ToCryptoInt(p), ToCryptoInt(a), ToCryptoInt(b)),
       _q(q),
       _g(ToCryptoInt(gx), ToCryptoInt(gy))
-    {};
+    {
+      qDebug() << " p" << p.GetByteArray().toHex(); 
+      qDebug() << " a" << a.GetByteArray().toHex(); 
+      qDebug() << " b" << b.GetByteArray().toHex(); 
+      qDebug() << "gx" << gx.GetByteArray().toHex(); 
+      qDebug() << "gy" << gy.GetByteArray().toHex(); 
+    };
 
 
   QSharedPointer<ECGroup> ECGroup::ProductionFixed() 
@@ -21,7 +27,7 @@ namespace AbstractGroup {
     const Integer q(QByteArray::fromHex("0xFFFFFFFF00000000FFFFFFFFFF"
                                         "FFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"));
 
-    const Integer a(-3);
+    const Integer a(-3L);
     const Integer b(QByteArray::fromHex("0x5AC635D8AA3A93E7B3EBBD5576"
                                         "9886BC651D06B0CC53B0F63BCE3C3E27D2604B"));
 
@@ -155,6 +161,8 @@ namespace AbstractGroup {
 
   bool ECGroup::IsProbablyValid() const
   {
+    qDebug() << IsElement(GetGenerator());
+    qDebug() << IsIdentity(Exponentiate(GetGenerator(), GetOrder()));
     return IsElement(GetGenerator()) && 
       IsIdentity(Exponentiate(GetGenerator(), GetOrder()));
   }

@@ -14,6 +14,15 @@ namespace Tests {
     EXPECT_EQ(QByteArray(), out);
   }
 
+  TEST(BlogDrop, ECPlaintextEmpty) 
+  {
+    QSharedPointer<const Parameters> params = Parameters::Parameters::ECProductionFixed();
+    Plaintext p(params);
+    QByteArray out;
+    EXPECT_FALSE(p.Decode(out));
+    EXPECT_EQ(QByteArray(), out);
+  }
+
   TEST(BlogDrop, IntegerPlaintextShort) 
   {
     QSharedPointer<const Parameters> params = Parameters::Parameters::IntegerTestingFixed();

@@ -8,6 +8,7 @@
 #include <cryptopp/aes.h>
 #include <cryptopp/ccm.h>
 #include <cryptopp/des.h>
+#include <cryptopp/modarith.h>
 #include <cryptopp/osrng.h> 
 
 #include "AsymmetricKey.hpp"

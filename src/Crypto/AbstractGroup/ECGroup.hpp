@@ -165,12 +165,20 @@ namespace AbstractGroup {
        */
       virtual QByteArray GetByteArray() const;
 
+      /**
+       * Get size of the EC field (i.e., the modulus p)
+       */
+      inline Integer GetFieldSize() const { return FromCryptoInt(_curve.FieldSize()); }
+
     private:
 
       CryptoPP::ECPPoint GetPoint(const Element &e) const;
       inline static CryptoPP::Integer ToCryptoInt(const Integer &e) 
       {
-        return CryptoPP::Integer(e.GetByteArray().constData());
+        // Hex encoding does not include minus sign        
+        CryptoPP::Integer i(("0x"+e.GetByteArray().toHex()).constData());
+        if(e < 0) i.SetNegative();
+        return i;
       }
 
       inline static Integer FromCryptoInt(const CryptoPP::Integer &i)

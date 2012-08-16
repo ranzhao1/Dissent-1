@@ -1,7 +1,10 @@
 #include <QByteArray>
 
+#include "Crypto/AbstractGroup/ECGroup.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
 #include "Parameters.hpp"
+
+using namespace Dissent::Crypto::AbstractGroup;
 
 namespace Dissent {
 namespace Crypto {
@@ -15,6 +18,11 @@ namespace BlogDrop {
   QSharedPointer<Parameters> Parameters::IntegerProductionFixed() 
   {
     return QSharedPointer<Parameters>(new Parameters(IntegerGroup::ProductionFixed()));
+  }
+
+  QSharedPointer<Parameters> Parameters::ECProductionFixed() 
+  {
+    return QSharedPointer<Parameters>(new Parameters(ECGroup::ProductionFixed()));
   }
 
   QSharedPointer<Parameters> Parameters::Empty() 
