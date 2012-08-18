@@ -23,10 +23,10 @@ namespace BlogDrop {
       /**
        * Constructor: Initialize a ciphertext
        * @param params Group parameters
-       * @param client_pks Client public keys
+       * @param client_pks Client public keys for ciphertexts
        */
       ServerCiphertext(const QSharedPointer<const Parameters> params, 
-          const QSharedPointer<const PublicKeySet> client_pks);
+          const QList<QSharedPointer<const PublicKeySet> > &client_pks);
 
       /**
        * Constructor: Initialize a ciphertext from serialized version
@@ -35,7 +35,7 @@ namespace BlogDrop {
        * @param serialized serialized byte array
        */
       ServerCiphertext(const QSharedPointer<const Parameters> params, 
-          const QSharedPointer<const PublicKeySet> client_pks,
+          const QList<QSharedPointer<const PublicKeySet> > &client_pks,
           const QByteArray &serialized);
 
       /**
@@ -61,20 +61,20 @@ namespace BlogDrop {
        */
       QByteArray GetByteArray() const;
 
-      inline Element GetElement() const { return _element; }
+      inline QList<Element> GetElements() const { return _elements; }
       inline Integer GetChallenge() const { return _challenge; }
       inline Integer GetResponse() const { return _response; }
 
     private:
 
-      Integer Commit(const Element &g1, const Element &g2, 
-          const Element &y1, const Element &y2,
-          const Element &t1, const Element &t2) const;
+      Integer Commit(const QList<Element> &gs,
+          const QList<Element> &ys,
+          const QList<Element> &ts) const;
 
       QSharedPointer<const Parameters> _params;
-      QSharedPointer<const PublicKeySet> _client_pks;
+      QList<QSharedPointer<const PublicKeySet> > _client_pks;
 
-      Element _element;
+      QList<Element> _elements;
       Integer _challenge;
       Integer _response;
   };

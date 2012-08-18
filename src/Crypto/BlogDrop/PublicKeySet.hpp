@@ -32,6 +32,18 @@ namespace BlogDrop {
           const QList<QSharedPointer<const PublicKey> > &keys);
 
       /**
+       * Return a list of PublicKeySets -- one per ciphertext element.
+       * @params params group parameters
+       * @params keys a list of format keys[client][element. You will probably
+       *         generate this by calling client_ciphertext->GetOneTimeKeys()
+       *         many times.
+       */
+      static QList<QSharedPointer<const PublicKeySet> > CreateClientKeySets(
+          const QSharedPointer<const Parameters> params, 
+          const QList<QList<QSharedPointer<const PublicKey> > > &keys);
+
+
+      /**
        * Destructor
        */
       virtual ~PublicKeySet() {}

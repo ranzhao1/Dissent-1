@@ -47,16 +47,16 @@ namespace BlogDrop {
 
       /**
        * Constructor: Initialize a ciphertext with an existing
-       * one-time public key
+       * set of one-time public keys
        * @param params Group parameters
        * @param server_pks Server public keys
        * @param author_pub author public key
-       * @param one_time_pub the client's one-time public key
+       * @param one_time_pubs the client's one-time public keys
        */
       explicit ClientCiphertext(const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKeySet> server_pks,
           const QSharedPointer<const PublicKey> author_pub, 
-          const QSharedPointer<const PublicKey> one_time_pub);
+          QList<QSharedPointer<const PublicKey> > one_time_pubs);
 
       /**
        * Destructor
@@ -86,12 +86,14 @@ namespace BlogDrop {
        */
       QByteArray GetByteArray() const;
 
-      inline const QSharedPointer<const PublicKey> GetOneTimeKey() const { return _one_time_pub; }
-      inline Element GetElement() const { return _element; }
+      inline QList<QSharedPointer<const PublicKey> > GetOneTimeKeys() const { 
+          return _one_time_pubs; 
+      }
+
+      inline QList<Element> GetElements() const { return _elements; }
+      inline QList<Integer> GetResponses() const { return _responses; }
       inline Integer GetChallenge1() const { return _challenge_1; }
       inline Integer GetChallenge2() const { return _challenge_2; }
-      inline Integer GetResponse1() const { return _response_1; }
-      inline Integer GetResponse2() const { return _response_2; }
 
       /**
        * Verify a set of proofs. Uses threading if available, so this might
@@ -103,22 +105,24 @@ namespace BlogDrop {
 
     private:
 
+      void InitializeLists(QList<Element> &gs, QList<Element> &ys) const;
       static bool VerifyOnce(QSharedPointer<const ClientCiphertext> c); 
 
-      Integer Commit(const Element &g1, const Element &g2, const Element &g3,
-          const Element &y1, const Element &y2, const Element &y3,
-          const Element &t1, const Element &t2, const Element &t3) const;
+      Integer Commit(const QList<Element> &gs, const QList<Element> &ys, 
+          const QList<Element> &ts) const;
 
       QSharedPointer<const Parameters> _params;
       QSharedPointer<const PublicKeySet> _server_pks;
       QSharedPointer<const PublicKey> _author_pub;
 
-      QSharedPointer<const PrivateKey> _one_time_priv;
-      QSharedPointer<const PublicKey> _one_time_pub;
+      QList<QSharedPointer<const PrivateKey> > _one_time_privs;
+      QList<QSharedPointer<const PublicKey> > _one_time_pubs;
 
-      Element _element;
+      QList<Element> _elements;
       Integer _challenge_1, _challenge_2;
-      Integer _response_1, _response_2;
+      QList<Integer> _responses;
+
+      const int _nelms;
   };
 }
 }

@@ -50,24 +50,24 @@ namespace BlogDrop {
       /**
        * Return integer representing this plaintext
        */
-      inline Element GetElement() const { return _m; }
+      inline QList<Element> GetElements() const { return _ms; }
 
       /**
        * Number of bytes that can fit in a plaintext
        */
       inline static int CanFit(const QSharedPointer<const Parameters> params) {
-        return params->GetGroup()->BytesPerElement();
+        return (params->GetNElements() * params->GetGroup()->BytesPerElement());
       }
 
       /**
        * Reveal a plaintext by combining ciphertext elements
        */
-      void Reveal(const Element &c);
+      void Reveal(const QList<Element> &c);
 
     private:
 
       const QSharedPointer<const Parameters> _params;
-      Element _m;
+      QList<Element> _ms;
 
   };
 

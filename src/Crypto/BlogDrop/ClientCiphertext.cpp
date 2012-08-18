@@ -13,11 +13,16 @@ namespace BlogDrop {
     _params(params),
     _server_pks(server_pks),
     _author_pub(author_pub),
-    _one_time_priv(new PrivateKey(_params)),
-    _one_time_pub(new PublicKey(_one_time_priv)),
-    _element(_params->GetGroup()->Exponentiate(_server_pks->GetElement(),
-          _one_time_priv->GetInteger())) 
+    _nelms(_params->GetNElements())
   {
+    for(int i=0; i<_nelms; i++) { 
+      QSharedPointer<const PrivateKey> priv(new PrivateKey(_params));
+      QSharedPointer<const PublicKey> pub(new PublicKey(priv));
+      _one_time_privs.append(priv);
+      _one_time_pubs.append(pub);
+      _elements.append(_params->GetGroup()->Exponentiate(_server_pks->GetElement(),
+          _one_time_privs[i]->GetInteger())); 
+    }
   }
 
   ClientCiphertext::ClientCiphertext(const QSharedPointer<const Parameters> params, 
@@ -26,186 +31,246 @@ namespace BlogDrop {
       const QByteArray &serialized) :
     _params(params),
     _server_pks(server_pks),
-    _author_pub(author_pub)
+    _author_pub(author_pub),
+    _nelms(_params->GetNElements())
   {
     QList<QByteArray> list;
     QDataStream stream(serialized);
     stream >> list;
 
-    if(list.count() != 6) {
+    // 2 challenges, k public keys, k elements, k+1 responses
+    if(list.count() != (2 + _nelms + _nelms + (1+_nelms))) {
       qWarning() << "Failed to unserialize";
       return; 
     }
 
-    _one_time_pub = QSharedPointer<const PublicKey>(new PublicKey(params, list[0]));
-    _element = _params->GetGroup()->ElementFromByteArray(list[1]);
-    _challenge_1 = Integer(list[2]);
-    _challenge_2 = Integer(list[3]);
-    _response_1 = Integer(list[4]);
-    _response_2 = Integer(list[5]);
+    int list_idx = 0;
+    _challenge_1 = Integer(list[list_idx++]);
+    _challenge_2 = Integer(list[list_idx++]); 
+
+    for(int j=0; j<_nelms; j++) { 
+      _elements.append(_params->GetGroup()->ElementFromByteArray(list[list_idx++]));
+    }
+
+    for(int j=0; j<_nelms; j++) { 
+      _one_time_pubs.append(QSharedPointer<const PublicKey>(
+            new PublicKey(params, list[list_idx++])));
+    }
+
+    _responses.append(Integer(list[list_idx++])); 
+
+    for(int j=0; j<_nelms; j++) { 
+      _responses.append(Integer(list[list_idx++]));
+    }
   }
 
   ClientCiphertext::ClientCiphertext(const QSharedPointer<const Parameters> params, 
       const QSharedPointer<const PublicKeySet> server_pks,
       const QSharedPointer<const PublicKey> author_pub,
-      const QSharedPointer<const PublicKey> one_time_pub) :
+      QList<QSharedPointer<const PublicKey> > one_time_pubs) :
     _params(params),
     _server_pks(server_pks),
     _author_pub(author_pub),
-    _one_time_priv(new PrivateKey(_params)),
-    _one_time_pub(one_time_pub)
+    _one_time_pubs(one_time_pubs),
+    _nelms(_params->GetNElements())
   {}
 
-  void ClientCiphertext::SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, const Plaintext &m)
+  void ClientCiphertext::SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, 
+      const Plaintext &m)
   {
-    _element = _params->GetGroup()->Multiply(_element, m.GetElement());
-
-    // g1 = Product of server PKs, A = g1^a = client ciphertext elm,  a = client SK
-    // g2 = DH key generator,      B = g2^b = client PK,              b = client SK
-    // g3 = DH key generator,      C = g3^c = author PK,              c = author SK
-
-    // f  = random element mod q
-    // v1 = random element mod q
-    // v2 = random element mod q
-
-    Integer f, v1, v2;
-    f = _params->GetGroup()->RandomExponent();
-    v1 = _params->GetGroup()->RandomExponent();
-    v2 = _params->GetGroup()->RandomExponent();
+    QList<Element> ms = m.GetElements();
+    for(int i=0; i<_nelms; i++) {
+      _elements[i] = _params->GetGroup()->Multiply(_elements[i], ms[i]);
+    }
 
     const Element g = _params->GetGroup()->GetGenerator();
     const Integer q = _params->GetGroup()->GetOrder();
+    
+    // g_auth = DH base
+    // g(i) = DH base
+    // g'(i) = product of server PKs
+    // ...
+    // y_auth = author PK
+    // y(i) = one-time PK i
+    // y'(i) = client ciphertext element i
+    // ...
+    QList<Element> gs;
+    QList<Element> ys;
 
-    Element t1, t2, t3;
+    InitializeLists(gs, ys);
 
-    // t1 = A^f * g1^v1
-    t1 = _params->GetGroup()->CascadeExponentiate(_element, f, 
-        _server_pks->GetElement(), v1);
+    // t_auth = * (g_auth)^{v_auth} 
+    // t(i) = yi^w * gi^vi
+    // t'(i) = y'i^w *  g'i^vi
+    // ...
+    Integer w = _params->GetGroup()->RandomExponent();
 
-    // t2 = B^f * g2^v1
-    t2 = _params->GetGroup()->CascadeExponentiate(_one_time_pub->GetElement(), f, g, v1);
+    QList<Element> ts;
+    QList<Integer> vs;
 
-    // t3 = g3^v2
-    t3 = _params->GetGroup()->Exponentiate(g, v2);
+    Integer v_auth = _params->GetGroup()->RandomExponent();
+    ts.append(_params->GetGroup()->Exponentiate(gs[0], v_auth));
 
-    // chal1 = f
-    _challenge_1 = f;
+    for(int i=0; i<(2*_nelms); i++) { 
+      Integer v = _params->GetGroup()->RandomExponent();
+      vs.append(v);
 
-    // chal2 = H(g1, g2, g3, y1, y2, y3, t1, t2, t3) - f
-    Integer hash = Commit(_server_pks->GetElement(), g, g,
-        _element, _one_time_pub->GetElement(), _author_pub->GetElement(),
-        t1, t2, t3);
+      ts.append(_params->GetGroup()->CascadeExponentiate(ys[i+1], w, gs[i+1], v)); i++;
+      ts.append(_params->GetGroup()->CascadeExponentiate(ys[i+1], w, gs[i+1], v));
+    }
 
-    _challenge_2 = (hash - f) % q;
-   
-    // resp1 = v1
-    _response_1 = v1;
+    // h = H(gs, ys, ts)
+    // chal_1 = h - w (mod q)
+    _challenge_1 = (Commit(gs, ys, ts) - w) % q;
+    // chal_2 = w
+    _challenge_2 = w;
 
-    // resp2 = v2 - (chal2 * c)
-    _response_2 = (v2 - (_challenge_2.MultiplyMod(author_priv->GetInteger(), 
-            q))) % q;
+    // r_auth = v_auth - (c1 * x_auth)
+    _responses.append((v_auth - (_challenge_1 * author_priv->GetInteger())) % q);
+    for(int i=0; i<_nelms; i++) { 
+      // r(i) = v(i) 
+      _responses.append(vs[i]);
+    }
   }
 
   void ClientCiphertext::SetProof()
   {
-    // g1 = Product of server PKs, A = g1^a = client ciphertext elm,  a = client SK
-    // g2 = DH key generator,      B = g2^b = client PK,              b = client SK
-    // g3 = DH key generator,      C = g3^c = author PK,              c = author SK
-
-    // f  = random element mod q
-    // v1 = random element mod q
-    // v2 = random element mod q
-
-    Integer f, v1, v2;
-    f = _params->GetGroup()->RandomExponent();
-    v1 = _params->GetGroup()->RandomExponent();
-    v2 = _params->GetGroup()->RandomExponent();
-
     const Element g = _params->GetGroup()->GetGenerator();
     const Integer q = _params->GetGroup()->GetOrder();
 
-    Element t1, t2, t3;
+    // g_auth = DH base
+    // g(i) = DH base
+    // g'(i) = product of server PKs
+    // ...
+    // y_auth = author PK
+    // y(i) = one-time PK i
+    // y'(i) = client ciphertext element i
+    // ...
+    QList<Element> gs;
+    QList<Element> ys;
 
-    // t1 = g1^v1
-    t1 = _params->GetGroup()->Exponentiate(_server_pks->GetElement(), v1);
+    InitializeLists(gs, ys);
 
-    // t2 = g2^v1
-    t2 = _params->GetGroup()->Exponentiate(g, v1);
+    // t_auth = (y_auth)^w * (g_auth)^{v_auth} 
+    // t(i) = gi^vi
+    // t'(i) = g'(i)^v'(i)
+    // ...
+    Integer w = _params->GetGroup()->RandomExponent();
 
-    // t3 = C^f * g3^v2
-    t3 = _params->GetGroup()->CascadeExponentiate(_author_pub->GetElement(), f, g, v2);
+    QList<Element> ts;
+    QList<Integer> vs;
 
-    // h = H(g1, g2, g3, y1, y2, y3, t1, t2, t3)
-    // chal_1 = h - f1 (mod q)
-    _challenge_1 = Commit(_server_pks->GetElement(), g, g,
-        _element, _one_time_pub->GetElement(), _author_pub->GetElement(),
-        t1, t2, t3);
-    _challenge_1 = (_challenge_1 - f) % q;
+    Integer v_auth = _params->GetGroup()->RandomExponent();
+    ts.append(_params->GetGroup()->CascadeExponentiate(ys[0], w, gs[0], v_auth));
 
-    // chal_2 = f
-    _challenge_2 = f;
+    for(int i=0; i<_nelms; i++) { 
+      vs.append(_params->GetGroup()->RandomExponent());
+    }
 
-    // resp_1 = v1 - (chal_1 * a)
-    _response_1 = (v1 - (_challenge_1.MultiplyMod(_one_time_priv->GetInteger(), 
-            q))) % q;
+    int v_idx = 0;
+    for(int i=1; i<(1+(2*_nelms)); i++) {
+      ts.append(_params->GetGroup()->Exponentiate(gs[i], vs[v_idx])); i++;
+      ts.append(_params->GetGroup()->Exponentiate(gs[i], vs[v_idx]));
 
-    // resp_2 = v2
-    _response_2 = v2;
+      v_idx++;
+    }
+
+    Q_ASSERT(v_idx == (_nelms));
+    Q_ASSERT(ts.count() == (1+(2*_nelms)));
+    Q_ASSERT(vs.count() == _nelms);
+
+    // h = H(gs, ys, ts)
+    // chal_1 = w
+    _challenge_1 = w;
+    // chal_2 = h - w (mod q)
+    _challenge_2 = (Commit(gs, ys, ts) - w) % q;
+
+    // r_auth = v_auth
+    _responses.append(v_auth);
+    for(int i=0; i<_nelms; i++) { 
+      // r(i) = v(i) - (c2 * secret_key_i)
+      _responses.append((vs[i] - (_challenge_2 * _one_time_privs[i]->GetInteger())) % q);
+    }
   }
 
   bool ClientCiphertext::VerifyProof() const
   {
-    // g1 = Product of server PKs, A = g1^a = client ciphertext elm,  a = client SK
-    // g2 = DH key generator,      B = g2^b = client PK,              b = client SK
-    // g3 = DH key generator,      C = g3^c = author PK,              c = author SK
+    if(_elements.count() != _nelms) {
+      qWarning() << "Got proof with incorrect number of elements (" << _elements.count() << ")";
+      return false;
+    }
 
-    if(!(_params->GetGroup()->IsElement(_one_time_pub->GetElement()) &&
-          _params->GetGroup()->IsElement(_element))) return false;
+    if(_responses.count() != (1+_nelms)) {
+      qWarning() << "Got proof with incorrect number of responses (" << _responses.count() << ")";
+      return false;
+    }
 
-    Element t1, t2, t3;
+    for(int i=0; i<_nelms; i++) { 
+      if(!(_params->GetGroup()->IsElement(_one_time_pubs[i]->GetElement()) &&
+            _params->GetGroup()->IsElement(_elements[i]))) {
+        qWarning() << "Got proof with invalid group element";
+        return false;
+      }
+    }
+
     const Element g = _params->GetGroup()->GetGenerator();
     const Integer q = _params->GetGroup()->GetOrder();
 
-    // t1 = A^chal1 * g1^resp1
-    t1 = _params->GetGroup()->CascadeExponentiate(_element, _challenge_1, 
-        _server_pks->GetElement(), _response_1);
+    // g_auth = DH base
+    // g(i) = DH base
+    // g'(i) = product of server PKs
+    // ...
+    // y_auth = author PK
+    // y(i) = one-time PK i
+    // y'(i) = client ciphertext element i
+    // ...
+    QList<Element> gs;
+    QList<Element> ys;
 
-    // t2 = B^chal1 * g2^resp1
-    t2 = _params->GetGroup()->CascadeExponentiate(_one_time_pub->GetElement(), _challenge_1,
-        g, _response_1);
+    InitializeLists(gs, ys);
 
-    // t3 = C^chal2 * g3^resp2
-    t3 = _params->GetGroup()->CascadeExponentiate(_author_pub->GetElement(), _challenge_2, 
-        g, _response_2);
+    // t_auth = (y_auth)^c1 * (g_auth)^{r_auth}
+    // t(i) = y1^c2 * g1^r1
+    // t'(i) = y'1^c2 * g'1^r1
+    // ...
+    QList<Element> ts;
+    ts.append(_params->GetGroup()->CascadeExponentiate(ys[0], _challenge_1,
+          gs[0], _responses[0]));
 
-    Integer hash = Commit(_server_pks->GetElement(), g, g, 
-        _element, _one_time_pub->GetElement(), _author_pub->GetElement(),
-        t1, t2, t3);
+    int response_idx = 1;
+    for(int i=1; i<(1+(2*_nelms)); i++) {
+      ts.append(_params->GetGroup()->CascadeExponentiate(ys[i], _challenge_2,
+          gs[i], _responses[response_idx]));
+      i++;
+      ts.append(_params->GetGroup()->CascadeExponentiate(ys[i], _challenge_2,
+          gs[i], _responses[response_idx]));
 
+      response_idx++;
+    }
+
+    Integer hash = Commit(gs, ys, ts);
     Integer sum = (_challenge_1 + _challenge_2) % q;
+
     return (sum == hash);
   }
 
-  Integer ClientCiphertext::Commit(const Element &g1, const Element &g2, const Element &g3,
-      const Element &y1, const Element &y2, const Element &y3,
-      const Element &t1, const Element &t2, const Element &t3) const
+  Integer ClientCiphertext::Commit(const QList<Element> &gs, const QList<Element> &ys, 
+          const QList<Element> &ts) const
   {
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     hash->Restart();
 
     hash->Update(_params->GetGroup()->GetByteArray());
 
-    hash->Update(_params->GetGroup()->ElementToByteArray(g1));
-    hash->Update(_params->GetGroup()->ElementToByteArray(g2));
-    hash->Update(_params->GetGroup()->ElementToByteArray(g3));
+    Q_ASSERT(gs.count() == (1+(2*_nelms)));
+    Q_ASSERT(ys.count() == (1+(2*_nelms)));
+    Q_ASSERT(ts.count() == (1+(2*_nelms)));
 
-    hash->Update(_params->GetGroup()->ElementToByteArray(y1));
-    hash->Update(_params->GetGroup()->ElementToByteArray(y2));
-    hash->Update(_params->GetGroup()->ElementToByteArray(y3));
-
-    hash->Update(_params->GetGroup()->ElementToByteArray(t1));
-    hash->Update(_params->GetGroup()->ElementToByteArray(t2));
-    hash->Update(_params->GetGroup()->ElementToByteArray(t3));
+    for(int i=0; i<_nelms; i++) {
+      hash->Update(_params->GetGroup()->ElementToByteArray(gs[i]));
+      hash->Update(_params->GetGroup()->ElementToByteArray(ys[i]));
+      hash->Update(_params->GetGroup()->ElementToByteArray(ts[i]));
+    }
 
     return Integer(hash->ComputeHash()) % _params->GetGroup()->GetOrder();
   }
@@ -214,12 +279,20 @@ namespace BlogDrop {
   {
     QList<QByteArray> list;
 
-    list.append(_one_time_pub->GetByteArray());
-    list.append(_params->GetGroup()->ElementToByteArray(_element));
     list.append(_challenge_1.GetByteArray());
     list.append(_challenge_2.GetByteArray());
-    list.append(_response_1.GetByteArray());
-    list.append(_response_2.GetByteArray());
+
+    for(int i=0; i<_nelms; i++) { 
+      list.append(_params->GetGroup()->ElementToByteArray(_elements[i]));
+    }
+
+    for(int i=0; i<_nelms; i++) { 
+      list.append(_one_time_pubs[i]->GetByteArray());
+    }
+
+    for(int i=0; i<_responses.count(); i++) { 
+      list.append(_responses[i].GetByteArray());
+    }
 
     QByteArray out;
     QDataStream stream(&out, QIODevice::WriteOnly);
@@ -248,10 +321,37 @@ namespace BlogDrop {
     return valid;
   }
 
+  void ClientCiphertext::InitializeLists(QList<Element> &gs, QList<Element> &ys) const
+  { 
+    const Element g = _params->GetGroup()->GetGenerator();
+    const Integer q = _params->GetGroup()->GetOrder();
+
+    // g_auth = DH base
+    // g(i) = DH base
+    // g'(i) = product of server PKs
+    // ...
+    gs.append(g);
+    for(int i=0; i<_nelms; i++) { 
+      gs.append(g);
+      gs.append(_server_pks->GetElement());
+    }
+
+    // y_auth = author PK
+    // y(i) = one-time PK i
+    // y'(i) = client ciphertext element i
+    // ...
+    ys.append(_author_pub->GetElement());
+    for(int i=0; i<_nelms; i++) { 
+      ys.append(_one_time_pubs[i]->GetElement());
+      ys.append(_elements[i]);
+    }
+  }
+
   bool ClientCiphertext::VerifyOnce(QSharedPointer<const ClientCiphertext> c) 
   {
     return c->VerifyProof();
   }
+
 }
 }
 }

@@ -90,7 +90,7 @@ namespace BlogDrop {
       QList<QSharedPointer<const ClientCiphertext> > _client_ciphertexts;
       QList<QSharedPointer<const ServerCiphertext> > _server_ciphertexts;
 
-      QSharedPointer<PublicKeySet> _client_pks;
+      QList<QSharedPointer<const PublicKeySet> > _client_pks;
   };
 }
 }

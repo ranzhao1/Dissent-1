@@ -58,8 +58,10 @@ namespace Tests {
       QByteArray output;
       EXPECT_TRUE(p.Decode(output));
       EXPECT_TRUE(output.count() > 0);
-      EXPECT_TRUE(output.count() < (params->GetGroup()->GetOrder().GetByteCount()/divby));
-      EXPECT_TRUE(output.count() > ((params->GetGroup()->GetOrder().GetByteCount()-5)/divby));
+      EXPECT_TRUE(output.count() < (params->GetNElements()*
+            (params->GetGroup()->GetOrder().GetByteCount()/divby)));
+      EXPECT_TRUE(output.count() > (params->GetNElements()*
+            ((params->GetGroup()->GetOrder().GetByteCount()-5)/divby)));
       EXPECT_EQ(msg, output);
     }
   }
@@ -130,25 +132,29 @@ namespace Tests {
     for(int t=0; t<10; t++) {
       const int nkeys = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
 
-      QList<QSharedPointer<const PublicKey> > client_pks;
-      for(int i=0; i<nkeys; i++) {
-        QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
-        QSharedPointer<const PublicKey> pub(new PublicKey(priv));
-        client_pks.append(pub);
+      QList<QSharedPointer<const PublicKeySet> > sets;
+      for(int j=0; j<params->GetNElements(); j++) {
+        QList<QSharedPointer<const PublicKey> > client_pks;
+        for(int i=0; i<nkeys; i++) {
+          QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
+          QSharedPointer<const PublicKey> pub(new PublicKey(priv));
+          client_pks.append(pub);
+        }
+        sets.append(QSharedPointer<const PublicKeySet>(new PublicKeySet(params, client_pks)));
       }
-
-      QSharedPointer<const PublicKeySet> client_pk_set(new PublicKeySet(params, client_pks));
 
       QSharedPointer<const PrivateKey> server_sk(new PrivateKey(params));
       QSharedPointer<const PublicKey> server_pk(new PublicKey(server_sk));
 
-      ServerCiphertext c(params, client_pk_set);
+      ServerCiphertext c(params, sets);
       c.SetProof(server_sk);
 
-      Element expected = params->GetGroup()->Exponentiate(client_pk_set->GetElement(), 
-          server_sk->GetInteger());
-      expected = params->GetGroup()->Inverse(expected);
-      ASSERT_EQ(expected, c.GetElement());
+      for(int j=0; j<params->GetNElements(); j++) {
+        Element expected = params->GetGroup()->Exponentiate(sets[j]->GetElement(), 
+            server_sk->GetInteger());
+        expected = params->GetGroup()->Inverse(expected);
+        ASSERT_EQ(expected, c.GetElements()[j]);
+      }
 
       ASSERT_TRUE(c.VerifyProof(server_pk));
     }
@@ -187,16 +193,21 @@ namespace Tests {
     const Integer q = params->GetGroup()->GetOrder();
     ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
     ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < q);
-    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < q);
-    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < q);
+
+    ASSERT_EQ(params->GetNElements()+1, c.GetResponses().count());
+    foreach(const Integer &i, c.GetResponses()) {
+      ASSERT_TRUE(i > 0 || i < q);
+    }
 
     // Make sure all values are distinct
     QSet<QByteArray> set;
     set.insert(c.GetChallenge1().GetByteArray());
     set.insert(c.GetChallenge2().GetByteArray());
-    set.insert(c.GetResponse1().GetByteArray());
-    set.insert(c.GetResponse2().GetByteArray());
-    ASSERT_EQ(4, set.count());
+    foreach(const Integer &i, c.GetResponses()) {
+      set.insert(i.GetByteArray());
+    }
+
+    ASSERT_EQ(params->GetNElements()+3, set.count());
 
     ASSERT_TRUE(c.VerifyProof());
   }
@@ -241,16 +252,21 @@ namespace Tests {
     const Integer q = params->GetGroup()->GetOrder();
     ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
     ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < q);
-    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < q);
-    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < q);
+
+    ASSERT_EQ(params->GetNElements()+1, c.GetResponses().count());
+    foreach(const Integer &i, c.GetResponses()) {
+      ASSERT_TRUE(i > 0 || i < q);
+    }
 
     // Make sure all values are distinct
     QSet<QByteArray> set;
     set.insert(c.GetChallenge1().GetByteArray());
     set.insert(c.GetChallenge2().GetByteArray());
-    set.insert(c.GetResponse1().GetByteArray());
-    set.insert(c.GetResponse2().GetByteArray());
-    ASSERT_EQ(4, set.count());
+    foreach(const Integer &i, c.GetResponses()) {
+      set.insert(i.GetByteArray());
+    }
+
+    ASSERT_EQ(params->GetNElements()+3, set.count());
 
     ASSERT_TRUE(c.VerifyProof());
   }
@@ -294,56 +310,60 @@ namespace Tests {
     c.SetAuthorProof(author_priv, m);
 
     // Generate non-author ciphertext
-    QList<ClientCiphertext> cover;
+    QList<QSharedPointer<const ClientCiphertext> > cover;
     const int ncover = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     for(int i=0; i<ncover; i++) {
-      ClientCiphertext cov(params, server_pk_set, author_pk);
-      cov.SetProof();
+      QSharedPointer<ClientCiphertext> cov(new ClientCiphertext(params, server_pk_set, author_pk));
+      cov->SetProof();
       cover.append(cov);
     }
 
     // Get client pk set
-    QList<QSharedPointer<const PublicKey> > client_pks;
-    client_pks.append(c.GetOneTimeKey());
+    QList<QList<QSharedPointer<const PublicKey> > > client_pks;
+    client_pks.append(c.GetOneTimeKeys());
     for(int i=0; i<ncover; i++) {
-      client_pks.append(cover[i].GetOneTimeKey());
+      client_pks.append(cover[i]->GetOneTimeKeys());
     }
 
-    QSharedPointer<const PublicKeySet> client_pk_set(new PublicKeySet(params, client_pks));
+    QList<QSharedPointer<const PublicKeySet> > sets = PublicKeySet::CreateClientKeySets(params, client_pks);
 
     const Integer q = params->GetGroup()->GetOrder();
     ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
     ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < q);
-    ASSERT_TRUE(c.GetResponse1() > 0 || c.GetResponse1() < q);
-    ASSERT_TRUE(c.GetResponse2() > 0 || c.GetResponse2() < q);
+
+    ASSERT_EQ(params->GetNElements()+1, c.GetResponses().count());
+    foreach(const Integer &i, c.GetResponses()) {
+      ASSERT_TRUE(i > 0 || i < q);
+    }
 
     // Make sure all values are distinct
     QSet<QByteArray> set;
     set.insert(c.GetChallenge1().GetByteArray());
     set.insert(c.GetChallenge2().GetByteArray());
-    set.insert(c.GetResponse1().GetByteArray());
-    set.insert(c.GetResponse2().GetByteArray());
-    ASSERT_EQ(4, set.count());
+    foreach(const Integer &i, c.GetResponses()) {
+      set.insert(i.GetByteArray());
+    }
+    ASSERT_EQ(params->GetNElements()+3, set.count());
 
     ASSERT_TRUE(c.VerifyProof());
 
     Plaintext out(params);
-    out.Reveal(c.GetElement());
+    out.Reveal(c.GetElements());
 
     for(int i=0; i<nkeys; i++) {
-      ServerCiphertext s(params, client_pk_set);
+      ServerCiphertext s(params, sets);
       s.SetProof(server_sks[i]);
 
       ASSERT_TRUE(s.VerifyProof(server_pks[i]));
 
-      out.Reveal(s.GetElement()); 
+      out.Reveal(s.GetElements()); 
     }
 
     for(int i=0; i<ncover; i++) {
-      out.Reveal(cover[i].GetElement());
+      out.Reveal(cover[i]->GetElements());
     }
 
-    ASSERT_EQ(m.GetElement(), out.GetElement());
+    ASSERT_EQ(m.GetElements(), out.GetElements());
   }
 
   TEST(BlogDrop, IntegerReveal) {
