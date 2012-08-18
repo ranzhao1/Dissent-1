@@ -9,7 +9,8 @@ namespace Tests {
 
     list.append(QSharedPointer<IntegerGroup>(new IntegerGroup(11, 3)));
     list.append(QSharedPointer<IntegerGroup>(IntegerGroup::TestingFixed()));
-    list.append(QSharedPointer<IntegerGroup>(IntegerGroup::ProductionFixed()));
+    list.append(QSharedPointer<IntegerGroup>(IntegerGroup::Production1024Fixed()));
+    list.append(QSharedPointer<IntegerGroup>(IntegerGroup::Production2048Fixed()));
 
     for(int i=0; i<list.count(); i++) {
       QSharedPointer<IntegerGroup> group(list[i]);

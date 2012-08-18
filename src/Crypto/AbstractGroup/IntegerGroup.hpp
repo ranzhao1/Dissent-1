@@ -37,7 +37,12 @@ namespace AbstractGroup {
       /**
        * Get a fixed group with modulus of length 1024 bits
        */
-      static QSharedPointer<IntegerGroup> ProductionFixed();
+      static QSharedPointer<IntegerGroup> Production1024Fixed();
+
+      /**
+       * Get a fixed group with modulus of length 2048 bits
+       */
+      static QSharedPointer<IntegerGroup> Production2048Fixed();
 
       /**
        * Get a fixed group with modulus of length 512 bits
@@ -186,9 +191,18 @@ namespace AbstractGroup {
 
     private:
 
+      IntegerGroup(const char *p_bytes, const char *q_bytes);
       Integer GetInteger(const Element &e) const;
 
+      /**
+       * A safe prime p = 2q+1 for prime q
+       */
       Integer _p;
+
+      /**
+       * Generator of group
+       */
+      Integer _g;
 
       /**
        * Equal to (p-1)/2. Useful for testing if an element
@@ -197,11 +211,6 @@ namespace AbstractGroup {
        *   (a is QR_p) iff (a^{(p-1)/2} == a^q == 1 mod p)
        */
       Integer _q;
-
-      /**
-       * Generator of group
-       */
-      Integer _g;
 
   };
 

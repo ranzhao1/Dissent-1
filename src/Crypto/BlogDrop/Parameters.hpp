@@ -22,7 +22,7 @@ namespace BlogDrop {
       /** 
        * Number of group elements in a ciphertext
        */
-      static const int ElementsPerCiphertext = 10;
+      static const int ElementsPerCiphertext = 3;
 
       /**
        * Constructor that uses 512-bit integer group (for testing)

@@ -17,7 +17,7 @@ namespace BlogDrop {
 
   QSharedPointer<Parameters> Parameters::IntegerProductionFixed() 
   {
-    return QSharedPointer<Parameters>(new Parameters(IntegerGroup::ProductionFixed()));
+    return QSharedPointer<Parameters>(new Parameters(IntegerGroup::Production1024Fixed()));
   }
 
   QSharedPointer<Parameters> Parameters::ECProductionFixed() 

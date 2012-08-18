@@ -8,9 +8,22 @@ namespace AbstractGroup {
 
   IntegerGroup::IntegerGroup(Integer p, Integer g) :
       _p(p), 
-      _q((p-1)/2), 
-      _g(g) 
+      _g(g),
+      _q((p-1)/2)
     {};
+
+  IntegerGroup::IntegerGroup(const char *p_bytes, const char *g_bytes) :
+    _p(QByteArray::fromHex(p_bytes)),
+    _g(QByteArray::fromHex(g_bytes)),
+    _q((_p-1)/2)
+  {
+    Q_ASSERT(_p>0);
+    Q_ASSERT(_q>0);
+    Q_ASSERT(_g>0);
+
+    if(_g.Pow((_p-1)/2, _g) == 1)
+      qFatal("g does not generate G*_p");
+  }
 
   QSharedPointer<IntegerGroup> IntegerGroup::Generate(int) 
   {
@@ -20,48 +33,42 @@ namespace AbstractGroup {
 
   QSharedPointer<IntegerGroup> IntegerGroup::TestingFixed() 
   {
-    const QByteArray bytes_p = QByteArray::fromHex(
-                               "0x1ADC5BAB8AA55C5B3277EC87A7383ACFDD581D8A86E71"
-                               "1CE98F1690BF81122EE873C53EC2A0646074B94416CDB"
-                               "FBC01FADA1C9D110DBEF1706CEBAC27F7D53C8F");
-    const QByteArray bytes_g = QByteArray::fromHex(
-                               "0x140A22002B9DC16A1F4AD9FE6CEB8548F98F7047EDE02"
-                               "EEF41A0F8DDD85B25AC551137DDD3A940A33EF6889CC5"
-                               "78DA0745F458AF4A9171EA189EA2A39D852C9E5");
+    const char *bytes_p = "0xd0a5cae1cd4b9ebbd66c5172d9cd33ec61ca04e3abd2d5afb"
+                          "43f0a5ddd18d57b";
+    const char *bytes_g = "0x03";
 
-    const Integer p(bytes_p);
-    const Integer g(bytes_g);
-
-    if(g.Pow((p-1)/2, g) == 1)
-      qFatal("g does not generate G*_p");
-
-    return QSharedPointer<IntegerGroup>(new IntegerGroup(p, g.Pow(2, p)));
+    return QSharedPointer<IntegerGroup>(new IntegerGroup(bytes_p, bytes_g));
   }
 
-  QSharedPointer<IntegerGroup> IntegerGroup::ProductionFixed() 
+  QSharedPointer<IntegerGroup> IntegerGroup::Production2048Fixed() 
   {
-    const QByteArray bytes_p = QByteArray::fromHex(
-                               "0x1CEB470C95CA446FBDD85B00B06D7CEC03189704005BE"
-                               "DE7779B56F79057C3552BA74E7B1E9592805EB6B9FD43"
-                               "09219B5EC755F0B2C8F65737D76246F4B96B5D55761DD"
-                               "8EC30BCA7A15C43EC92216D595B4D718002CE32BB4453"
-                               "00D151ED2C212BA411F4725D10F7AE459C67857BCE2AB"
-                               "99010052AF9F685F37D1484570D35D0B");
-    const QByteArray bytes_g = QByteArray::fromHex(
-                               "0x80022675C64380BF40EC20A2681C4AD9A04CEB144D89B"
-                               "9865402B25E5491C32732E330CC89D3F5C9D474B4B2EB"
-                               "C7B5754A8B083432C388BA601D7BD79B371F6A2ED6A51"
-                               "98DA86832DE32AC95F1B8EEEF61D1B16E4C7C84FB7AA4"
-                               "1F622538B72600443E179C1A9AAA40F8E7384311CE536"
-                               "1BDEBA2E1513579CC4457BFD3167B1B");
+    const char *bytes_p = "0xfddb8c605ec022e00980a93695b6e16f776f8db658c40163d"
+                          "2cfb2f57d0d685076311697065cf78657fa6819000e9ea923c1"
+                          "b488cd734f7c8585e97f7515bad667ecba98c4c271db8126703"
+                          "a4d4e62238aad384d69f5ccb77fa0fb2569879ca672be6a9228"
+                          "0ada08627be1b96371964b35f0e8ac655014a9293ac9dcf1e26"
+                          "c9a43a4027ee504d06d60d3819dabaec3268b950932376d146a"
+                          "75debb715b366e6fbc3efbb31960382798496dab78f03460b99"
+                          "cf204153084ea8e6a6a32fcefa8106f0a1e24246681ba0e2e47"
+                          "365d7e84016fd3e2f3ed72022a61c981c3194206d727fceab01"
+                          "781cdcc0d3b2c680aa7573471fe781c2e081354cbcf7e94a6a1"
+                          "c9df";
+    const char *bytes_g = "0x02";
 
-    const Integer p(bytes_p);
-    const Integer g(bytes_g);
+    return QSharedPointer<IntegerGroup>(new IntegerGroup(bytes_p, bytes_g));
+  }
 
-    if(g.Pow((p-1)/2, g) == 1)
-      qFatal("g does not generate G*_p");
+  QSharedPointer<IntegerGroup> IntegerGroup::Production1024Fixed() 
+  {
+    const char *bytes_p = "0xfd8a16fc2afdaeb2ea62b66b355f73e6c2fc4349bf4551793"
+                          "36ca1b45f75d68da0101cba63c22efd5f72e5c81dc30cf709da"
+                          "aef2323e950160926e11ef8cbf40a26496668749218b5620276"
+                          "697c2d1536b31042ad846e1e5758d79b3e4e0b5bc4c5d3a4e95"
+                          "da4502e9058ea3beade156d8234e35d5164783c57e6135139db"
+                          "097";
+    const char *bytes_g = "0x02";
 
-    return QSharedPointer<IntegerGroup>(new IntegerGroup(p, g.Pow(2, p)));
+    return QSharedPointer<IntegerGroup>(new IntegerGroup(bytes_p, bytes_g));
   }
 
   QSharedPointer<IntegerGroup> IntegerGroup::Zero() 
