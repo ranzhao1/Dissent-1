@@ -378,16 +378,26 @@ namespace Tests {
     }
   }
 
-  void EndToEndOnce(QSharedPointer<const Parameters> params)
+  void EndToEndOnce(QSharedPointer<const Parameters> params, bool random = true)
   {
-    const int nservers = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-    const int nclients = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-    const int author_idx = Random::GetInstance().GetInt(0, nclients);
+    int nservers; 
+    int nclients; 
+    int author_idx;
+    if(random) {
+      nservers = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
+      nclients = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
+      author_idx = Random::GetInstance().GetInt(0, nclients);
+    } else {
+      nservers = 10;
+      nclients = 100;
+      author_idx = 0;
+    }
 
     // Generate an author PK
     const QSharedPointer<const PrivateKey> author_priv(new PrivateKey(params));
     const QSharedPointer<const PublicKey> author_pk(new PublicKey(author_priv));
 
+    qDebug() << "SERVER_PK";
     // Generate list of server pks
     QList<QSharedPointer<const PublicKey> > server_pks;
     QList<QSharedPointer<const PrivateKey> > server_sks;
@@ -400,11 +410,13 @@ namespace Tests {
 
     QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, server_pks));
 
+    qDebug() << "CREATE_SERVER";
     QList<BlogDropServer> servers;
     for(int i=0; i<nservers; i++) {
       servers.append(BlogDropServer(params, server_pk_set, author_pk, server_sks[i]));
     }
 
+    qDebug() << "RANDOM_PLAINTEXT";
     // Get a random plaintext
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
@@ -419,6 +431,7 @@ namespace Tests {
       for_servers.append(QList<QByteArray>());
     }
 
+    qDebug() << "CLIENTS";
     // Generate client ciphertext and give it to all servers
     for(int client_idx=0; client_idx<nclients; client_idx++) {
       QByteArray c = BlogDropClient(params, server_pk_set, 
@@ -433,21 +446,26 @@ namespace Tests {
       }
     }
 
+    qDebug() << "ADD_CLIENT_TO_SERVER";
     for(int server_idx=0; server_idx<nservers; server_idx++) {
       servers[server_idx].AddClientCiphertexts(for_servers[server_idx]);
     }
 
+    qDebug() << "CLOSE_BIN";
     // Generate server ciphertext and pass it to all servers
     QList<QByteArray> s;
     for(int i=0; i<nservers; i++) {
       s.append(servers[i].CloseBin());
     }
+
+    qDebug() << "ADD_SERVER_TO_SERVER";
     for(int i=0; i<nservers; i++) {
       for(int j=0; j<nservers; j++) {
         ASSERT_TRUE(servers[j].AddServerCiphertext(servers[i].GetPublicKey(), s[i]));
       }
     }
 
+    qDebug() << "REVEAL";
     // Reveal the plaintext
     for(int i=0; i<nservers; i++) {
       QByteArray out;
@@ -490,6 +508,14 @@ namespace Tests {
     cf.SetThreading(CryptoFactory::MultiThreaded);
     EndToEndOnce(Parameters::Parameters::ECProductionFixed());
     cf.SetThreading(t);
+  }
+
+  TEST(BlogDrop, BenchmarkInteger) {
+    EndToEndOnce(Parameters::Parameters::IntegerProductionFixed(), false);
+  }
+
+  TEST(BlogDrop, BenchmarkEC) {
+    EndToEndOnce(Parameters::Parameters::ECProductionFixed(), false);
   }
 
 }

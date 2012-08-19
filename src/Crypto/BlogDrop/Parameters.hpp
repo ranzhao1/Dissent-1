@@ -19,11 +19,6 @@ namespace BlogDrop {
       typedef Dissent::Crypto::AbstractGroup::AbstractGroup AbstractGroup;
       typedef Dissent::Crypto::AbstractGroup::Element Element;
 
-      /** 
-       * Number of group elements in a ciphertext
-       */
-      static const int ElementsPerCiphertext = 3;
-
       /**
        * Constructor that uses 512-bit integer group (for testing)
        */
@@ -59,7 +54,7 @@ namespace BlogDrop {
 
       Parameters();
 
-      Parameters(QSharedPointer<const AbstractGroup> group);
+      Parameters(QSharedPointer<const AbstractGroup> group, int n_elements);
 
       QSharedPointer<const AbstractGroup> _group;
 

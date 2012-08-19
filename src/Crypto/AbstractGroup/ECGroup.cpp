@@ -69,9 +69,9 @@ namespace AbstractGroup {
   
   QByteArray ECGroup::ElementToByteArray(const Element &a) const
   {
-    const unsigned int nbytes = _curve.EncodedPointSize(true);
+    const unsigned int nbytes = _curve.EncodedPointSize(false);
     QByteArray out(nbytes, 0);
-    _curve.EncodePoint(reinterpret_cast<unsigned char*>(out.data()), GetPoint(a), true);
+    _curve.EncodePoint(reinterpret_cast<unsigned char*>(out.data()), GetPoint(a), false);
     return out;
   }
   

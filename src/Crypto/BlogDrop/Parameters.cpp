@@ -12,17 +12,17 @@ namespace BlogDrop {
 
   QSharedPointer<Parameters> Parameters::IntegerTestingFixed() 
   {
-    return QSharedPointer<Parameters>(new Parameters(IntegerGroup::TestingFixed()));
+    return QSharedPointer<Parameters>(new Parameters(IntegerGroup::TestingFixed(), 2));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerProductionFixed() 
   {
-    return QSharedPointer<Parameters>(new Parameters(IntegerGroup::Production1024Fixed()));
+    return QSharedPointer<Parameters>(new Parameters(IntegerGroup::Production2048Fixed(), 1));
   }
 
   QSharedPointer<Parameters> Parameters::ECProductionFixed() 
   {
-    return QSharedPointer<Parameters>(new Parameters(ECGroup::ProductionFixed()));
+    return QSharedPointer<Parameters>(new Parameters(ECGroup::ProductionFixed(), 8));
   }
 
   QSharedPointer<Parameters> Parameters::Empty() 
@@ -30,12 +30,11 @@ namespace BlogDrop {
     return QSharedPointer<Parameters>(new Parameters());
   }
 
-  Parameters::Parameters() :
-    _n_elements(ElementsPerCiphertext) {}
+  Parameters::Parameters() : _n_elements(0) {}
 
-  Parameters::Parameters(QSharedPointer<const AbstractGroup> group) :
+  Parameters::Parameters(QSharedPointer<const AbstractGroup> group, int n_elements) :
     _group(group),
-    _n_elements(ElementsPerCiphertext)
+    _n_elements(n_elements)
   {
     Q_ASSERT(!group.isNull());
     Q_ASSERT(group->IsProbablyValid());
