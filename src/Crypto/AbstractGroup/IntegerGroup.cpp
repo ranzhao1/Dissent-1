@@ -121,7 +121,7 @@ namespace AbstractGroup {
 
   Integer IntegerGroup::RandomExponent() const
   {
-    return Integer::GetRandomInteger(0, _q, false); 
+    return Integer::GetRandomInteger(1, _q, false); 
   }
 
   Element IntegerGroup::RandomElement() const

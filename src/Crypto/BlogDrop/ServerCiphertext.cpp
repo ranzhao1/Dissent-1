@@ -1,6 +1,8 @@
 
 #include "Crypto/AbstractGroup/Element.hpp"
 #include "Crypto/CryptoFactory.hpp"
+
+#include "BlogDropUtils.hpp"
 #include "ServerCiphertext.hpp"
 
 namespace Dissent {
@@ -93,7 +95,7 @@ namespace BlogDrop {
     }
    
     // c = HASH(g1, g2, ..., y1, y2, ..., t1, t2, ...) mod q
-    _challenge = Commit(gs, ys, ts);
+    _challenge = BlogDropUtils::Commit(_params, gs, ys, ts);
 
     // r = v - cx == v - (chal)server_sk
     _response = (v - (_challenge.MultiplyMod(priv->GetInteger(), q))) % q;
@@ -157,29 +159,8 @@ namespace BlogDrop {
       ys.append(_elements[i]);
     }
     
-    Integer tmp = Commit(gs, ys, ts);
+    Integer tmp = BlogDropUtils::Commit(_params, gs, ys, ts);
     return (tmp == _challenge);
-  }
-
-  Integer ServerCiphertext::Commit(const QList<Element> &gs,
-          const QList<Element> &ys, const QList<Element> &ts) const
-  {
-    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
-
-    hash->Restart();
-    hash->Update(_params->GetGroup()->GetByteArray());
-
-    Q_ASSERT(gs.count() == (1+_params->GetNElements()));
-    Q_ASSERT(ys.count() == (1+_params->GetNElements()));
-    Q_ASSERT(ts.count() == (1+_params->GetNElements()));
-
-    for(int i=0; i<_params->GetNElements(); i++) {
-      hash->Update(_params->GetGroup()->ElementToByteArray(gs[i]));
-      hash->Update(_params->GetGroup()->ElementToByteArray(ys[i]));
-      hash->Update(_params->GetGroup()->ElementToByteArray(ts[i]));
-    }
-
-    return Integer(hash->ComputeHash()) % _params->GetGroup()->GetOrder();
   }
 
   QByteArray ServerCiphertext::GetByteArray() const 

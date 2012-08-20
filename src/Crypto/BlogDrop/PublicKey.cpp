@@ -1,4 +1,7 @@
 
+#include "Crypto/AbstractGroup/Element.hpp"
+
+#include "BlogDropUtils.hpp"
 #include "PublicKey.hpp"
 
 namespace Dissent {
@@ -32,6 +35,56 @@ namespace BlogDrop {
     _params(params),
     _public_key(key)
   {
+  }
+
+  QByteArray PublicKey::ProveKnowledge(const PrivateKey &secret) const
+  {
+    // Taken from Camenisch'97 Exmaple 1
+
+    // v <-- random in [1, q)
+    const Integer v = _params->GetGroup()->RandomExponent();
+
+    // t = g^v
+    const Element t = _params->GetGroup()->Exponentiate(
+        _params->GetGroup()->GetGenerator(), v);
+
+    // c = H(g, y, t)
+    const Integer c = BlogDropUtils::Commit(_params, 
+        _params->GetGroup()->GetGenerator(), 
+        _public_key, 
+        t);
+
+    // r = v - cx (mod q)
+    const Integer q = _params->GetGroup()->GetOrder();
+    const Integer r = ((v - (c * secret.GetInteger())) % q);
+
+    // return (c, r)
+    QPair<Integer,Integer> pair(c, r);
+
+    QByteArray out;
+    QDataStream stream(&out, QIODevice::WriteOnly);
+    stream << pair;
+
+    return out;
+  }
+
+  bool PublicKey::VerifyKnowledge(const QByteArray &proof) const
+  {
+    QPair<Integer,Integer> pair;
+
+    QDataStream stream(proof);
+    stream >> pair;
+
+    const Element g = _params->GetGroup()->GetGenerator();
+    const Integer c = pair.first;
+    const Integer r = pair.second;
+
+    // t' = (g^r)*(y^c)
+
+    const Element t = _params->GetGroup()->CascadeExponentiate(g, r, _public_key, c);
+
+    // check that (c == H(g, y, t))
+    return (c == BlogDropUtils::Commit(_params, g, _public_key, t));
   }
 }
 }

@@ -67,10 +67,6 @@ namespace BlogDrop {
 
     private:
 
-      Integer Commit(const QList<Element> &gs,
-          const QList<Element> &ys,
-          const QList<Element> &ts) const;
-
       QSharedPointer<const Parameters> _params;
       QList<QSharedPointer<const PublicKeySet> > _client_pks;
 

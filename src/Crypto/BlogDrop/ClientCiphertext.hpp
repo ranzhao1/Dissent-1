@@ -2,8 +2,10 @@
 #define DISSENT_CRYPTO_BLOGDROP_CLIENT_CIPHERTEXT_H_GUARD
 
 #include <QSet>
+
 #include "Crypto/AbstractGroup/Element.hpp"
 #include "Crypto/Integer.hpp"
+
 #include "Parameters.hpp"
 #include "Plaintext.hpp"
 #include "PrivateKey.hpp"
@@ -107,9 +109,6 @@ namespace BlogDrop {
 
       void InitializeLists(QList<Element> &gs, QList<Element> &ys) const;
       static bool VerifyOnce(QSharedPointer<const ClientCiphertext> c); 
-
-      Integer Commit(const QList<Element> &gs, const QList<Element> &ys, 
-          const QList<Element> &ts) const;
 
       QSharedPointer<const Parameters> _params;
       QSharedPointer<const PublicKeySet> _server_pks;

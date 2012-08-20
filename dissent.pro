@@ -108,6 +108,7 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/BlogDrop/BlogDropAuthor.hpp \
            src/Crypto/BlogDrop/BlogDropClient.hpp \
            src/Crypto/BlogDrop/BlogDropServer.hpp \
+           src/Crypto/BlogDrop/BlogDropUtils.hpp \
            src/Crypto/BlogDrop/ClientCiphertext.hpp \
            src/Crypto/BlogDrop/Parameters.hpp \
            src/Crypto/BlogDrop/Plaintext.hpp \
@@ -279,6 +280,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/BlogDrop/BlogDropAuthor.cpp \
            src/Crypto/BlogDrop/BlogDropClient.cpp \
            src/Crypto/BlogDrop/BlogDropServer.cpp \
+           src/Crypto/BlogDrop/BlogDropUtils.cpp \
            src/Crypto/BlogDrop/ClientCiphertext.cpp \
            src/Crypto/BlogDrop/Parameters.cpp \
            src/Crypto/BlogDrop/Plaintext.cpp \

@@ -1,6 +1,9 @@
 
 #include <QtCore>
+
 #include "Crypto/CryptoFactory.hpp"
+
+#include "BlogDropUtils.hpp"
 #include "ClientCiphertext.hpp"
 
 namespace Dissent {
@@ -121,7 +124,7 @@ namespace BlogDrop {
 
     // h = H(gs, ys, ts)
     // chal_1 = h - w (mod q)
-    _challenge_1 = (Commit(gs, ys, ts) - w) % q;
+    _challenge_1 = (BlogDropUtils::Commit(_params, gs, ys, ts) - w) % q;
     // chal_2 = w
     _challenge_2 = w;
 
@@ -183,7 +186,7 @@ namespace BlogDrop {
     // chal_1 = w
     _challenge_1 = w;
     // chal_2 = h - w (mod q)
-    _challenge_2 = (Commit(gs, ys, ts) - w) % q;
+    _challenge_2 = (BlogDropUtils::Commit(_params, gs, ys, ts) - w) % q;
 
     // r_auth = v_auth
     _responses.append(v_auth);
@@ -248,31 +251,10 @@ namespace BlogDrop {
       response_idx++;
     }
 
-    Integer hash = Commit(gs, ys, ts);
+    Integer hash = BlogDropUtils::Commit(_params, gs, ys, ts);
     Integer sum = (_challenge_1 + _challenge_2) % q;
 
     return (sum == hash);
-  }
-
-  Integer ClientCiphertext::Commit(const QList<Element> &gs, const QList<Element> &ys, 
-          const QList<Element> &ts) const
-  {
-    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
-    hash->Restart();
-
-    hash->Update(_params->GetGroup()->GetByteArray());
-
-    Q_ASSERT(gs.count() == (1+(2*_nelms)));
-    Q_ASSERT(ys.count() == (1+(2*_nelms)));
-    Q_ASSERT(ts.count() == (1+(2*_nelms)));
-
-    for(int i=0; i<_nelms; i++) {
-      hash->Update(_params->GetGroup()->ElementToByteArray(gs[i]));
-      hash->Update(_params->GetGroup()->ElementToByteArray(ys[i]));
-      hash->Update(_params->GetGroup()->ElementToByteArray(ts[i]));
-    }
-
-    return Integer(hash->ComputeHash()) % _params->GetGroup()->GetOrder();
   }
 
   QByteArray ClientCiphertext::GetByteArray() const 

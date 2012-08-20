@@ -57,9 +57,18 @@ namespace AbstractGroup {
   Element ECGroup::CascadeExponentiate(const Element &a1, const Integer &e1,
       const Element &a2, const Integer &e2) const
   {
+    // For some reason, this is 50% faster than Crypto++'s native
+    // CascadeMultiply
+    return Element(new ECElementData(_curve.Add(
+            _curve.Multiply(ToCryptoInt(e1), GetPoint(a1)),
+            _curve.Multiply(ToCryptoInt(e2), GetPoint(a2)))));
+   
+    /*
     return Element(new ECElementData(_curve.CascadeMultiply(
           ToCryptoInt(e1), GetPoint(a1),
           ToCryptoInt(e2), GetPoint(a2))));
+    */
+    
   }
 
   Element ECGroup::Inverse(const Element &a) const
@@ -96,7 +105,7 @@ namespace AbstractGroup {
 
   Integer ECGroup::RandomExponent() const
   {
-    return Integer::GetRandomInteger(0, GetOrder(), false); 
+    return Integer::GetRandomInteger(1, GetOrder(), false); 
   }
 
   Element ECGroup::RandomElement() const

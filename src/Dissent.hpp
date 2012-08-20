@@ -94,6 +94,7 @@
 #include "Crypto/BlogDrop/BlogDropAuthor.hpp"
 #include "Crypto/BlogDrop/BlogDropClient.hpp"
 #include "Crypto/BlogDrop/BlogDropServer.hpp"
+#include "Crypto/BlogDrop/BlogDropUtils.hpp"
 #include "Crypto/BlogDrop/ClientCiphertext.hpp"
 #include "Crypto/BlogDrop/Parameters.hpp"
 #include "Crypto/BlogDrop/Plaintext.hpp"
