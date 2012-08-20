@@ -87,10 +87,6 @@ namespace Anonymity {
         SERVER_CLIENT_LIST, &BlogDropRound::HandleServerClientList,
         &BlogDropRound::SubmitClientList);
 
-    _state_machine.AddState(SERVER_WAIT_FOR_SERVER_CLIENT_LIST_HASHES,
-        SERVER_CLIENT_LIST_HASH, &BlogDropRound::HandleServerClientListHash,
-        &BlogDropRound::SubmitServerClientListHash);
-
     _state_machine.AddState(SERVER_WAIT_FOR_SERVER_CIPHERTEXT,
         SERVER_CIPHERTEXT, &BlogDropRound::HandleServerCiphertext,
         &BlogDropRound::SubmitServerCiphertext);
@@ -107,8 +103,6 @@ namespace Anonymity {
     _state_machine.AddTransition(SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
         SERVER_WAIT_FOR_CLIENT_LISTS);
     _state_machine.AddTransition(SERVER_WAIT_FOR_CLIENT_LISTS,
-        SERVER_WAIT_FOR_SERVER_CLIENT_LIST_HASHES);
-    _state_machine.AddTransition(SERVER_WAIT_FOR_SERVER_CLIENT_LIST_HASHES,
         SERVER_WAIT_FOR_SERVER_CIPHERTEXT);
     _state_machine.AddTransition(SERVER_WAIT_FOR_SERVER_CIPHERTEXT,
         SERVER_WAIT_FOR_SERVER_VALIDATION);
@@ -242,12 +236,20 @@ namespace Anonymity {
       throw QRunTimeError("Already have server public key");
     }
 
-    QByteArray payload;
-    stream >> payload;
+    QByteArray public_key;
+    QByteArray proof;
+    stream >> public_key >> proof;
 
-    _state->server_pks[server_idx] = QSharedPointer<const PublicKey>(new PublicKey(_state->params, payload));
+    _state->server_pks[server_idx] = QSharedPointer<const PublicKey>(
+        new PublicKey(_state->params, public_key));
+
     if(!_state->server_pks[server_idx]->IsValid()) {
       Stop("Got invalid public key--aborting");
+      return;
+    }
+
+    if(!_state->server_pks[server_idx]->VerifyKnowledge(proof)) {
+      Stop("Server failed to prove knowledge of secret key--aborting");
       return;
     }
 
@@ -358,42 +360,6 @@ namespace Anonymity {
 
     qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
       ": received client list from" << GetGroup().GetIndex(from) <<
-      from.ToString() << "Have" << _server_state->handled_servers.count()
-      << "expecting" << GetGroup().GetSubgroup().Count();
-
-    if(_server_state->handled_servers.count() == GetGroup().GetSubgroup().Count()) {
-      _state_machine.StateComplete();
-    }
-  }
-
-  void BlogDropRound::HandleServerClientListHash(const Id &from, QDataStream &stream)
-  {
-    if(!IsServer()) {
-      throw QRunTimeError("Not a server");
-    } else if(!GetGroup().GetSubgroup().Contains(from)) {
-      throw QRunTimeError("Not a server");
-    }
-
-    Q_ASSERT(_server_state);
-
-    if(_server_state->handled_servers.contains(from)) {
-      throw QRunTimeError("Already have client list hash");
-    }
-
-    QByteArray client_list_hash;
-    stream >> client_list_hash;
-
-    if(client_list_hash != _server_state->my_client_list_hash)
-    {
-      qDebug() << "Mine" << _server_state->my_client_list_hash.toHex()
-        << "Other" << client_list_hash.toHex();
-      throw QRunTimeError("Other client list does not match mine.");
-    }
-
-    _server_state->handled_servers.insert(from);
-
-    qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
-      ": received client list hash from" << GetGroup().GetIndex(from) <<
       from.ToString() << "Have" << _server_state->handled_servers.count()
       << "expecting" << GetGroup().GetSubgroup().Count();
 
@@ -529,8 +495,9 @@ namespace Anonymity {
   {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
-    stream << SERVER_PUBLIC_KEY << GetRoundId() <<
-      _state_machine.GetPhase() << _server_state->server_pub->GetByteArray();
+    stream << SERVER_PUBLIC_KEY << GetRoundId() << _state_machine.GetPhase() 
+      << _server_state->server_pub->GetByteArray()
+      << _server_state->server_pub->ProveKnowledge(_server_state->server_priv);
 
     VerifiableBroadcast(payload);
   }
@@ -652,18 +619,6 @@ namespace Anonymity {
     VerifiableBroadcastToServers(payload);
   }
 
-  void BlogDropRound::SubmitServerClientListHash()
-  {
-    GenerateServerCiphertext();
-
-    QByteArray payload;
-    QDataStream stream(&payload, QIODevice::WriteOnly);
-    stream << SERVER_CLIENT_LIST_HASH << GetRoundId() <<
-      _state_machine.GetPhase() << _server_state->my_client_list_hash;
-
-    VerifiableBroadcastToServers(payload);
-  }
-
   void BlogDropRound::GenerateServerCiphertext()
   {
     // by_slot[slot_idx][client_idx] = ciphertext
@@ -693,14 +648,6 @@ namespace Anonymity {
     QList<QByteArray> values = _server_state->client_ciphertexts.values();
     qSort(values);
 
-    QByteArray to_hash;
-    QDataStream ctexts(&to_hash, QIODevice::WriteOnly);
-    ctexts << values;
-
-    Library *lib = CryptoFactory::GetInstance().GetLibrary();
-    QSharedPointer<Hash> hashalgo(lib->GetHashAlgorithm());
-    _server_state->my_client_list_hash = hashalgo->ComputeHash(to_hash);
-
     QList<QByteArray> server_ctexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
       _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx]);
@@ -713,6 +660,8 @@ namespace Anonymity {
 
   void BlogDropRound::SubmitServerCiphertext()
   {
+    GenerateServerCiphertext();
+
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << SERVER_CIPHERTEXT << GetRoundId() <<

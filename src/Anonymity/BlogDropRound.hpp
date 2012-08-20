@@ -41,7 +41,6 @@ namespace Anonymity {
         CLIENT_CIPHERTEXT = 0,
         SERVER_PUBLIC_KEY,
         SERVER_CLIENT_LIST,
-        SERVER_CLIENT_LIST_HASH,
         SERVER_CIPHERTEXT,
         SERVER_VALIDATION,
         SERVER_CLEARTEXT,
@@ -56,7 +55,6 @@ namespace Anonymity {
         CLIENT_WAIT_FOR_CLEARTEXT,
         SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
         SERVER_WAIT_FOR_CLIENT_LISTS,
-        SERVER_WAIT_FOR_SERVER_CLIENT_LIST_HASHES,
         SERVER_WAIT_FOR_SERVER_CIPHERTEXT,
         SERVER_WAIT_FOR_SERVER_VALIDATION,
         SERVER_PUSH_CLEARTEXT,
@@ -229,7 +227,6 @@ namespace Anonymity {
           /* Serialized hash[id] = serialized list of serialized ciphertexts */
           QHash<Id,QByteArray> client_ciphertexts;
 
-          QByteArray my_client_list_hash;
           QByteArray my_ciphertext;
 
           QSet<Id> handled_servers;
@@ -302,13 +299,6 @@ namespace Anonymity {
       void HandleServerClientList(const Id &from, QDataStream &stream);
 
       /**
-       * Server handles other server hash messages
-       * @param from sender of the message
-       * @param stream message
-       */
-      void HandleServerClientListHash(const Id &from, QDataStream &stream);
-
-      /**
        * Server handles other server ciphertext messages
        * @param from sender of the message
        * @param stream message
@@ -338,7 +328,6 @@ namespace Anonymity {
       void SubmitClientCiphertext();
       void SetOnlineClients();
       void SubmitClientList();
-      void SubmitServerClientListHash();
       void SubmitServerCiphertext();
       void GenerateServerCiphertext();
       QByteArray GenerateClientCiphertext();
