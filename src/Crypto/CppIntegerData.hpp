@@ -178,6 +178,10 @@ namespace Crypto {
         return new CppIntegerData(_integer.InverseMod(GetInteger(mod)));
       }
 
+      /**
+       * Return a mod m
+       * @param mod the modulus
+       */
       virtual IntegerData *Modulo(const IntegerData *modulus) const 
       {
         return new CppIntegerData(_integer % GetInteger(modulus));

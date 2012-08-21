@@ -84,6 +84,10 @@ namespace Crypto {
        */
       virtual IntegerData *Divide(const IntegerData *divisor) const = 0;
 
+      /**
+       * Modulo operator, take a mod m
+       * @param modulus the modulus
+       */
       virtual IntegerData *Modulo(const IntegerData *modulus) const = 0;
 
       /**

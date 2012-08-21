@@ -129,6 +129,10 @@ namespace Crypto {
         return Integer(_data->Divide(divisor._data.constData()));
       }
 
+      /**
+       * Modulo operator, produces a new Integer
+       * @param modulus the modulus to use
+       */
       inline Integer Modulo(const Integer &mod) const
       {
         return Integer(_data->Modulo(mod._data.constData()));
