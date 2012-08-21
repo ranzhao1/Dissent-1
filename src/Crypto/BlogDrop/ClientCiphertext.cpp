@@ -284,7 +284,11 @@ namespace BlogDrop {
   
   QSet<int> ClientCiphertext::VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c)
   {
-    CryptoFactory::ThreadingType t = CryptoFactory::GetInstance().GetThreadingType();
+    // XXX Only allowing single-threaded mode for now. Need to add
+    // synchronization to ECGroup classes if for multi-threading to
+    // work.
+    // CryptoFactory::ThreadingType t = CryptoFactory::GetInstance().GetThreadingType();
+    CryptoFactory::ThreadingType t = CryptoFactory::SingleThreaded;
     QSet<int> valid;
 
     if(t == CryptoFactory::SingleThreaded) {
