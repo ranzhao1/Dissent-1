@@ -98,6 +98,7 @@
 #include "Crypto/BlogDrop/CiphertextFactory.hpp"
 #include "Crypto/BlogDrop/ClientCiphertext.hpp"
 #include "Crypto/BlogDrop/ElGamalClientCiphertext.hpp"
+#include "Crypto/BlogDrop/ElGamalServerCiphertext.hpp"
 #include "Crypto/BlogDrop/Parameters.hpp"
 #include "Crypto/BlogDrop/Plaintext.hpp"
 #include "Crypto/BlogDrop/PrivateKey.hpp"

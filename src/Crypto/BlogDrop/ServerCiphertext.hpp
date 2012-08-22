@@ -3,6 +3,7 @@
 
 #include "Crypto/AbstractGroup/Element.hpp"
 #include "Crypto/Integer.hpp"
+#include "ClientCiphertext.hpp"
 #include "Parameters.hpp"
 #include "PrivateKey.hpp"
 #include "PublicKeySet.hpp"
@@ -23,20 +24,9 @@ namespace BlogDrop {
       /**
        * Constructor: Initialize a ciphertext
        * @param params Group parameters
-       * @param client_pks Client public keys for ciphertexts
+       * @param n_elms number of elements per ciphertext
        */
-      ServerCiphertext(const QSharedPointer<const Parameters> params, 
-          const QList<QSharedPointer<const PublicKeySet> > &client_pks);
-
-      /**
-       * Constructor: Initialize a ciphertext from serialized version
-       * @param params Group parameters
-       * @param client_pks Client public keys
-       * @param serialized serialized byte array
-       */
-      ServerCiphertext(const QSharedPointer<const Parameters> params, 
-          const QList<QSharedPointer<const PublicKeySet> > &client_pks,
-          const QByteArray &serialized);
+      ServerCiphertext(const QSharedPointer<const Parameters> params, int n_elms);
 
       /**
        * Destructor
@@ -47,32 +37,27 @@ namespace BlogDrop {
        * Initialize elements proving correctness of ciphertext
        * @param Server private key used to generate proof
        */
-      void SetProof(const QSharedPointer<const PrivateKey> priv);
+      virtual void SetProof(const QSharedPointer<const PrivateKey> priv) = 0;
 
       /**
        * Check ciphertext proof
        * @param pub public key of server
        * @returns true if proof is okay
        */
-      bool VerifyProof(const QSharedPointer<const PublicKey> pub) const;
+      virtual bool VerifyProof(const QSharedPointer<const PublicKey> pub) const = 0;
 
       /**
        * Get serialized version
        */
-      QByteArray GetByteArray() const;
+      virtual QByteArray GetByteArray() const = 0;
 
-      inline QList<Element> GetElements() const { return _elements; }
-      inline Integer GetChallenge() const { return _challenge; }
-      inline Integer GetResponse() const { return _response; }
+      virtual inline QList<Element> GetElements() const { return _elements; }
 
-    private:
+    protected:
 
       QSharedPointer<const Parameters> _params;
-      QList<QSharedPointer<const PublicKeySet> > _client_pks;
-
       QList<Element> _elements;
-      Integer _challenge;
-      Integer _response;
+      const int _n_elms;
   };
 }
 }

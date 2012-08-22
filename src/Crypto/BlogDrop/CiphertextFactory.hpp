@@ -5,6 +5,7 @@
 #include "Parameters.hpp"
 #include "PublicKey.hpp"
 #include "PublicKeySet.hpp"
+#include "ServerCiphertext.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -17,17 +18,28 @@ namespace BlogDrop {
 
     public:
 
-      static QSharedPointer<Dissent::Crypto::BlogDrop::ClientCiphertext> CreateClientCiphertext(
+      typedef Dissent::Crypto::BlogDrop::ClientCiphertext ClientCiphertext;
+      typedef Dissent::Crypto::BlogDrop::ServerCiphertext ServerCiphertext;
+
+      static QSharedPointer<ClientCiphertext> CreateClientCiphertext(
           const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKeySet> server_pks,
           const QSharedPointer<const PublicKey> author_pub);
 
-      static QSharedPointer<Dissent::Crypto::BlogDrop::ClientCiphertext> CreateClientCiphertext(
+      static QSharedPointer<ClientCiphertext> CreateClientCiphertext(
           const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKeySet> server_pks,
           const QSharedPointer<const PublicKey> author_pub,
           const QByteArray &serialized);
 
+      static QSharedPointer<ServerCiphertext> CreateServerCiphertext(
+          const QSharedPointer<const Parameters> params, 
+          const QList<QSharedPointer<const ClientCiphertext> > &client_ctexts);
+
+      static QSharedPointer<ServerCiphertext> CreateServerCiphertext(
+          const QSharedPointer<const Parameters> params, 
+          const QList<QSharedPointer<const ClientCiphertext> > &client_ctexts,
+          const QByteArray &serialized);
   };
 
 }

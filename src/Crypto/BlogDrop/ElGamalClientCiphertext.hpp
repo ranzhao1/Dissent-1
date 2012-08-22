@@ -68,6 +68,17 @@ namespace BlogDrop {
        */
       virtual QByteArray GetByteArray() const;
 
+      /**
+       * Get the one-time public keys for this ciphertext
+       */
+      inline QList<QSharedPointer<const PublicKey> > GetOneTimeKeys() const { 
+        return _one_time_pubs;
+      }
+
+      inline Integer GetChallenge1() const { return _challenge_1; }
+      inline Integer GetChallenge2() const { return _challenge_2; }
+      inline QList<Integer> GetResponses() const { return _responses; }
+
     private:
       Integer Commit(const QSharedPointer<const Parameters> &params,
           const QList<Element> &gs, 
@@ -75,6 +86,9 @@ namespace BlogDrop {
           const QList<Element> &ts) const;
 
       void InitializeLists(QList<Element> &gs, QList<Element> &ys) const;
+
+      Integer _challenge_1, _challenge_2;
+      QList<Integer> _responses;
 
       QList<QSharedPointer<const PrivateKey> > _one_time_privs;
       QList<QSharedPointer<const PublicKey> > _one_time_pubs;

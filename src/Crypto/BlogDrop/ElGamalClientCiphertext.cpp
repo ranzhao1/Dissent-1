@@ -13,12 +13,9 @@ namespace BlogDrop {
   ElGamalClientCiphertext::ElGamalClientCiphertext(const QSharedPointer<const Parameters> params, 
       const QSharedPointer<const PublicKeySet> server_pks,
       const QSharedPointer<const PublicKey> author_pub) :
-    _params(params),
-    _server_pks(server_pks),
-    _author_pub(author_pub),
-    _nelms(_params->GetNElements())
+    ClientCiphertext(params, server_pks, author_pub, params->GetNElements())
   {
-    for(int i=0; i<_nelms; i++) { 
+    for(int i=0; i<_n_elms; i++) { 
       QSharedPointer<const PrivateKey> priv(new PrivateKey(_params));
       QSharedPointer<const PublicKey> pub(new PublicKey(priv));
       _one_time_privs.append(priv);
@@ -32,17 +29,14 @@ namespace BlogDrop {
       const QSharedPointer<const PublicKeySet> server_pks,
       const QSharedPointer<const PublicKey> author_pub,
       const QByteArray &serialized) :
-    _params(params),
-    _server_pks(server_pks),
-    _author_pub(author_pub),
-    _nelms(_params->GetNElements())
+    ClientCiphertext(params, server_pks, author_pub, params->GetNElements())
   {
     QList<QByteArray> list;
     QDataStream stream(serialized);
     stream >> list;
 
     // 2 challenges, k public keys, k elements, k+1 responses
-    if(list.count() != (2 + _nelms + _nelms + (1+_nelms))) {
+    if(list.count() != (2 + _n_elms + _n_elms + (1+_n_elms))) {
       qWarning() << "Failed to unserialize";
       return; 
     }
@@ -51,18 +45,18 @@ namespace BlogDrop {
     _challenge_1 = Integer(list[list_idx++]);
     _challenge_2 = Integer(list[list_idx++]); 
 
-    for(int j=0; j<_nelms; j++) { 
+    for(int j=0; j<_n_elms; j++) { 
       _elements.append(_params->GetMessageGroup()->ElementFromByteArray(list[list_idx++]));
     }
 
-    for(int j=0; j<_nelms; j++) { 
+    for(int j=0; j<_n_elms; j++) { 
       _one_time_pubs.append(QSharedPointer<const PublicKey>(
             new PublicKey(params, list[list_idx++])));
     }
 
     _responses.append(Integer(list[list_idx++])); 
 
-    for(int j=0; j<_nelms; j++) { 
+    for(int j=0; j<_n_elms; j++) { 
       _responses.append(Integer(list[list_idx++]));
     }
   }
@@ -71,7 +65,7 @@ namespace BlogDrop {
       const Plaintext &m)
   {
     QList<Element> ms = m.GetElements();
-    for(int i=0; i<_nelms; i++) {
+    for(int i=0; i<_n_elms; i++) {
       _elements[i] = _params->GetMessageGroup()->Multiply(_elements[i], ms[i]);
     }
 
@@ -103,7 +97,7 @@ namespace BlogDrop {
     Integer v_auth = _params->GetKeyGroup()->RandomExponent();
     ts.append(_params->GetKeyGroup()->Exponentiate(gs[0], v_auth));
 
-    for(int i=0; i<(2*_nelms); i++) { 
+    for(int i=0; i<(2*_n_elms); i++) { 
       Integer v = _params->GetMessageGroup()->RandomExponent();
       vs.append(v);
 
@@ -119,7 +113,7 @@ namespace BlogDrop {
 
     // r_auth = v_auth - (c1 * x_auth)
     _responses.append((v_auth - (_challenge_1 * author_priv->GetInteger())) % q);
-    for(int i=0; i<_nelms; i++) { 
+    for(int i=0; i<_n_elms; i++) { 
       // r(i) = v(i) 
       _responses.append(vs[i]);
     }
@@ -155,21 +149,21 @@ namespace BlogDrop {
     Integer v_auth = _params->GetKeyGroup()->RandomExponent();
     ts.append(_params->GetKeyGroup()->CascadeExponentiate(ys[0], w, gs[0], v_auth));
 
-    for(int i=0; i<_nelms; i++) { 
+    for(int i=0; i<_n_elms; i++) { 
       vs.append(_params->GetKeyGroup()->RandomExponent());
     }
 
     int v_idx = 0;
-    for(int i=1; i<(1+(2*_nelms)); i++) {
+    for(int i=1; i<(1+(2*_n_elms)); i++) {
       ts.append(_params->GetKeyGroup()->Exponentiate(gs[i], vs[v_idx])); i++;
       ts.append(_params->GetMessageGroup()->Exponentiate(gs[i], vs[v_idx]));
 
       v_idx++;
     }
 
-    Q_ASSERT(v_idx == (_nelms));
-    Q_ASSERT(ts.count() == (1+(2*_nelms)));
-    Q_ASSERT(vs.count() == _nelms);
+    Q_ASSERT(v_idx == (_n_elms));
+    Q_ASSERT(ts.count() == (1+(2*_n_elms)));
+    Q_ASSERT(vs.count() == _n_elms);
 
     // h = H(gs, ys, ts)
     // chal_1 = w
@@ -179,7 +173,7 @@ namespace BlogDrop {
 
     // r_auth = v_auth
     _responses.append(v_auth);
-    for(int i=0; i<_nelms; i++) { 
+    for(int i=0; i<_n_elms; i++) { 
       // r(i) = v(i) - (c2 * secret_key_i)
       _responses.append((vs[i] - (_challenge_2 * _one_time_privs[i]->GetInteger())) % q);
     }
@@ -187,17 +181,17 @@ namespace BlogDrop {
 
   bool ElGamalClientCiphertext::VerifyProof() const
   {
-    if(_elements.count() != _nelms) {
+    if(_elements.count() != _n_elms) {
       qWarning() << "Got proof with incorrect number of elements (" << _elements.count() << ")";
       return false;
     }
 
-    if(_responses.count() != (1+_nelms)) {
+    if(_responses.count() != (1+_n_elms)) {
       qWarning() << "Got proof with incorrect number of responses (" << _responses.count() << ")";
       return false;
     }
 
-    for(int i=0; i<_nelms; i++) { 
+    for(int i=0; i<_n_elms; i++) { 
       if(!(_params->GetKeyGroup()->IsElement(_one_time_pubs[i]->GetElement()) &&
             _params->GetMessageGroup()->IsElement(_elements[i]))) {
         qWarning() << "Got proof with invalid group element";
@@ -230,7 +224,7 @@ namespace BlogDrop {
           gs[0], _responses[0]));
 
     int response_idx = 1;
-    for(int i=1; i<(1+(2*_nelms)); i++) {
+    for(int i=1; i<(1+(2*_n_elms)); i++) {
       ts.append(_params->GetKeyGroup()->CascadeExponentiate(ys[i], _challenge_2,
           gs[i], _responses[response_idx]));
       i++;
@@ -253,11 +247,11 @@ namespace BlogDrop {
     list.append(_challenge_1.GetByteArray());
     list.append(_challenge_2.GetByteArray());
 
-    for(int i=0; i<_nelms; i++) { 
+    for(int i=0; i<_n_elms; i++) { 
       list.append(_params->GetMessageGroup()->ElementToByteArray(_elements[i]));
     }
 
-    for(int i=0; i<_nelms; i++) { 
+    for(int i=0; i<_n_elms; i++) { 
       list.append(_one_time_pubs[i]->GetByteArray());
     }
 
@@ -281,7 +275,7 @@ namespace BlogDrop {
     // g'(i) = product of server PKs
     // ...
     gs.append(g_key);
-    for(int i=0; i<_nelms; i++) { 
+    for(int i=0; i<_n_elms; i++) { 
       gs.append(g_key);
       gs.append(_server_pks->GetElement());
     }
@@ -291,7 +285,7 @@ namespace BlogDrop {
     // y'(i) = client ciphertext element i
     // ...
     ys.append(_author_pub->GetElement());
-    for(int i=0; i<_nelms; i++) { 
+    for(int i=0; i<_n_elms; i++) { 
       ys.append(_one_time_pubs[i]->GetElement());
       ys.append(_elements[i]);
     }

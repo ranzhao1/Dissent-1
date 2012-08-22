@@ -121,6 +121,7 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/BlogDrop/CiphertextFactory.hpp \
            src/Crypto/BlogDrop/ClientCiphertext.hpp \
            src/Crypto/BlogDrop/ElGamalClientCiphertext.hpp \
+           src/Crypto/BlogDrop/ElGamalServerCiphertext.hpp \
            src/Crypto/BlogDrop/Parameters.hpp \
            src/Crypto/BlogDrop/Plaintext.hpp \
            src/Crypto/BlogDrop/PrivateKey.hpp \
@@ -295,6 +296,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/BlogDrop/CiphertextFactory.cpp \
            src/Crypto/BlogDrop/ClientCiphertext.cpp \
            src/Crypto/BlogDrop/ElGamalClientCiphertext.cpp \
+           src/Crypto/BlogDrop/ElGamalServerCiphertext.cpp \
            src/Crypto/BlogDrop/Parameters.cpp \
            src/Crypto/BlogDrop/Plaintext.cpp \
            src/Crypto/BlogDrop/PrivateKey.cpp \

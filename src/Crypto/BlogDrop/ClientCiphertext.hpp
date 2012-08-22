@@ -30,22 +30,12 @@ namespace BlogDrop {
        * @param params Group parameters
        * @param server_pks Server public keys
        * @param author_pub author public key
+       * @param n_elms number of group elements in each ciphertext
        */
       explicit ClientCiphertext(const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKeySet> server_pks,
-          const QSharedPointer<const PublicKey> author_pub);
-
-      /**
-       * Constructor: Initialize a ciphertext from a serialized bytearray
-       * @param params Group parameters
-       * @param server_pks Server public keys
-       * @param author_pub author public key
-       * @param the byte array
-       */
-      explicit ClientCiphertext(const QSharedPointer<const Parameters> params, 
-          const QSharedPointer<const PublicKeySet> server_pks,
-          const QSharedPointer<const PublicKey> author_pub, 
-          const QByteArray &serialized);
+          const QSharedPointer<const PublicKey> author_pub,
+          int n_elms);
 
       /**
        * Destructor
@@ -83,23 +73,24 @@ namespace BlogDrop {
        */
       static QSet<int> VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c);
 
-      inline QList<Element> GetElements() const { return _elements; }
-      inline QSharedPointer<const Parameters> GetParameters() const { return _params; }
-      inline QSharedPointer<const PublicKeySet> GetServerKeys() const { return _server_pks; }
-      inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; } 
-      inline int GetNElements() const { return _n_elms; }
+      virtual inline QList<Element> GetElements() const { return _elements; }
+      virtual inline QSharedPointer<const Parameters> GetParameters() const { return _params; }
+      virtual inline QSharedPointer<const PublicKeySet> GetServerKeys() const { return _server_pks; }
+      virtual inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; } 
+      virtual inline int GetNElements() const { return _n_elms; }
 
     protected:
 
       QList<Element> _elements;
+
+      QSharedPointer<const Parameters> _params;
+      QSharedPointer<const PublicKeySet> _server_pks;
+      QSharedPointer<const PublicKey> _author_pub;
       const int _n_elms;
 
     private:
       static bool VerifyOnce(QSharedPointer<const ClientCiphertext> c); 
 
-      QSharedPointer<const Parameters> _params;
-      QSharedPointer<const PublicKeySet> _server_pks;
-      QSharedPointer<const PublicKey> _author_pub;
   };
 
 }

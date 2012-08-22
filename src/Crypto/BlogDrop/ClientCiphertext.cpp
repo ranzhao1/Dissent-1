@@ -10,6 +10,16 @@ namespace Dissent {
 namespace Crypto {
 namespace BlogDrop {
 
+  ClientCiphertext::ClientCiphertext(const QSharedPointer<const Parameters> params, 
+      const QSharedPointer<const PublicKeySet> server_pks,
+      const QSharedPointer<const PublicKey> author_pub,
+      int n_elms) :
+    _params(params),
+    _server_pks(server_pks),
+    _author_pub(author_pub),
+    _n_elms(n_elms)
+  {}
+
   QSet<int> ClientCiphertext::VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c)
   {
     // XXX Only allowing single-threaded mode for now. Need to add

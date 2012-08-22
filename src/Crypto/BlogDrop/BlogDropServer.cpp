@@ -48,16 +48,8 @@ namespace BlogDrop {
 
   QByteArray BlogDropServer::CloseBin() 
   {
-    // keys[client][element] = key
-    QList<QList<QSharedPointer<const PublicKey> > > keys;
-    for(int client_idx=0; client_idx<_client_ciphertexts.count(); client_idx++) {
-      keys.append(_client_ciphertexts[client_idx]->GetOneTimeKeys());
-    }
-
-    // _client_pks[element] = PublicKeySet for element
-    _client_pks = PublicKeySet::CreateClientKeySets(_params, keys);
-
-    QSharedPointer<ServerCiphertext> s(new ServerCiphertext(_params, _client_pks));
+    QSharedPointer<ServerCiphertext> s = CiphertextFactory::CreateServerCiphertext(
+        _params, _client_ciphertexts);
     s->SetProof(_server_priv);
     return s->GetByteArray();
   }
@@ -65,7 +57,8 @@ namespace BlogDrop {
   bool BlogDropServer::AddServerCiphertext(QSharedPointer<const PublicKey> from, 
       const QByteArray &in) 
   {
-    QSharedPointer<const ServerCiphertext> s(new ServerCiphertext(_params, _client_pks, in));
+    QSharedPointer<const ServerCiphertext> s = CiphertextFactory::CreateServerCiphertext(
+        _params, _client_ciphertexts, in);
 
     if(!s->VerifyProof(from)) return false;
     _server_ciphertexts.append(s);
@@ -78,11 +71,13 @@ namespace BlogDrop {
     Plaintext m(_params);
     for(int client_idx=0; client_idx<_client_ciphertexts.count(); client_idx++)
     {
+      qDebug() << "client" << client_idx;
       m.Reveal(_client_ciphertexts[client_idx]->GetElements());
     }
 
     for(int server_idx=0; server_idx<_server_ciphertexts.count(); server_idx++)
     {
+      qDebug() << "server" << server_idx;
       m.Reveal(_server_ciphertexts[server_idx]->GetElements());
     }
 

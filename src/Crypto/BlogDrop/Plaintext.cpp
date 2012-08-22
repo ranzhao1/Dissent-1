@@ -46,6 +46,7 @@ namespace BlogDrop {
 
   void Plaintext::Reveal(const QList<Element> &c)
   {
+    qDebug() << c.count() << _ms.count();
     Q_ASSERT(c.count() == _ms.count());
 
     for(int i=0; i<_params->GetNElements(); i++) {
