@@ -12,17 +12,20 @@ namespace BlogDrop {
 
   QSharedPointer<Parameters> Parameters::IntegerTestingFixed() 
   {
-    return QSharedPointer<Parameters>(new Parameters(IntegerGroup::TestingFixed(), 2));
+    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::TestingFixed();
+    return QSharedPointer<Parameters>(new Parameters(fixed, fixed, 2));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerProductionFixed() 
   {
-    return QSharedPointer<Parameters>(new Parameters(IntegerGroup::Production2048Fixed(), 1));
+    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::Production2048Fixed();
+    return QSharedPointer<Parameters>(new Parameters(fixed, fixed, 1));
   }
 
   QSharedPointer<Parameters> Parameters::ECProductionFixed() 
   {
-    return QSharedPointer<Parameters>(new Parameters(ECGroup::ProductionFixed(), 8));
+    QSharedPointer<const AbstractGroup> fixed = ECGroup::ProductionFixed();
+    return QSharedPointer<Parameters>(new Parameters(fixed, fixed, 8));
   }
 
   QSharedPointer<Parameters> Parameters::Empty() 
@@ -32,12 +35,16 @@ namespace BlogDrop {
 
   Parameters::Parameters() : _n_elements(0) {}
 
-  Parameters::Parameters(QSharedPointer<const AbstractGroup> group, int n_elements) :
-    _group(group),
+  Parameters::Parameters(QSharedPointer<const AbstractGroup> key_group, 
+      QSharedPointer<const AbstractGroup> msg_group, int n_elements) :
+    _key_group(key_group),
+    _msg_group(msg_group),
     _n_elements(n_elements)
   {
-    Q_ASSERT(!group.isNull());
-    Q_ASSERT(group->IsProbablyValid());
+    Q_ASSERT(!_key_group.isNull());
+    Q_ASSERT(!_msg_group.isNull());
+    Q_ASSERT(key_group->IsProbablyValid());
+    Q_ASSERT(msg_group->IsProbablyValid());
   }
 }
 }

@@ -1,5 +1,6 @@
 #include <QtCore>
 #include "BlogDropServer.hpp"
+#include "CiphertextFactory.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -32,8 +33,8 @@ namespace BlogDrop {
 
     // Unpack each ciphertext
     for(int client_idx=0; client_idx<in.count(); client_idx++) {
-      list.append(QSharedPointer<const ClientCiphertext>(
-            new ClientCiphertext(_params, _server_pk_set, _author_pub, in[client_idx])));
+      list.append(CiphertextFactory::CreateClientCiphertext(_params, 
+            _server_pk_set, _author_pub, in[client_idx]));
     }
 
     QSet<int> valid = ClientCiphertext::VerifyProofs(list);

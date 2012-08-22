@@ -16,7 +16,7 @@ namespace Crypto {
 namespace BlogDrop {
 
   /**
-   * Object holding BlogDrop client ciphertext
+  * Abstract base class representing BlogDrop client ciphertext
    */
   class ClientCiphertext {
 
@@ -48,19 +48,6 @@ namespace BlogDrop {
           const QByteArray &serialized);
 
       /**
-       * Constructor: Initialize a ciphertext with an existing
-       * set of one-time public keys
-       * @param params Group parameters
-       * @param server_pks Server public keys
-       * @param author_pub author public key
-       * @param one_time_pubs the client's one-time public keys
-       */
-      explicit ClientCiphertext(const QSharedPointer<const Parameters> params, 
-          const QSharedPointer<const PublicKeySet> server_pks,
-          const QSharedPointer<const PublicKey> author_pub, 
-          QList<QSharedPointer<const PublicKey> > one_time_pubs);
-
-      /**
        * Destructor
        */
       virtual ~ClientCiphertext() {}
@@ -70,32 +57,23 @@ namespace BlogDrop {
        * @param author_priv author private key used to generate proof
        * @param m author's plaintext message
        */
-      void SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, const Plaintext &m);
+      virtual void SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, const Plaintext &m) = 0;
 
       /**
        * Initialize elements proving correctness of ciphertext
        */
-      void SetProof();
+      virtual void SetProof() = 0;
 
       /**
        * Check ciphertext proof
        * @returns true if proof is okay
        */
-      bool VerifyProof() const;
+      virtual bool VerifyProof() const = 0;
 
       /**
        * Get a byte array for this ciphertext
        */
-      QByteArray GetByteArray() const;
-
-      inline QList<QSharedPointer<const PublicKey> > GetOneTimeKeys() const { 
-          return _one_time_pubs; 
-      }
-
-      inline QList<Element> GetElements() const { return _elements; }
-      inline QList<Integer> GetResponses() const { return _responses; }
-      inline Integer GetChallenge1() const { return _challenge_1; }
-      inline Integer GetChallenge2() const { return _challenge_2; }
+      virtual QByteArray GetByteArray() const = 0;
 
       /**
        * Verify a set of proofs. Uses threading if available, so this might
@@ -105,26 +83,28 @@ namespace BlogDrop {
        */
       static QSet<int> VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c);
 
-    private:
+      inline QList<Element> GetElements() const { return _elements; }
+      inline QSharedPointer<const Parameters> GetParameters() const { return _params; }
+      inline QSharedPointer<const PublicKeySet> GetServerKeys() const { return _server_pks; }
+      inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; } 
+      inline int GetNElements() const { return _n_elms; }
 
-      void InitializeLists(QList<Element> &gs, QList<Element> &ys) const;
+    protected:
+
+      QList<Element> _elements;
+      const int _n_elms;
+
+    private:
       static bool VerifyOnce(QSharedPointer<const ClientCiphertext> c); 
 
       QSharedPointer<const Parameters> _params;
       QSharedPointer<const PublicKeySet> _server_pks;
       QSharedPointer<const PublicKey> _author_pub;
-
-      QList<QSharedPointer<const PrivateKey> > _one_time_privs;
-      QList<QSharedPointer<const PublicKey> > _one_time_pubs;
-
-      QList<Element> _elements;
-      Integer _challenge_1, _challenge_2;
-      QList<Integer> _responses;
-
-      const int _nelms;
   };
+
 }
 }
 }
+
 
 #endif

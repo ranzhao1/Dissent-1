@@ -69,13 +69,13 @@ namespace BlogDrop {
        * Get serialized version of the integer
        */
       inline QByteArray GetByteArray() const { 
-        return _params->GetGroup()->ElementToByteArray(_public_key);
+        return _params->GetKeyGroup()->ElementToByteArray(_public_key);
       }
 
       /**
        * Is the key valid?
        */
-      inline bool IsValid() const { return _params->GetGroup()->IsElement(_public_key); }
+      inline bool IsValid() const { return _params->GetKeyGroup()->IsElement(_public_key); }
 
       /**
        * Return a NIZK proving that the generator knows the secret key
@@ -110,7 +110,7 @@ namespace BlogDrop {
   };
 
   inline uint qHash(const PublicKey &key) { 
-    return qHash(key.GetParameters()->GetGroup()->ElementToByteArray(key.GetElement()));
+    return qHash(key.GetParameters()->GetKeyGroup()->ElementToByteArray(key.GetElement()));
   }
 }
 }

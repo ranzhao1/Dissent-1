@@ -12,6 +12,15 @@ DEFINES += "VERSION=3"
 QMAKE_CXXFLAGS += -Werror
 QMAKE_CFLAGS += -Werror
 
+# Comment out to disable use
+# of pairing-based crypto library
+USE_PBC = "asdf"
+
+!isEmpty(USE_PBC) {
+  DEFINES += "USE_PBC"
+  message( Using PBC library )
+}
+
 # Input
 LIBS += -lcryptopp 
 HEADERS += ext/joyent-http-parser/http_parser.h \
@@ -109,7 +118,9 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/BlogDrop/BlogDropClient.hpp \
            src/Crypto/BlogDrop/BlogDropServer.hpp \
            src/Crypto/BlogDrop/BlogDropUtils.hpp \
+           src/Crypto/BlogDrop/CiphertextFactory.hpp \
            src/Crypto/BlogDrop/ClientCiphertext.hpp \
+           src/Crypto/BlogDrop/ElGamalClientCiphertext.hpp \
            src/Crypto/BlogDrop/Parameters.hpp \
            src/Crypto/BlogDrop/Plaintext.hpp \
            src/Crypto/BlogDrop/PrivateKey.hpp \
@@ -281,7 +292,9 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/BlogDrop/BlogDropClient.cpp \
            src/Crypto/BlogDrop/BlogDropServer.cpp \
            src/Crypto/BlogDrop/BlogDropUtils.cpp \
+           src/Crypto/BlogDrop/CiphertextFactory.cpp \
            src/Crypto/BlogDrop/ClientCiphertext.cpp \
+           src/Crypto/BlogDrop/ElGamalClientCiphertext.cpp \
            src/Crypto/BlogDrop/Parameters.cpp \
            src/Crypto/BlogDrop/Plaintext.cpp \
            src/Crypto/BlogDrop/PrivateKey.cpp \

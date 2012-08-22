@@ -1,5 +1,7 @@
 
 #include "BlogDropAuthor.hpp"
+#include "CiphertextFactory.hpp"
+#include "ClientCiphertext.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -29,9 +31,10 @@ namespace BlogDrop {
 
     if(data.count()) data = data.mid(can_fit);
 
-    ClientCiphertext c(GetParameters(), GetServerKeys(), GetAuthorKey());
-    c.SetAuthorProof(_author_priv, m);
-    out = c.GetByteArray();
+    QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(
+        GetParameters(), GetServerKeys(), GetAuthorKey());
+    c->SetAuthorProof(_author_priv, m);
+    out = c->GetByteArray();
     
     return !data.count();
   }

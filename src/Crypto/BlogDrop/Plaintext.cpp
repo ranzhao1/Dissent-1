@@ -9,17 +9,17 @@ namespace BlogDrop {
     _params(params)
   {
     for(int i=0; i<_params->GetNElements(); i++) {
-      _ms.append(params->GetGroup()->GetIdentity());
+      _ms.append(params->GetMessageGroup()->GetIdentity());
     }
   }
 
   void Plaintext::Encode(const QByteArray &input)
   {
     QByteArray data = input;
-    const int bytesper = _params->GetGroup()->BytesPerElement();
+    const int bytesper = _params->GetMessageGroup()->BytesPerElement();
 
     for(int i=0; i<_params->GetNElements(); i++) {
-      _ms[i] = _params->GetGroup()->EncodeBytes(data.left(bytesper));
+      _ms[i] = _params->GetMessageGroup()->EncodeBytes(data.left(bytesper));
       data = data.mid(bytesper);
     }
   }
@@ -29,7 +29,7 @@ namespace BlogDrop {
     QByteArray out;
     for(int i=0; i<_params->GetNElements(); i++) {
       QByteArray tmp;
-      if(!_params->GetGroup()->DecodeBytes(_ms[i], tmp)) return false;
+      if(!_params->GetMessageGroup()->DecodeBytes(_ms[i], tmp)) return false;
       out += tmp;
     }
 
@@ -40,7 +40,7 @@ namespace BlogDrop {
   void Plaintext::SetRandom()
   {
     for(int i=0; i<_params->GetNElements(); i++) {
-      _ms[i] = _params->GetGroup()->RandomElement();
+      _ms[i] = _params->GetMessageGroup()->RandomElement();
     }
   }
 
@@ -49,7 +49,7 @@ namespace BlogDrop {
     Q_ASSERT(c.count() == _ms.count());
 
     for(int i=0; i<_params->GetNElements(); i++) {
-      _ms[i] = _params->GetGroup()->Multiply(_ms[i], c[i]);
+      _ms[i] = _params->GetMessageGroup()->Multiply(_ms[i], c[i]);
     }
   }
 

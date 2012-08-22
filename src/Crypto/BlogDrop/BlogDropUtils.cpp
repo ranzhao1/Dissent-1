@@ -1,5 +1,6 @@
 
-#include "Crypto/CryptoFactory.hpp"
+#include "Crypto/AbstractGroup/AbstractGroup.hpp"
+
 #include "BlogDropUtils.hpp"
 
 namespace Dissent {
@@ -14,18 +15,22 @@ namespace BlogDrop {
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
 
     hash->Restart();
-    hash->Update(params->GetGroup()->GetByteArray());
+    hash->Update(params->GetKeyGroup()->GetByteArray());
+    hash->Update(params->GetMessageGroup()->GetByteArray());
 
     Q_ASSERT(gs.count() == ys.count());
     Q_ASSERT(gs.count() == ts.count());
 
     for(int i=0; i<gs.count(); i++) {
-      hash->Update(params->GetGroup()->ElementToByteArray(gs[i]));
-      hash->Update(params->GetGroup()->ElementToByteArray(ys[i]));
-      hash->Update(params->GetGroup()->ElementToByteArray(ts[i]));
+      QSharedPointer<const Crypto::AbstractGroup::AbstractGroup> group = 
+        ((!i) ? params->GetKeyGroup() : params->GetMessageGroup());
+
+      hash->Update(group->ElementToByteArray(gs[i]));
+      hash->Update(group->ElementToByteArray(ys[i]));
+      hash->Update(group->ElementToByteArray(ts[i]));
     }
 
-    return Integer(hash->ComputeHash()) % params->GetGroup()->GetOrder();
+    return Integer(hash->ComputeHash()) % params->GetGroupOrder();
   }
 
   Integer BlogDropUtils::Commit(const QSharedPointer<const Parameters> &params,

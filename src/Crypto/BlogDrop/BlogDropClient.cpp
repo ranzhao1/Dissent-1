@@ -1,5 +1,7 @@
 
 #include "BlogDropClient.hpp"
+#include "CiphertextFactory.hpp"
+#include "ClientCiphertext.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -16,7 +18,7 @@ namespace BlogDrop {
 
   QByteArray BlogDropClient::GenerateCoverCiphertext() const 
   {
-    QSharedPointer<ClientCiphertext> c(new ClientCiphertext(_params, _server_pks, _author_pub));
+    QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(_params, _server_pks, _author_pub);
     c->SetProof();
     return c->GetByteArray();
   }

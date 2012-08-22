@@ -42,7 +42,7 @@ namespace BlogDrop {
     _challenge = Integer(list[0]);
     _response = Integer(list[1]);
     for(int i=0; i<_params->GetNElements(); i++) {
-      _elements.append(_params->GetGroup()->ElementFromByteArray(list[2+i]));
+      _elements.append(_params->GetMessageGroup()->ElementFromByteArray(list[2+i]));
     }
   }
 
@@ -52,22 +52,22 @@ namespace BlogDrop {
 
     for(int i=0; i<nelms; i++) {
       // element[i] = (prod of client_pks[i])^-server_sk mod p
-      Element e = _params->GetGroup()->Exponentiate(
+      Element e = _params->GetMessageGroup()->Exponentiate(
             _client_pks[i]->GetElement(), priv->GetInteger()); 
-      e = _params->GetGroup()->Inverse(e);
+      e = _params->GetMessageGroup()->Inverse(e);
       _elements.append(e);
     }
 
-    const Element g = _params->GetGroup()->GetGenerator();
-    const Integer q = _params->GetGroup()->GetOrder();
+    const Element g_key = _params->GetKeyGroup()->GetGenerator();
+    const Integer q = _params->GetGroupOrder();
       
     // v in [0,q) 
-    Integer v = _params->GetGroup()->RandomExponent();
+    Integer v = _params->GetKeyGroup()->RandomExponent();
 
     QList<Element> gs;
 
     // g0 = DH generator
-    gs.append(g);
+    gs.append(g_key);
     for(int i=0; i<nelms; i++) {
       // g(i) = product of client PKs i
       gs.append(_client_pks[i]->GetElement());
@@ -77,12 +77,12 @@ namespace BlogDrop {
     QList<Element> ts;
 
     // t0 = g0^v
-    ts.append(_params->GetGroup()->Exponentiate(g, v));
+    ts.append(_params->GetKeyGroup()->Exponentiate(g_key, v));
 
     for(int i=0; i<nelms; i++) {
       // t(i) = g(i)^-v
-      Element ti = _params->GetGroup()->Exponentiate(_client_pks[i]->GetElement(), v);
-      ti = _params->GetGroup()->Inverse(ti);
+      Element ti = _params->GetMessageGroup()->Exponentiate(_client_pks[i]->GetElement(), v);
+      ti = _params->GetMessageGroup()->Inverse(ti);
       ts.append(ti);
     }
 
@@ -110,7 +110,7 @@ namespace BlogDrop {
     // t'(0) = g0^r  * y0^c
     // t'(i) = g(i)^-r  * y(i)^c
 
-    if(!(_params->GetGroup()->IsElement(pub->GetElement()))) { 
+    if(!(_params->GetKeyGroup()->IsElement(pub->GetElement()))) { 
       qDebug() << "Proof contains illegal group elements";
       return false;
     }
@@ -118,8 +118,8 @@ namespace BlogDrop {
     const int nelms = _params->GetNElements();
 
     for(int i=0; i<nelms; i++) {
-      if(!_params->GetGroup()->IsElement(_client_pks[i]->GetElement()) &&
-      _params->GetGroup()->IsElement(_elements[i])) {
+      if(!_params->GetKeyGroup()->IsElement(_client_pks[i]->GetElement()) &&
+      _params->GetMessageGroup()->IsElement(_elements[i])) {
         qDebug() << "Proof contains illegal group elements";
         return false;
       }
@@ -127,25 +127,26 @@ namespace BlogDrop {
 
     QList<Element> ts;
 
-    const Element g = _params->GetGroup()->GetGenerator();
-    const Integer q = _params->GetGroup()->GetOrder();
+    const Element g_key = _params->GetKeyGroup()->GetGenerator();
+    const Integer q = _params->GetGroupOrder();
 
     // t0 = g0^r * y0^c
-    ts.append(_params->GetGroup()->CascadeExponentiate(g, _response,
+    ts.append(_params->GetKeyGroup()->CascadeExponentiate(g_key, _response,
         pub->GetElement(), _challenge));
 
     for(int i=0; i<nelms; i++) {
       // t(i) = g(i)^-r * y(i)^c
-      Element ti = _params->GetGroup()->Exponentiate(_client_pks[i]->GetElement(), _response);
-      ti = _params->GetGroup()->Inverse(ti);
-      Element ti_tmp = _params->GetGroup()->Exponentiate(_elements[i], _challenge);
-      ti = _params->GetGroup()->Multiply(ti, ti_tmp);
+      Element ti = _params->GetMessageGroup()->Exponentiate(
+          _client_pks[i]->GetElement(), _response);
+      ti = _params->GetMessageGroup()->Inverse(ti);
+      Element ti_tmp = _params->GetMessageGroup()->Exponentiate(_elements[i], _challenge);
+      ti = _params->GetMessageGroup()->Multiply(ti, ti_tmp);
       ts.append(ti); 
     }
 
     QList<Element> gs;
     // g0 = DH generator
-    gs.append(g);
+    gs.append(g_key);
     for(int i=0; i<nelms; i++) {
       // g(i) = product of client PKs i
       gs.append(_client_pks[i]->GetElement());
@@ -169,8 +170,9 @@ namespace BlogDrop {
 
     list.append(_challenge.GetByteArray());
     list.append(_response.GetByteArray());
-    for(int i=0; i<_params->GetNElements(); i++) {
-      list.append(_params->GetGroup()->ElementToByteArray(_elements[i]));
+    list.append(_params->GetKeyGroup()->ElementToByteArray(_elements[0]));
+    for(int i=1; i<_params->GetNElements(); i++) {
+      list.append(_params->GetMessageGroup()->ElementToByteArray(_elements[i]));
     }
 
     QByteArray out;

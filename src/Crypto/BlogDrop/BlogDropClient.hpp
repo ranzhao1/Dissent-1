@@ -3,7 +3,6 @@
 
 #include <QSharedPointer>
 
-#include "ClientCiphertext.hpp"
 #include "Parameters.hpp"
 #include "Plaintext.hpp"
 #include "PrivateKey.hpp"
@@ -31,7 +30,6 @@ namespace BlogDrop {
        * Destructor
        */
       virtual ~BlogDropClient() {}
-
 
       /**
        * Generate a client cover-traffic ciphertext

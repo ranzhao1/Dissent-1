@@ -46,17 +46,42 @@ namespace BlogDrop {
        */
       virtual ~Parameters() {}
 
-      inline QSharedPointer<const AbstractGroup> GetGroup() const { return _group; }
+      /**
+       * Get the group that contains the public key elements 
+       */
+      inline QSharedPointer<const AbstractGroup> GetKeyGroup() const { return _key_group; }
+
+      /**
+       * Get the group that contains the ciphertext and message elements
+       */
+      inline QSharedPointer<const AbstractGroup> GetMessageGroup() const { 
+        return _msg_group;
+      }
 
       int GetNElements() const { return _n_elements; }
+
+      inline Integer GetGroupOrder() const { 
+        // For proofs to work, the two groups must have the same order
+        Q_ASSERT(_key_group->GetOrder() == _msg_group->GetOrder());
+        return _key_group->GetOrder();
+      }
 
     private:
 
       Parameters();
 
-      Parameters(QSharedPointer<const AbstractGroup> group, int n_elements);
+      Parameters(QSharedPointer<const AbstractGroup> key_group, 
+          QSharedPointer<const AbstractGroup> msg_group, int n_elements);
 
-      QSharedPointer<const AbstractGroup> _group;
+      /**
+       * The group containing the public keys
+       */
+      QSharedPointer<const AbstractGroup> _key_group;
+
+      /**
+       * The group containing the message elements (plaintexts + ciphertexts)
+       */
+      QSharedPointer<const AbstractGroup> _msg_group;
 
       /**
        * Number of ciphertext elements in a single ciphertext
