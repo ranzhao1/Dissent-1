@@ -158,6 +158,7 @@ namespace AbstractGroup {
       inline const Pairing &GetPairing() const { return _pairing; }
       inline void SetIdentity(Element e) { _identity = e; }
       inline void SetGenerator(Element e) { _generator = e; }
+      Zr IntegerToZr(const Integer &in) const;
       
       QByteArray _param_str;
 

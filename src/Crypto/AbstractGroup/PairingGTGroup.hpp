@@ -1,5 +1,5 @@
-#ifndef DISSENT_CRYPTO_ABSTRACT_GROUP_PAIRING_G1_GROUP_H_GUARD
-#define DISSENT_CRYPTO_ABSTRACT_GROUP_PAIRING_G1_GROUP_H_GUARD
+#ifndef DISSENT_CRYPTO_ABSTRACT_GROUP_PAIRING_GT_GROUP_H_GUARD
+#define DISSENT_CRYPTO_ABSTRACT_GROUP_PAIRING_GT_GROUP_H_GUARD
 
 #include <gmp.h>
 
@@ -10,16 +10,16 @@ namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
 
-  class PairingG1Group : public PairingGroup {
+  class PairingGTGroup : public PairingGroup {
 
     public:
 
-      static QSharedPointer<PairingG1Group> ProductionFixed();
+      static QSharedPointer<PairingGTGroup> ProductionFixed();
 
       /**
        * Destructor
        */
-      virtual ~PairingG1Group(); 
+      virtual ~PairingGTGroup(); 
 
       /**
        * Multiply two points
@@ -101,11 +101,11 @@ namespace AbstractGroup {
     private:
 
       // Private Constructor
-      PairingG1Group();
+      PairingGTGroup();
 
-      inline G1 GetElement(const Element &a) const
+      inline GT GetElement(const Element &a) const
       {
-        return G1(PairingElementData<G1>::GetElement(a.GetData())); 
+        return GT(PairingElementData<GT>::GetElement(a.GetData())); 
       }
  
   };

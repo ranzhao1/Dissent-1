@@ -115,7 +115,6 @@ namespace AbstractGroup {
   {
     return false;
   }
-
 }
 }
 }

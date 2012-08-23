@@ -10,7 +10,7 @@ INCLUDEPATH += src \
 #DEFINES += QT_NO_DEBUG_OUTPUT
 #DEFINES += QT_NO_WARNING_OUTPUT
 DEFINES += DISSENT_TEST
-DEFINES += PBC_DEBUG
+#DEFINES += PBC_DEBUG
 
 # Input
 HEADERS += ext/googletest/include/gtest/gtest-death-test.h \

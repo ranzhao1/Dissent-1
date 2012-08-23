@@ -32,18 +32,31 @@ namespace AbstractGroup {
     // convert base 10 into base 16
 
   /*
-    const unsigned char generatorT_str[] = 
-          "[795021851328020033538485063506889346340348790473894916238866664663"
-          "9150616295447802746802629878913026197716951475548418491838118674043"
-          "19363059257332521718605, 678205493899729155525770728889429548658760"
-          "4094995139744601370103366002392787037597944280636791426667700330308"
-          "27851052673787698901892811486811655628074359316]";
 */
   };
 
   Integer PairingGroup::RandomExponent() const
   {
     return Integer::GetRandomInteger(1, GetOrder(), false); 
+  }
+  
+  Zr PairingGroup::IntegerToZr(const Integer &in) const
+  { 
+    mpz_t z;
+    // XXX Future: remove this mpz_init call to speed up 
+    // operations
+    mpz_init(z);
+
+    const char *bytes = in.GetByteArray().toHex().constData();
+    if(gmp_sscanf(bytes, "%Zx", z) != 1) {
+      qDebug() << "Bad string" << bytes;
+      qFatal("Could not convert integer");
+    }
+
+    Zr e(_pairing, z);
+    Q_ASSERT(e.isElementPresent());
+    mpz_clear(z);
+    return e; 
   }
 
 }
