@@ -10,6 +10,7 @@ INCLUDEPATH += src \
 #DEFINES += QT_NO_DEBUG_OUTPUT
 #DEFINES += QT_NO_WARNING_OUTPUT
 DEFINES += DISSENT_TEST
+DEFINES += PBC_DEBUG
 
 # Input
 HEADERS += ext/googletest/include/gtest/gtest-death-test.h \
@@ -80,6 +81,7 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/OverlayHelper.cpp \
            src/Tests/PackagersTest.cpp \
            src/Tests/PacketsTest.cpp \
+           src/Tests/PairingGroupTest.cpp \
            src/Tests/PeerReviewTest.cpp \
            src/Tests/RandomTest.cpp \
            src/Tests/RepeatingBulkRoundTest.cpp \

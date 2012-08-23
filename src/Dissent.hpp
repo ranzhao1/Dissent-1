@@ -91,6 +91,8 @@
 #include "Crypto/AbstractGroup/ElementData.hpp"
 #include "Crypto/AbstractGroup/IntegerElementData.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
+#include "Crypto/AbstractGroup/PairingElementData.hpp"
+#include "Crypto/AbstractGroup/PairingGroup.hpp"
 #include "Crypto/BlogDrop/BlogDropAuthor.hpp"
 #include "Crypto/BlogDrop/BlogDropClient.hpp"
 #include "Crypto/BlogDrop/BlogDropServer.hpp"

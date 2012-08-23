@@ -1,7 +1,10 @@
 #include <QByteArray>
 
+#include <pbc/pbc.h>
+
 #include "Crypto/AbstractGroup/ECGroup.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
+#include "Crypto/AbstractGroup/PairingGroup.hpp"
 #include "Parameters.hpp"
 
 using namespace Dissent::Crypto::AbstractGroup;
@@ -27,6 +30,14 @@ namespace BlogDrop {
     QSharedPointer<const AbstractGroup> fixed = ECGroup::ProductionFixed();
     return QSharedPointer<Parameters>(new Parameters(fixed, fixed, 8));
   }
+
+  QSharedPointer<Parameters> Parameters::PairingProductionFixed() 
+  {
+    QSharedPointer<const AbstractGroup> g1 = PairingGroup::ProductionG1Fixed();
+    QSharedPointer<const AbstractGroup> gT = PairingGroup::ProductionGTFixed();
+    return QSharedPointer<Parameters>(new Parameters(g1, gT, 8));
+  }
+
 
   QSharedPointer<Parameters> Parameters::Empty() 
   {

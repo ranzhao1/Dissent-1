@@ -5,16 +5,16 @@
 TEMPLATE = lib
 TARGET = dissent
 DEPENDPATH += 
-INCLUDEPATH += ext/joyent-http-parser/ ext/qt-json/ src/ ext/qxt
+INCLUDEPATH += ext/joyent-http-parser/ ext/qt-json/ src/ ext/qxt ext/PBCWrapper-0.8.0
 CONFIG += qt debug
 QT = core network
 DEFINES += "VERSION=3"
 QMAKE_CXXFLAGS += -Werror
-QMAKE_CFLAGS += -Werror
+QMAKE_CFLAGS += -Werror 
 
 # Comment out to disable use
 # of pairing-based crypto library
-USE_PBC = "asdf"
+USE_PBC = "true"
 
 !isEmpty(USE_PBC) {
   DEFINES += "USE_PBC"
@@ -22,9 +22,18 @@ USE_PBC = "asdf"
 }
 
 # Input
-LIBS += -lcryptopp 
+LIBS += -lcryptopp -lpbc -lgmp
 HEADERS += ext/joyent-http-parser/http_parser.h \
            ext/qt-json/json.h \
+           ext/PBCWrapper-0.8.0/G1.h \
+           ext/PBCWrapper-0.8.0/G2.h \
+           ext/PBCWrapper-0.8.0/G.h \
+           ext/PBCWrapper-0.8.0/GT.h \
+           ext/PBCWrapper-0.8.0/Pairing.h \
+           ext/PBCWrapper-0.8.0/PBCExceptions.h \
+           ext/PBCWrapper-0.8.0/PBC.h \
+           ext/PBCWrapper-0.8.0/PPPairing.h \
+           ext/PBCWrapper-0.8.0/Zr.h \
            ext/qxt/qxtcommandoptions.h \
            ext/qxt/qxtglobal.h \
            src/Dissent.hpp \
@@ -114,6 +123,8 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/AbstractGroup/ElementData.hpp \
            src/Crypto/AbstractGroup/IntegerElementData.hpp \
            src/Crypto/AbstractGroup/IntegerGroup.hpp \
+           src/Crypto/AbstractGroup/PairingElementData.hpp \
+           src/Crypto/AbstractGroup/PairingGroup.hpp \
            src/Crypto/BlogDrop/BlogDropAuthor.hpp \
            src/Crypto/BlogDrop/BlogDropClient.hpp \
            src/Crypto/BlogDrop/BlogDropServer.hpp \
@@ -224,6 +235,13 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
 
 SOURCES += ext/joyent-http-parser/http_parser.c \
            ext/qt-json/json.cpp \
+           ext/PBCWrapper-0.8.0/G1.cc \
+           ext/PBCWrapper-0.8.0/G2.cc \
+           ext/PBCWrapper-0.8.0/G.cc \
+           ext/PBCWrapper-0.8.0/GT.cc \
+           ext/PBCWrapper-0.8.0/Pairing.cc \
+           ext/PBCWrapper-0.8.0/PPPairing.cc \
+           ext/PBCWrapper-0.8.0/Zr.cc \
            ext/qxt/qxtcommandoptions.cpp \
            src/Anonymity/BaseBulkRound.cpp \
            src/Anonymity/BlogDropRound.cpp \
@@ -289,6 +307,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/ThreadedOnionEncryptor.cpp \
            src/Crypto/AbstractGroup/IntegerGroup.cpp \
            src/Crypto/AbstractGroup/ECGroup.cpp \
+           src/Crypto/AbstractGroup/PairingGroup.cpp \
            src/Crypto/BlogDrop/BlogDropAuthor.cpp \
            src/Crypto/BlogDrop/BlogDropClient.cpp \
            src/Crypto/BlogDrop/BlogDropServer.cpp \

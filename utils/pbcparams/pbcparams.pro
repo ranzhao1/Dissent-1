@@ -9,7 +9,7 @@ QT = core network
 DEFINES += "VERSION=3"
 QMAKE_CXXFLAGS += -Werror 
 QMAKE_CFLAGS += -Werror 
-LIBS += -lpbc
+LIBS += -lpbc -lgmp
 
 # Input
 

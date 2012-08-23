@@ -3,7 +3,7 @@
 
 #include <QSharedPointer>
 
-#include "Crypto/AbstractGroup/IntegerGroup.hpp"
+#include "Crypto/AbstractGroup/AbstractGroup.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -35,6 +35,15 @@ namespace BlogDrop {
        * RSA/DH groups)
        */
       static QSharedPointer<Parameters> ECProductionFixed();
+
+      /**
+       * Constructor that uses a type-A pairing group from
+       * the Stanford PBC library
+       *   qbits = 512
+       *   rbits = 510
+       */
+      static QSharedPointer<Parameters> PairingProductionFixed();
+      
       
       /**
        * Constructor that has empty/invalid parameters
