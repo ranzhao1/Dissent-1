@@ -93,6 +93,7 @@
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
 #include "Crypto/AbstractGroup/PairingElementData.hpp"
 #include "Crypto/AbstractGroup/PairingGroup.hpp"
+#include "Crypto/AbstractGroup/PairingG1Group.hpp"
 #include "Crypto/BlogDrop/BlogDropAuthor.hpp"
 #include "Crypto/BlogDrop/BlogDropClient.hpp"
 #include "Crypto/BlogDrop/BlogDropServer.hpp"

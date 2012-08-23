@@ -80,7 +80,7 @@ namespace AbstractGroup {
   {
     const unsigned int nbytes = _curve.EncodedPointSize(false);
     QByteArray out(nbytes, 0);
-    _curve.EncodePoint(reinterpret_cast<unsigned char*>(out.data()), GetPoint(a), false);
+    _curve.EncodePoint((unsigned char*)(out.data()), GetPoint(a), false);
     return out;
   }
   
@@ -88,7 +88,7 @@ namespace AbstractGroup {
   { 
     CryptoPP::ECPPoint point;
     _curve.DecodePoint(point, 
-        reinterpret_cast<const unsigned char*>(bytes.constData()), 
+        (const unsigned char*)(bytes.constData()), 
         bytes.count());
     return Element(new ECElementData(point));
   }

@@ -4,7 +4,7 @@
 
 #include "Crypto/AbstractGroup/ECGroup.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
-#include "Crypto/AbstractGroup/PairingGroup.hpp"
+#include "Crypto/AbstractGroup/PairingG1Group.hpp"
 #include "Parameters.hpp"
 
 using namespace Dissent::Crypto::AbstractGroup;
@@ -33,8 +33,8 @@ namespace BlogDrop {
 
   QSharedPointer<Parameters> Parameters::PairingProductionFixed() 
   {
-    QSharedPointer<const AbstractGroup> g1 = PairingGroup::ProductionG1Fixed();
-    QSharedPointer<const AbstractGroup> gT = PairingGroup::ProductionGTFixed();
+    QSharedPointer<const AbstractGroup> g1 = PairingG1Group::ProductionFixed();
+    QSharedPointer<const AbstractGroup> gT = PairingG1Group::ProductionFixed();
     return QSharedPointer<Parameters>(new Parameters(g1, gT, 8));
   }
 

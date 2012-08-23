@@ -9,7 +9,7 @@ INCLUDEPATH += ext/joyent-http-parser/ ext/qt-json/ src/ ext/qxt ext/PBCWrapper-
 CONFIG += qt debug
 QT = core network
 DEFINES += "VERSION=3"
-QMAKE_CXXFLAGS += -Werror
+QMAKE_CXXFLAGS += -Werror 
 QMAKE_CFLAGS += -Werror 
 
 # Comment out to disable use
@@ -125,6 +125,7 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/AbstractGroup/IntegerGroup.hpp \
            src/Crypto/AbstractGroup/PairingElementData.hpp \
            src/Crypto/AbstractGroup/PairingGroup.hpp \
+           src/Crypto/AbstractGroup/PairingG1Group.hpp \
            src/Crypto/BlogDrop/BlogDropAuthor.hpp \
            src/Crypto/BlogDrop/BlogDropClient.hpp \
            src/Crypto/BlogDrop/BlogDropServer.hpp \
@@ -308,6 +309,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/AbstractGroup/IntegerGroup.cpp \
            src/Crypto/AbstractGroup/ECGroup.cpp \
            src/Crypto/AbstractGroup/PairingGroup.cpp \
+           src/Crypto/AbstractGroup/PairingG1Group.cpp \
            src/Crypto/BlogDrop/BlogDropAuthor.cpp \
            src/Crypto/BlogDrop/BlogDropClient.cpp \
            src/Crypto/BlogDrop/BlogDropServer.cpp \

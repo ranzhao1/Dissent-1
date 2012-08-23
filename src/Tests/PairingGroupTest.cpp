@@ -7,8 +7,7 @@ namespace Tests {
   {
     QList<QSharedPointer<PairingGroup> > list;
 
-    list.append(QSharedPointer<PairingGroup>(PairingGroup::ProductionG1Fixed()));
-    list.append(QSharedPointer<PairingGroup>(PairingGroup::ProductionGTFixed()));
+    list.append(QSharedPointer<PairingGroup>(PairingG1Group::ProductionFixed()));
 
     for(int i=0; i<list.count(); i++) {
       QSharedPointer<PairingGroup> group(list[i]);
@@ -26,7 +25,7 @@ namespace Tests {
 
   TEST(PairingGroup, IsElement) 
   {
-    QSharedPointer<PairingGroup> group = PairingGroup::ProductionG1Fixed();
+    QSharedPointer<PairingGroup> group = PairingG1Group::ProductionFixed();
 
     for(int i=0; i<100; i++) {
       EXPECT_TRUE(group->IsElement(group->RandomElement()));
@@ -35,7 +34,7 @@ namespace Tests {
 
   TEST(PairingGroup, RandomExponent) 
   {
-    QSharedPointer<PairingGroup> group = PairingGroup::ProductionG1Fixed();
+    QSharedPointer<PairingGroup> group = PairingG1Group::ProductionFixed();
 
     for(int i=0; i<100; i++) {
       EXPECT_TRUE(group->IsElement(group->Exponentiate(group->GetGenerator(),

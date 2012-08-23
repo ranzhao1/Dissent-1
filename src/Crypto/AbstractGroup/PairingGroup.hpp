@@ -15,27 +15,24 @@ namespace AbstractGroup {
 
     public:
 
-      static QSharedPointer<PairingGroup> ProductionG1Fixed();
-      static QSharedPointer<PairingGroup> ProductionGTFixed();
-
       /**
        * Destructor
        */
-      virtual ~PairingGroup(); 
+      virtual ~PairingGroup() {}
 
       /**
        * Multiply two points
        * @param a first operand 
        * @param b second operand 
        */
-      virtual Element Multiply(const Element &a, const Element &b) const;
+      virtual Element Multiply(const Element &a, const Element &b) const = 0;
 
       /**
        * Exponentiate a point by scalar exp
        * @param a base
        * @param exp exponent
        */
-      virtual Element Exponentiate(const Element &a, const Integer &exp) const;
+      virtual Element Exponentiate(const Element &a, const Integer &exp) const = 0;
 
       /**
        * Compute (e1^a1 * e2^a2). Generally this can be done much faster
@@ -46,37 +43,40 @@ namespace AbstractGroup {
        * @param e2 exponent 2
        */
       virtual Element CascadeExponentiate(const Element &a1, const Integer &e1,
-          const Element &a2, const Integer &e2) const;
+          const Element &a2, const Integer &e2) const = 0;
 
       /**
        * Compute b such that ab = 1 (identity)
        * @param a element to invert
        */
-      virtual Element Inverse(const Element &a) const;
+      virtual Element Inverse(const Element &a) const = 0;
 
       /**
        * Serialize the element as a QByteArray
        * @param a element to serialize 
        */
-      virtual QByteArray ElementToByteArray(const Element &a) const;
+      virtual QByteArray ElementToByteArray(const Element &a) const = 0;
 
       /**
        * Unserialize an element from a QByteArray
        * @param bytes the byte array to unserialize
        */
-      virtual Element ElementFromByteArray(const QByteArray &bytes) const;
+      virtual Element ElementFromByteArray(const QByteArray &bytes) const = 0;
 
       /**
        * Return true if a is an element of the group 
        * @param a element to test
        */
-      virtual bool IsElement(const Element &a) const;
+      virtual bool IsElement(const Element &) const { 
+        // PBC does not support this operation
+        return true; 
+      }
 
       /**
        * Return true if a == 1 (identity)
        * @param a element to test
        */
-      virtual bool IsIdentity(const Element &a) const;
+      virtual bool IsIdentity(const Element &a) const = 0;
 
       /**
        * Return an integer in [0, q)
@@ -86,7 +86,7 @@ namespace AbstractGroup {
       /**
        * Return a random point on the curve
        */
-      virtual Element RandomElement() const;
+      virtual Element RandomElement() const = 0;
 
       /**
        * Return the group generating point (g)
@@ -139,31 +139,37 @@ namespace AbstractGroup {
        * Check if the group is probably valid. It's hard to
        * check in general, so this is just a "best effort" test.
        */
-      virtual bool IsProbablyValid() const;
+      virtual bool IsProbablyValid() const {
+        // PBC does not support this
+        return true;
+      }
 
       /**
        * Get a byte array representation of the group
        */
-      virtual QByteArray GetByteArray() const;
+      inline virtual QByteArray GetByteArray() const {
+        return _param_str;
+      }
 
     protected:
-      inline QSharedPointer<G> GetElement(const Element &e) const {
-        return PairingElementData::GetElement(e.GetData());
-      }
- 
-      // Private constructor
-      static QSharedPointer<PairingGroup> Create(PairingElementType type);
-      PairingGroup(const char *param_str, int param_len, PairingElementType type);
+      // Protected constructor
+      PairingGroup();
 
-      Pairing _pairing;
-
-      Integer _order;
-      Element _generator;
-      Element _identity;
-
+      inline const Pairing &GetPairing() const { return _pairing; }
+      inline void SetIdentity(Element e) { _identity = e; }
+      inline void SetGenerator(Element e) { _generator = e; }
+      
       QByteArray _param_str;
 
-      PairingElementType _type;
+      Pairing _pairing;
+      Element _identity;
+      Element _generator;
+      Integer _order;
+
+    private:
+      static const char _param_bytes[]; 
+      static const char _order_bytes[]; 
+
   };
 
 }

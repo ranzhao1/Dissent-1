@@ -10,13 +10,13 @@ namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
 
+  template<class T>
   class PairingElementData : public ElementData {
 
     public:
 
-      PairingElementData(QSharedPointer<G> element) {
-        _element = element;
-      }
+      PairingElementData(T element) :
+        _element(element) {}
 
       /**
        * Destructor
@@ -29,7 +29,7 @@ namespace AbstractGroup {
        */
       virtual bool operator==(const ElementData *other) const
       {
-        QSharedPointer<G> e = GetElement(other);
+        T e = GetElement(other);
         return (_element == e);
       }
 
@@ -37,21 +37,24 @@ namespace AbstractGroup {
        * Get the point associated with this ElementData
        * @param data data element to query
        */
-      inline static QSharedPointer<G> GetElement(const ElementData *data) 
+      inline static T GetElement(const ElementData *data) 
       {
-        const PairingElementData *elmdata = dynamic_cast<const PairingElementData*>(data);
+        const PairingElementData<T> *elmdata = 
+          dynamic_cast<const PairingElementData<T>*>(data);
         if(elmdata) {
+          Q_ASSERT(elmdata->_element.isElementPresent());
+          //elmdata->_element.dump(stderr, "element: ", 10);
           return elmdata->_element;
         } else {
           qFatal("Invalid cast");
         }
 
-        return QSharedPointer<G>();
+        return T();
       }
 
-    private:
+    private: 
 
-      QSharedPointer<G> _element;
+      T _element;
 
   };
 
