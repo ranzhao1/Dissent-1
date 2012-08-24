@@ -2,6 +2,7 @@
 #define DISSENT_CRYPTO_ABSTRACT_GROUP_PAIRING_GROUP_H_GUARD
 
 #include <QSharedPointer>
+#include <gmp.h>
 #include <PBC.h>
 
 #include "AbstractGroup.hpp"
@@ -18,7 +19,7 @@ namespace AbstractGroup {
       /**
        * Destructor
        */
-      virtual ~PairingGroup() {}
+      virtual ~PairingGroup();
 
       /**
        * Multiply two points
@@ -166,6 +167,8 @@ namespace AbstractGroup {
       Element _identity;
       Element _generator;
       Integer _order;
+
+      mpz_t *_z_tmp;
 
     private:
       static const char _param_bytes[]; 
