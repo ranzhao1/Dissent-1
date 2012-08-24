@@ -1,6 +1,7 @@
 BlogDrop (23 August 2012)
 - Add encode and decode to Pairing groups
 - Implement pairing proof 
+- Implement Bryan's proof
 - OpenSSL EC implementation
 
 

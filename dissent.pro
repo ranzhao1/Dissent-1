@@ -118,8 +118,8 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/ThreadedOnionEncryptor.hpp \
            src/Crypto/Serialization.hpp \
            src/Crypto/AbstractGroup/AbstractGroup.hpp \
-           src/Crypto/AbstractGroup/ECElementData.hpp \
-           src/Crypto/AbstractGroup/ECGroup.hpp \
+           src/Crypto/AbstractGroup/CppECElementData.hpp \
+           src/Crypto/AbstractGroup/CppECGroup.hpp \
            src/Crypto/AbstractGroup/Element.hpp \
            src/Crypto/AbstractGroup/ElementData.hpp \
            src/Crypto/AbstractGroup/IntegerElementData.hpp \
@@ -309,7 +309,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/OnionEncryptor.cpp \
            src/Crypto/ThreadedOnionEncryptor.cpp \
            src/Crypto/AbstractGroup/IntegerGroup.cpp \
-           src/Crypto/AbstractGroup/ECGroup.cpp \
+           src/Crypto/AbstractGroup/CppECGroup.cpp \
            src/Crypto/AbstractGroup/PairingGroup.cpp \
            src/Crypto/AbstractGroup/PairingG1Group.cpp \
            src/Crypto/AbstractGroup/PairingGTGroup.cpp \

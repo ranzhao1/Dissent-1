@@ -1,5 +1,5 @@
-#ifndef DISSENT_CRYPTO_ABSTRACT_GROUP_EC_ELEMENT_DATA_H_GUARD
-#define DISSENT_CRYPTO_ABSTRACT_GROUP_EC_ELEMENT_DATA_H_GUARD
+#ifndef DISSENT_CRYPTO_ABSTRACT_GROUP_CPP_EC_ELEMENT_DATA_H_GUARD
+#define DISSENT_CRYPTO_ABSTRACT_GROUP_CPP_EC_ELEMENT_DATA_H_GUARD
 
 #include <cryptopp/ecp.h>
 #include <QByteArray>
@@ -10,9 +10,10 @@ namespace Crypto {
 namespace AbstractGroup {
 
   /**
-   * This is a point on an elliptic curve.
+   * This is a point on an elliptic curve
+
    */
-  class ECElementData : public ElementData {
+  class CppECElementData : public ElementData {
 
     public:
 
@@ -20,12 +21,12 @@ namespace AbstractGroup {
        * Constructor
        * @param point elliptic curve point
        */
-      ECElementData(CryptoPP::ECPPoint point) : _point(point) {}
+      CppECElementData(CryptoPP::ECPPoint point) : _point(point) {}
 
       /**
        * Destructor
        */
-      virtual ~ECElementData() {}
+      virtual ~CppECElementData() {}
 
       /**
        * Equality operator
@@ -42,8 +43,8 @@ namespace AbstractGroup {
        */
       inline static CryptoPP::ECPPoint GetPoint(const ElementData *data)
       {
-        const ECElementData *elmdata =
-          dynamic_cast<const ECElementData*>(data);
+        const CppECElementData *elmdata =
+          dynamic_cast<const CppECElementData*>(data);
         if(elmdata) {
           return elmdata->_point;
         } else {

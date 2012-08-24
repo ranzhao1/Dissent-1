@@ -58,10 +58,10 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/BlogDropRoundTest.cpp \
            src/Tests/BulkRoundTest.cpp \
            src/Tests/ConnectionTest.cpp \
+           src/Tests/CppECGroupTest.cpp \
            src/Tests/Crypto.cpp \
            src/Tests/CSBulkRoundTest.cpp \
            src/Tests/CSOverlayTest.cpp \
-           src/Tests/ECGroupTest.cpp \
            src/Tests/DsaCryptoTest.cpp \
            src/Tests/EdgeTest.cpp \
            src/Tests/GroupTest.cpp \
