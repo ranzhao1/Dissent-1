@@ -23,18 +23,18 @@ namespace AbstractGroup {
       _generator(EC_POINT_new(_group))
     {
       Q_ASSERT(_group);
-      Q_ASSERT(!BN_zero(_zero));
-      Q_ASSERT(!BN_one(_one));
+      Q_ASSERT(BN_zero(_zero));
+      Q_ASSERT(BN_one(_one));
 
       // affine coordinates are the "normal" (x,y) pairs
-      Q_ASSERT(!EC_POINT_set_affine_coordinates_GFp(_group, 
+      Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_group, 
             _generator, _gx, _gy, _xtx));
 
       // precompute multiplication helper data
-      Q_ASSERT(!EC_GROUP_precompute_mult(_group, _ctx);
+      Q_ASSERT(EC_GROUP_precompute_mult(_group, _ctx);
 
       // Cofactor of our curves are always 1
-      Q_ASSERT(!EC_GROUP_set_generator(_group, _generator, _q, _one));
+      Q_ASSERT(EC_GROUP_set_generator(_group, _generator, _q, _one));
     };
 
   OpenECGroup::~OpenECGroup() 
@@ -98,7 +98,7 @@ namespace AbstractGroup {
     Q_ASSERT(r);
 
     // r = a + b
-    Q_ASSERT(!EC_POINT_add(_group, r, GetPoint(a), GetPoint(b), _ctx));
+    Q_ASSERT(EC_POINT_add(_group, r, GetPoint(a), GetPoint(b), _ctx));
 
     return Element(new OpenECElementData(r));
   }
@@ -116,7 +116,7 @@ namespace AbstractGroup {
     ps[0] = GetPoint(a);
     ms[0] = _tmp0;
 
-    Q_ASSERT(!EC_POINTs_mul(_group, r, _zero, 1, ps, ms, _ctx));
+    Q_ASSERT(EC_POINTs_mul(_group, r, _zero, 1, ps, ms, _ctx));
 
     return Element(new OpenECElementData(r));
   }
@@ -138,7 +138,7 @@ namespace AbstractGroup {
     ms[0] = _tmp0;
     ms[1] = _tmp2;
 
-    Q_ASSERT(!EC_POINTs_mul(_group, r, _zero, 2, ps, ms, _ctx));
+    Q_ASSERT(EC_POINTs_mul(_group, r, _zero, 2, ps, ms, _ctx));
 
     return Element(new OpenECElementData(r));
   }
@@ -148,39 +148,38 @@ namespace AbstractGroup {
     EC_POINT *r = EC_POINT_dup(GetPoint(a));
     Q_ASSERT(r);
 
-    Q_ASSERT(!EC_POINT_invert(_group, r, _ctx));
+    Q_ASSERT(EC_POINT_invert(_group, r, _ctx));
     return Element(new OpenECElementData(r));
   }
   
   QByteArray OpenECGroup::ElementToByteArray(const Element &a) const
   {
-    /*
-    const unsigned int nbytes = _curve.EncodedPointSize(false);
+    // Get number of bytes requires to hold point
+    const unsigned int nbytes = EC_POINT_point2oct(_group, GetPoint(a),
+      POINT_CONVERSION_UNCOMPRESSED, NULL, 0, _ctx);
     QByteArray out(nbytes, 0);
-    _curve.EncodePoint((unsigned char*)(out.data()), GetPoint(a), false);
-    */
+
+    Q_ASSERT(EC_POINT_point2oct(_group, GetPoint(a),
+      POINT_CONVERSION_UNCOMPRESSED, out.data(), out.count(), _ctx));
     return out;
   }
   
   Element OpenECGroup::ElementFromByteArray(const QByteArray &bytes) const 
   { 
-    /*
-    CryptoPP::ECPPoint point;
-    _curve.DecodePoint(point, 
-        (const unsigned char*)(bytes.constData()), 
-        bytes.count());
-        */
+    EC_POINT *point = EC_POINT_new(_group);
+    Q_ASSERT(EC_POINT_oct2point(_group, point, bytes.constData(),
+          bytes.count(), _ctx));
     return Element(new OpenECElementData(point));
   }
 
   bool OpenECGroup::IsElement(const Element &a) const 
   {
-    return _curve.VerifyPoint(GetPoint(a));
+    return EC_POINT_is_on_curve(_group, GetPoint(a), _ctx);
   }
 
   bool OpenECGroup::IsIdentity(const Element &a) const 
   {
-    return (a == GetIdentity());
+    return EC_POINT_is_at_infinity(_group, GetPoint(a));
   }
 
   Integer OpenECGroup::RandomExponent() const
@@ -285,59 +284,62 @@ namespace AbstractGroup {
 
   bool OpenECGroup::IsProbablyValid() const
   {
-    qDebug() << IsElement(GetGenerator());
-    qDebug() << IsIdentity(Exponentiate(GetGenerator(), GetOrder()));
-
-    return IsElement(GetGenerator()) && 
-      IsIdentity(Exponentiate(GetGenerator(), GetOrder())) &&
-      CryptoPP::IsPrime(_curve.FieldSize()) &&
-      CryptoPP::IsPrime(ToCryptoInt(GetOrder()));
+    return EC_GROUP_check(_group, _ctx);
   }
 
   QByteArray OpenECGroup::GetByteArray() const
   {
+    QByteArray p(BN_num_bytes(p), 0);
+    QByteArray a(BN_num_bytes(a), 0);
+    QByteArray b(BN_num_bytes(b), 0);
+    QByteArray gx(BN_num_bytes(gx), 0);
+    
+    Q_ASSERT(BN_bn2bin(_p, p.data()));
+    Q_ASSERT(BN_bn2bin(_a, a.data()));
+    Q_ASSERT(BN_bn2bin(_b, b.data()));
+    Q_ASSERT(BN_bn2bin(_gx, gx.data()));
+
     QByteArray out;
     QDataStream stream(&out, QIODevice::WriteOnly);
 
-    stream << FromCryptoInt(_curve.FieldSize()).GetByteArray() 
-      << FromCryptoInt(_curve.GetA()).GetByteArray()
-      << FromCryptoInt(_curve.GetB()).GetByteArray();
+    stream << p, a, b, gx;
 
     return out;
   }
 
-  bool OpenECGroup::SolveForY(const CryptoPP::Integer &x, Element &point) const
+  bool OpenECGroup::SolveForY(EC_POINT *ret, BIGNUM *x) const
   {
     // y^2 = x^3 + ax + b (mod p)
 
     CryptoPP::ModularArithmetic arith(_curve.FieldSize());
 
     // tmp = x
-    CryptoPP::Integer tmp = x;
+    Q_ASSERT(BN_copy(_tmp0, x));
 
     // tmp = x^2
-    tmp = arith.Square(tmp);
+    Q_ASSERT(BN_mod_sqr(_tmp0, _tmp0, _p, _ctx));
 
     // tmp = x^2 + a
-    tmp = arith.Add(tmp, _curve.GetA());
+    Q_ASSERT(BN_mod_add(_tmp0, _tmp0, _a, _p, _ctx));
 
     // tmp = x (x^2 + a) == (x^3 + ax)
-    tmp = arith.Multiply(tmp, x);
+    Q_ASSERT(BN_mod_mul(_tmp0, _tmp0, x, _p, _ctx));
 
     // tmp = x^3 + ax + b
-    tmp = arith.Add(tmp, _curve.GetB());
+    Q_ASSERT(BN_mod_add(_tmp0, _tmp0, _b, _p, _ctx));
    
     // does there exist y such that (y^2 = x^3 + ax + b) mod p ?
+    Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_group, 
+            _generator, _gx, _gy, _ctx));
 
     // jacobi symbol is 1 if tmp is a non-trivial 
     // quadratic residue mod p
-    bool solved = (CryptoPP::Jacobi(tmp, _curve.FieldSize()) == 1);
+    bool solved = (BN_kronecker(_tmp0, _p, _ctx) == 1);
 
     if(solved) {
-      const CryptoPP::Integer y = CryptoPP::ModularSquareRoot(tmp, _curve.FieldSize());
-
-      point = Element(new OpenECElementData(CryptoPP::ECPPoint(x, y)));
-      Q_ASSERT(IsElement(point));
+      Q_ASSERT(BN_mod_sqrt(_tmp1, _tmp0, _p, _ctx));
+      Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_group, ret, _tmp0, _tmp1, _ctx));
+      Q_ASSERT(EC_POINT_is_on_curve(_group, ret, _ctx));
     }
 
     return solved;

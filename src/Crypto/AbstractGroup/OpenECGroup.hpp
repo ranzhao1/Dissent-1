@@ -131,7 +131,11 @@ namespace AbstractGroup {
        * Return the number of bytes that can be
        * encoded in a single group element
        */
-      virtual int BytesPerElement() const;
+      inline virtual int BytesPerElement() const {
+        // Bytes in field minus bytes in parameter k
+        // minus two padding bytes
+        return (_field_bytes - _k_bytes - 2);
+      }
 
       /**
        * Encode ByteArray into group element. Fails if the 
