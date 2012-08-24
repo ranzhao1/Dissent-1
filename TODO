@@ -1,10 +1,9 @@
 BlogDrop (23 August 2012)
 - Add encode and decode to Pairing groups
+  * Use OpenECGroup to do encoding and decoding
 - Implement pairing proof 
 - Implement Bryan's proof
-- OpenSSL EC implementation
 - Implement Bryan's scheme
-- Use montgomery multiplication in OpenSSL
 
 
 -----------------
