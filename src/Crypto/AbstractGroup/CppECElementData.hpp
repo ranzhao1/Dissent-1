@@ -11,7 +11,7 @@ namespace AbstractGroup {
 
   /**
    * This is a point on an elliptic curve
-
+   * implemented using Crypto++
    */
   class CppECElementData : public ElementData {
 
