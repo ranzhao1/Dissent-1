@@ -24,7 +24,7 @@ namespace AbstractGroup {
        * @param ctx BIGNUM context
        */
       OpenECElementData(EC_POINT *point, EC_GROUP *group, BN_CTX *ctx) : 
-        _point(point), _group(group), _ctx(gtx) {}
+        _point(point), _group(group), _ctx(ctx) {}
 
       /**
        * Destructor

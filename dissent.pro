@@ -18,7 +18,8 @@ USE_PBC = "true"
 
 !isEmpty(USE_PBC) {
   DEFINES += "USE_PBC"
-  LIBS += "/usr/local/lib/libpbc.a"
+#LIBS += "/usr/local/lib/libpbc.a"
+  LIBS += -lpbc -lcrypto
   message( Using PBC library )
 }
 
@@ -124,6 +125,8 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/AbstractGroup/ElementData.hpp \
            src/Crypto/AbstractGroup/IntegerElementData.hpp \
            src/Crypto/AbstractGroup/IntegerGroup.hpp \
+           src/Crypto/AbstractGroup/OpenECElementData.hpp \
+           src/Crypto/AbstractGroup/OpenECGroup.hpp \
            src/Crypto/AbstractGroup/PairingElementData.hpp \
            src/Crypto/AbstractGroup/PairingGroup.hpp \
            src/Crypto/AbstractGroup/PairingG1Group.hpp \
@@ -310,6 +313,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/ThreadedOnionEncryptor.cpp \
            src/Crypto/AbstractGroup/IntegerGroup.cpp \
            src/Crypto/AbstractGroup/CppECGroup.cpp \
+           src/Crypto/AbstractGroup/OpenECGroup.cpp \
            src/Crypto/AbstractGroup/PairingGroup.cpp \
            src/Crypto/AbstractGroup/PairingG1Group.cpp \
            src/Crypto/AbstractGroup/PairingGTGroup.cpp \

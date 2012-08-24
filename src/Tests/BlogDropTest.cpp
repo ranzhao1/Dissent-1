@@ -530,7 +530,7 @@ namespace Tests {
   }
 
   void BenchmarkGroup(QSharedPointer<const Parameters> params,
-      QSharedPointer<const AbstractGroup::AbstractGroup> group)
+      QSharedPointer<const AbstractGroup> group)
   {
     Element a1 = group->RandomElement();
     Integer e1 = group->RandomExponent();
@@ -553,9 +553,14 @@ namespace Tests {
     Benchmark(Parameters::Parameters::IntegerProductionFixed());
   }
 
-  TEST(BlogDrop, BenchmarkEC) 
+  TEST(BlogDrop, BenchmarkCppEC) 
   {
     Benchmark(Parameters::Parameters::CppECProductionFixed());
+  }
+
+  TEST(BlogDrop, BenchmarkOpenEC) 
+  {
+    Benchmark(Parameters::Parameters::OpenECProductionFixed());
   }
 
   TEST(BlogDrop, BenchmarkIntegerRaw) 

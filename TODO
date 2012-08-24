@@ -4,6 +4,7 @@ BlogDrop (23 August 2012)
 - Implement Bryan's proof
 - OpenSSL EC implementation
 - Implement Bryan's scheme
+- Use montgomery multiplication in OpenSSL
 
 
 -----------------

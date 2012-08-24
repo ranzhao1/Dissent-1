@@ -113,19 +113,31 @@ namespace AbstractGroup {
       /**
        * Return the group generating point (g)
        */
-      inline virtual Element GetGenerator() const { 
-        return Element(new OpenECElementData(_g)); 
+      inline virtual Element GetGenerator() const 
+      { 
+        EC_POINT *g = EC_POINT_dup(_generator, _data->group);
+        Q_ASSERT(g);
+        return NewElement(g);
       }
       
       /**
        * Return the group order (q)
        */
-      inline virtual Integer GetOrder() const;
+      inline virtual Integer GetOrder() const 
+      {
+        return GetCppInteger(_q);
+      }
 
       /**
        * Return the group identity element O
        */
-      inline virtual Element GetIdentity() const; 
+      inline virtual Element GetIdentity() const
+      {
+        EC_POINT *i = EC_POINT_new(_data->group);
+        Q_ASSERT(i);
+        Q_ASSERT(EC_POINT_set_to_infinity(_data->group, i));
+        return NewElement(i);
+      }
 
       /**
        * Return the number of bytes that can be
@@ -172,26 +184,24 @@ namespace AbstractGroup {
 
     private:
 
+      inline Element NewElement(EC_POINT *e) const 
+      {
+        return Element(new OpenECElementData(e, _data->group, _data->ctx)); 
+      }
+
+
       /**
        * Create a new BIGNUM from Integer. ret
        * must already have been initialized with BN_new()
        */
-      void GetInteger(BIGNUM *ret, const Integer &i) const;
+      static void GetInteger(BIGNUM *ret, const Integer &i);
+      static Integer GetCppInteger(const BIGNUM *a);
+      static EC_POINT *GetPoint(const Element &e);
 
-      EC_POINT *GetPoint(const Element &e) const;
-
-      inline static CryptoPP::Integer ToCryptoInt(const Integer &e) 
-      {
-        // Hex encoding does not include minus sign        
-        CryptoPP::Integer i(("0x"+e.GetByteArray().toHex()).constData());
-        if(e < 0) i.SetNegative();
-        return i;
-      }
-
-      inline static Integer FromCryptoInt(const CryptoPP::Integer &i)
-      {
-        return Integer(new CppIntegerData(i));
-      }
+      /**
+       * Fast multiplication mod p using stored BN_MONT_CTX
+       */
+      int FastModMul(BIGNUM *r, BIGNUM *a, BIGNUM *b) const;
 
       /** 
        * Try to solve EC equation for y given x
@@ -199,7 +209,36 @@ namespace AbstractGroup {
        * @param point returned ECP point if solution found
        * @returns true if found solution
        */
-      bool SolveForY(const CryptoPP::Integer &x, Element &point) const;
+      bool SolveForY(EC_POINT *ret, BIGNUM *x) const;
+
+      /**
+       * These are members of the class that will change
+       */
+      class MutableData {
+        public:
+          MutableData() :
+            tmp0(BN_new()),
+            tmp1(BN_new()),
+            ctx(BN_CTX_new()),
+            mont(BN_MONT_CTX_new()),
+            group(EC_GROUP_new(EC_GFp_nist_method())) 
+          {}
+
+          ~MutableData() {
+            EC_GROUP_clear_free(group);
+            BN_MONT_CTX_free(mont);
+            BN_CTX_free(ctx);
+            BN_clear_free(tmp0);
+            BN_clear_free(tmp1);
+          }
+
+          BIGNUM *tmp0;
+          BIGNUM *tmp1;
+
+          BN_CTX *ctx;
+          BN_MONT_CTX *mont;
+          EC_GROUP *group;
+      };
 
       BIGNUM *_p;
       BIGNUM *_q;
@@ -208,19 +247,19 @@ namespace AbstractGroup {
       BIGNUM *_gx;
       BIGNUM *_gy;
 
+      BIGNUM *_zero;
       BIGNUM *_one;
 
-      BIGNUM *_tmp0, *_tmp1;
-
-      BN_CTX *_ctx;
-      EC_GROUP *_group;
+      MutableData *_data;
       EC_POINT *_generator;
 
       Integer _order;
 
       /** Serialization parameters */
+      BIGNUM *_k;
       static const int _k_bytes = 1;
-      static const int _k = (1 << (_k_bytes*8));
+      static const int _k_int = (1 << (_k_bytes*8));
+      const int _field_bytes;
 
   };
 

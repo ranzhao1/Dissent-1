@@ -5,38 +5,17 @@ namespace Tests {
 
   TEST(CppECGroup, Basic)
   {
-    QSharedPointer<CppECGroup> group(CppECGroup::ProductionFixed());
-
-    Element g = group->GetGenerator();
-
-    ASSERT_TRUE(group->IsProbablyValid());
-    ASSERT_EQ(g, g);
-
-    ASSERT_TRUE(group->IsElement(g));
-    ASSERT_FALSE(group->IsIdentity(g));
-    ASSERT_TRUE(group->IsIdentity(group->Exponentiate(g, group->GetOrder())));
-    ASSERT_TRUE(group->IsElement(group->Exponentiate(g, group->RandomExponent())));
-    ASSERT_FALSE(group->IsIdentity(group->Exponentiate(g, group->RandomExponent())));
-    ASSERT_TRUE(group->IsElement(group->Multiply(g, g)));
+    AbstractGroup_Basic(CppECGroup::ProductionFixed());
   }
 
   TEST(CppECGroup, IsElement) 
   {
-    QSharedPointer<CppECGroup> group = CppECGroup::ProductionFixed();
-
-    for(int i=0; i<100; i++) {
-      EXPECT_TRUE(group->IsElement(group->RandomElement()));
-    }
+    AbstractGroup_IsElement(CppECGroup::ProductionFixed());
   }
 
   TEST(CppECGroup, RandomExponent) 
   {
-    QSharedPointer<CppECGroup> group = CppECGroup::ProductionFixed();
-
-    for(int i=0; i<100; i++) {
-      EXPECT_TRUE(group->IsElement(group->Exponentiate(group->GetGenerator(),
-              group->RandomExponent())));
-    }
+    AbstractGroup_RandomExponent(CppECGroup::ProductionFixed());
   }
 
   TEST(CppECGroup, NotElement) 
@@ -55,6 +34,16 @@ namespace Tests {
     }
 
     EXPECT_TRUE(count < 5);
+  }
+  
+  TEST(CppECGroup, Multiplication) 
+  {
+    AbstractGroup_Multiplication(CppECGroup::ProductionFixed());
+  }
+
+  TEST(CppECGroup, Exponentiation) 
+  {
+    AbstractGroup_Exponentiation(CppECGroup::ProductionFixed());
   }
 
 }

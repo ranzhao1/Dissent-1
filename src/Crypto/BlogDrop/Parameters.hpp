@@ -32,9 +32,16 @@ namespace BlogDrop {
       /**
        * Constructor that uses 256-bit fixed EC group 
        * (Supposedly 256-bit ECs are equivalent to 3072-bit 
-       * RSA/DH groups)
+       * RSA/DH groups) implemented with Crypto++
        */
       static QSharedPointer<Parameters> CppECProductionFixed();
+
+      /**
+       * Constructor that uses 256-bit fixed EC group 
+       * (Supposedly 256-bit ECs are equivalent to 3072-bit 
+       * RSA/DH groups) implemented with OpenSSL
+       */
+      static QSharedPointer<Parameters> OpenECProductionFixed();
 
       /**
        * Constructor that uses a type-A pairing group from

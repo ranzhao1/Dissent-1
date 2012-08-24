@@ -13,36 +13,18 @@ namespace Tests {
     list.append(QSharedPointer<IntegerGroup>(IntegerGroup::Production2048Fixed()));
 
     for(int i=0; i<list.count(); i++) {
-      QSharedPointer<IntegerGroup> group(list[i]);
-
-      Element g = group->GetGenerator();
-
-      ASSERT_TRUE(group->IsProbablyValid());
-      ASSERT_EQ(g, g);
-      ASSERT_TRUE(group->IsElement(g));
-      ASSERT_FALSE(group->IsIdentity(g));
-      ASSERT_TRUE(group->IsIdentity(group->Exponentiate(g, group->GetOrder())));
-      ASSERT_TRUE(group->IsElement(group->Multiply(g, g)));
+      AbstractGroup_Basic(list[i]);
     }
   }
 
-  TEST(IntegerGroup, IsElement) 
+  TEST(IntegerGroup, IsElement)
   {
-    QSharedPointer<IntegerGroup> group = IntegerGroup::TestingFixed();
-
-    for(int i=0; i<100; i++) {
-      EXPECT_TRUE(group->IsElement(group->RandomElement()));
-    }
+    AbstractGroup_Basic(IntegerGroup::TestingFixed());
   }
 
-  TEST(IntegerGroup, RandomExponent) 
+TEST(IntegerGroup, RandomExponent)
   {
-    QSharedPointer<IntegerGroup> group = IntegerGroup::TestingFixed();
-
-    for(int i=0; i<100; i++) {
-      EXPECT_TRUE(group->IsElement(group->Exponentiate(group->GetGenerator(),
-              group->RandomExponent())));
-    }
+    AbstractGroup_RandomExponent(IntegerGroup::TestingFixed());
   }
 
   TEST(IntegerGroup, NotElement) 

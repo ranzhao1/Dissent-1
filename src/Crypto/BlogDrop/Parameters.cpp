@@ -4,6 +4,7 @@
 
 #include "Crypto/AbstractGroup/CppECGroup.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
+#include "Crypto/AbstractGroup/OpenECGroup.hpp"
 #include "Crypto/AbstractGroup/PairingG1Group.hpp"
 #include "Parameters.hpp"
 
@@ -28,6 +29,12 @@ namespace BlogDrop {
   QSharedPointer<Parameters> Parameters::CppECProductionFixed() 
   {
     QSharedPointer<const AbstractGroup> fixed = CppECGroup::ProductionFixed();
+    return QSharedPointer<Parameters>(new Parameters(fixed, fixed, 8));
+  }
+
+  QSharedPointer<Parameters> Parameters::OpenECProductionFixed() 
+  {
+    QSharedPointer<const AbstractGroup> fixed = OpenECGroup::ProductionFixed();
     return QSharedPointer<Parameters>(new Parameters(fixed, fixed, 8));
   }
 

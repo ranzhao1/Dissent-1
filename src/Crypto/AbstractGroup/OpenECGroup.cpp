@@ -1,4 +1,3 @@
-
 #include "OpenECElementData.hpp"
 #include "OpenECGroup.hpp"
 
@@ -16,33 +15,46 @@ namespace AbstractGroup {
       _gy(gy),
       _zero(BN_new()),
       _one(BN_new()),
-      _tmp0(BN_new()),
-      _tmp1(BN_new()),
-      _ctx(BN_CTX_new()),
-      _group(EC_GROUP_new_curve_GFp(_p, _a, _b, _ctx)),
-      _generator(EC_POINT_new(_group))
+      _data(new MutableData()),
+      _generator(EC_POINT_new(_data->group)), 
+      _k(BN_new()),
+      _field_bytes(BN_num_bytes(_p)-1)
     {
-      Q_ASSERT(_group);
+      Q_ASSERT(_data->ctx);
+      Q_ASSERT(_data->group);
+
       Q_ASSERT(BN_zero(_zero));
       Q_ASSERT(BN_one(_one));
+      Q_ASSERT(BN_set_word(_k, _k_int));
+
+      /*
+      BN_print_fp(stdout, _p);
+      BN_print_fp(stdout, _a);
+      BN_print_fp(stdout, _b);
+      */
+
+      // Prepare montgomery multiplication mod p
+      Q_ASSERT(BN_MONT_CTX_set(_data->mont, _p, _data->ctx));
+
+      // Initialize group
+      Q_ASSERT(EC_GROUP_set_curve_GFp(_data->group, _p, _a, _b, _data->ctx));
 
       // affine coordinates are the "normal" (x,y) pairs
-      Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_group, 
-            _generator, _gx, _gy, _xtx));
-
-      // precompute multiplication helper data
-      Q_ASSERT(EC_GROUP_precompute_mult(_group, _ctx);
+      Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_data->group, 
+            _generator, _gx, _gy, _data->ctx));
 
       // Cofactor of our curves are always 1
-      Q_ASSERT(EC_GROUP_set_generator(_group, _generator, _q, _one));
+      Q_ASSERT(EC_GROUP_set_generator(_data->group, _generator, _q, _one));
+
+      // Precomupte factors of generator
+      Q_ASSERT(EC_GROUP_precompute_mult(_data->group, _data->ctx));
     };
 
   OpenECGroup::~OpenECGroup() 
   {
     EC_POINT_clear_free(_generator);
-    EC_GROUP_clear_freee(_group);
 
-    BN_CTX_free(_ctx);
+    delete _data;
 
     BN_clear_free(_p);
     BN_clear_free(_q);
@@ -53,28 +65,40 @@ namespace AbstractGroup {
     BN_free(_one);
     BN_free(_zero);
 
-    BN_clear_free(_tmp0);
-    BN_clear_free(_tmp1);
+    BN_clear_free(_k);
   }
 
   QSharedPointer<OpenECGroup> OpenECGroup::ProductionFixed() 
   {
     // RFC 5903 - 256-bit curve
-    const char *str_p = "0xFFFFFFFF000000010000000000"
+    const char *str_p = "FFFFFFFF000000010000000000"
                     "00000000000000FFFFFFFFFFFFFFFFFFFFFFFF";
-    const char *str_q = "0xFFFFFFFF00000000FFFFFFFFFF"
+    const char *str_q = "FFFFFFFF00000000FFFFFFFFFF"
                     "FFFFFFBCE6FAADA7179E84F3B9CAC2FC632551";
 
     const char *str_a = "-3";
-    const char *str_b = "0x5AC635D8AA3A93E7B3EBBD5576"
+    const char *str_b = "5AC635D8AA3A93E7B3EBBD5576"
                     "9886BC651D06B0CC53B0F63BCE3C3E27D2604B";
 
-    const char *str_gx = "0x6B17D1F2E12C4247F8BCE6E56"
+    const char *str_gx = "6B17D1F2E12C4247F8BCE6E56"
                      "3A440F277037D812DEB33A0F4A13945D898C296";
-    const char *str_gy = "0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE3"
+    const char *str_gy = "4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE3"
                      "3576B315ECECBB6406837BF51F5";
 
-    BIGNUM *p, *q, *a, *b, *gx, *gy;
+    BIGNUM *p = BN_new();
+    BIGNUM *q = BN_new();
+    BIGNUM *a = BN_new();
+    BIGNUM *b = BN_new();
+    BIGNUM *gx = BN_new();
+    BIGNUM *gy = BN_new();
+
+    Q_ASSERT(p);
+    Q_ASSERT(q);
+    Q_ASSERT(a);
+    Q_ASSERT(b);
+    Q_ASSERT(gx);
+    Q_ASSERT(gy);
+
     BN_hex2bn(&p, str_p);
     BN_hex2bn(&q, str_q);
     BN_hex2bn(&a, str_a);
@@ -94,92 +118,92 @@ namespace AbstractGroup {
 
   Element OpenECGroup::Multiply(const Element &a, const Element &b) const
   {
-    EC_POINT *r = EC_POINT_new(_group);
+    EC_POINT *r = EC_POINT_new(_data->group);
     Q_ASSERT(r);
 
     // r = a + b
-    Q_ASSERT(EC_POINT_add(_group, r, GetPoint(a), GetPoint(b), _ctx));
+    Q_ASSERT(EC_POINT_add(_data->group, r, GetPoint(a), GetPoint(b), _data->ctx));
 
-    return Element(new OpenECElementData(r));
+    return NewElement(r);
   }
 
   Element OpenECGroup::Exponentiate(const Element &a, const Integer &exp) const
   {
-    EC_POINT *r = EC_POINT_new(_group);
+    EC_POINT *r = EC_POINT_new(_data->group);
     Q_ASSERT(r);
 
-    EC_POINT *ps[1];
-    BIGNUM *ms[1];
+    const EC_POINT *ps[1];
+    const BIGNUM *ms[1];
 
-    GetInteger(_tmp0, exp);
+    GetInteger(_data->tmp0, exp);
 
     ps[0] = GetPoint(a);
-    ms[0] = _tmp0;
+    ms[0] = _data->tmp0;
 
-    Q_ASSERT(EC_POINTs_mul(_group, r, _zero, 1, ps, ms, _ctx));
+    Q_ASSERT(EC_POINTs_mul(_data->group, r, _zero, 1, ps, ms, _data->ctx));
 
-    return Element(new OpenECElementData(r));
+    return NewElement(r);
   }
   
   Element OpenECGroup::CascadeExponentiate(const Element &a1, const Integer &e1,
       const Element &a2, const Integer &e2) const
   {
-    EC_POINT *r = EC_POINT_new(_group);
+    EC_POINT *r = EC_POINT_new(_data->group);
     Q_ASSERT(r);
 
-    EC_POINT *ps[2];
-    BIGNUM *ms[2];
+    const EC_POINT *ps[2];
+    const BIGNUM *ms[2];
 
-    GetInteger(_tmp0, e1);
-    GetInteger(_tmp1, e2);
+    GetInteger(_data->tmp0, e1);
+    GetInteger(_data->tmp1, e2);
 
     ps[0] = GetPoint(a1);
     ps[1] = GetPoint(a2);
-    ms[0] = _tmp0;
-    ms[1] = _tmp2;
+    ms[0] = _data->tmp0;
+    ms[1] = _data->tmp1;
 
-    Q_ASSERT(EC_POINTs_mul(_group, r, _zero, 2, ps, ms, _ctx));
+    Q_ASSERT(EC_POINTs_mul(_data->group, r, _zero, 2, ps, ms, _data->ctx));
 
-    return Element(new OpenECElementData(r));
+    return NewElement(r);
   }
 
   Element OpenECGroup::Inverse(const Element &a) const
   {
-    EC_POINT *r = EC_POINT_dup(GetPoint(a));
+    EC_POINT *r = EC_POINT_dup(GetPoint(a), _data->group);
     Q_ASSERT(r);
 
-    Q_ASSERT(EC_POINT_invert(_group, r, _ctx));
-    return Element(new OpenECElementData(r));
+    Q_ASSERT(EC_POINT_invert(_data->group, r, _data->ctx));
+    return NewElement(r);
   }
   
   QByteArray OpenECGroup::ElementToByteArray(const Element &a) const
   {
     // Get number of bytes requires to hold point
-    const unsigned int nbytes = EC_POINT_point2oct(_group, GetPoint(a),
-      POINT_CONVERSION_UNCOMPRESSED, NULL, 0, _ctx);
+    const unsigned int nbytes = EC_POINT_point2oct(_data->group, GetPoint(a),
+      POINT_CONVERSION_UNCOMPRESSED, NULL, 0, _data->ctx);
     QByteArray out(nbytes, 0);
 
-    Q_ASSERT(EC_POINT_point2oct(_group, GetPoint(a),
-      POINT_CONVERSION_UNCOMPRESSED, out.data(), out.count(), _ctx));
+    Q_ASSERT(EC_POINT_point2oct(_data->group, GetPoint(a),
+      POINT_CONVERSION_UNCOMPRESSED, (unsigned char*)out.data(), out.count(), _data->ctx));
     return out;
   }
   
   Element OpenECGroup::ElementFromByteArray(const QByteArray &bytes) const 
   { 
-    EC_POINT *point = EC_POINT_new(_group);
-    Q_ASSERT(EC_POINT_oct2point(_group, point, bytes.constData(),
-          bytes.count(), _ctx));
-    return Element(new OpenECElementData(point));
+    EC_POINT *point = EC_POINT_new(_data->group);
+    Q_ASSERT(EC_POINT_oct2point(_data->group, point, 
+          (const unsigned char*)bytes.constData(), bytes.count(), _data->ctx));
+    return NewElement(point);
   }
 
   bool OpenECGroup::IsElement(const Element &a) const 
   {
-    return EC_POINT_is_on_curve(_group, GetPoint(a), _ctx);
+    return EC_POINT_is_on_curve(_data->group, GetPoint(a), _data->ctx);
   }
 
   bool OpenECGroup::IsIdentity(const Element &a) const 
   {
-    return EC_POINT_is_at_infinity(_group, GetPoint(a));
+    return EC_POINT_is_at_infinity(_data->group, GetPoint(a));
   }
 
   Integer OpenECGroup::RandomExponent() const
@@ -190,11 +214,6 @@ namespace AbstractGroup {
   Element OpenECGroup::RandomElement() const
   {
     return Exponentiate(GetGenerator(), RandomExponent());
-  }
-
-  CryptoPP::ECPPoint OpenECGroup::GetPoint(const Element &e) const
-  {
-    return OpenECElementData::GetPoint(e.GetData());
   }
 
   Element OpenECGroup::EncodeBytes(const QByteArray &in) const
@@ -228,42 +247,40 @@ namespace AbstractGroup {
     data += in;
     data.append(0xff);
 
-    // r is an encoding of the string in a big integer
-    CryptoPP::Integer r(("0x"+data.toHex()).constData());
+    // tmp0 (r) is an encoding of the string in a big integer
+    Q_ASSERT(BN_hex2bn(&(_data->tmp0), (const char*)data.toHex().constData()));
+      
+    Q_ASSERT(BN_cmp(_data->tmp0, _p) < 0);
 
-    qDebug() << "r" << Integer(new CppIntegerData(r)).GetByteArray().toHex();
-    
-    Q_ASSERT(r < _curve.FieldSize());
+    EC_POINT *point = EC_POINT_new(_data->group);
 
-    Element point;
-    CryptoPP::Integer x, y;
-    for(int i=0; i<_k; i++) {
+    for(int i=0; i<_k_int; i++) {
+      Q_ASSERT(BN_set_word(_data->tmp1, i));
+
       // x = rk + i mod p
-      x = ((r*_k)+i);
+      Q_ASSERT(FastModMul(_data->tmp0, _data->tmp0, _k));
+      Q_ASSERT(BN_mod_add(_data->tmp0, _data->tmp0, _data->tmp1, _p, _data->ctx));
 
-      Q_ASSERT(x < _curve.FieldSize());
-
-      if(SolveForY(x, point)) {
-        return point;
+      if(SolveForY(point, _data->tmp0)) {
+        return NewElement(point);
       } 
     }
 
     qFatal("Failed to find point");
-    return Element(new OpenECElementData(CryptoPP::ECPPoint()));
+    return NewElement(NULL);
   }
  
   bool OpenECGroup::DecodeBytes(const Element &a, QByteArray &out) const
   {
+    BIGNUM *x = BN_new();
+    BIGNUM *y = BN_new();
+    Q_ASSERT(EC_POINT_get_affine_coordinates_GFp(_data->group, GetPoint(a), x, y, _data->ctx));
+
     // output value = floor( x/k )
-    CryptoPP::Integer x = GetPoint(a).x;
+    Q_ASSERT(BN_div(_data->tmp0, NULL, x, _k, _data->ctx));
    
-    // x = floor(x/k)
-    CryptoPP::Integer remainder, quotient;
-    CryptoPP::Integer::Divide(remainder, quotient, x, CryptoPP::Integer(_k));
-
-    Integer intdata(new CppIntegerData(quotient));
-
-    QByteArray data = intdata.GetByteArray(); 
+    QByteArray data(BN_num_bytes(_data->tmp0), 0);
+    Q_ASSERT(BN_bn2bin(_data->tmp0, (unsigned char*)data.data()));
 
     if(data.count() < 2) {
       qWarning() << "Data is too short";
@@ -279,82 +296,105 @@ namespace AbstractGroup {
     }
 
     out = data.mid(1, data.count()-2);
+
+    BN_clear_free(x);
+    BN_clear_free(y);
+
     return true;
   }
 
   bool OpenECGroup::IsProbablyValid() const
   {
-    return EC_GROUP_check(_group, _ctx);
+    return EC_GROUP_check(_data->group, _data->ctx);
   }
 
   QByteArray OpenECGroup::GetByteArray() const
   {
-    QByteArray p(BN_num_bytes(p), 0);
-    QByteArray a(BN_num_bytes(a), 0);
-    QByteArray b(BN_num_bytes(b), 0);
-    QByteArray gx(BN_num_bytes(gx), 0);
+    QByteArray p(BN_num_bytes(_p), 0);
+    QByteArray a(BN_num_bytes(_a), 0);
+    QByteArray b(BN_num_bytes(_b), 0);
+    QByteArray gx(BN_num_bytes(_gx), 0);
     
-    Q_ASSERT(BN_bn2bin(_p, p.data()));
-    Q_ASSERT(BN_bn2bin(_a, a.data()));
-    Q_ASSERT(BN_bn2bin(_b, b.data()));
-    Q_ASSERT(BN_bn2bin(_gx, gx.data()));
+    Q_ASSERT(BN_bn2bin(_p, (unsigned char*)p.data()));
+    Q_ASSERT(BN_bn2bin(_a, (unsigned char*)a.data()));
+    Q_ASSERT(BN_bn2bin(_b, (unsigned char*)b.data()));
+    Q_ASSERT(BN_bn2bin(_gx, (unsigned char*)gx.data()));
 
     QByteArray out;
     QDataStream stream(&out, QIODevice::WriteOnly);
 
-    stream << p, a, b, gx;
+    stream << p << a << b << gx;
 
     return out;
+  }
+
+  int OpenECGroup::FastModMul(BIGNUM *r, BIGNUM *a, BIGNUM *b) const
+  {
+    // Convert a and b to montgomery rep mod p
+    Q_ASSERT(BN_to_montgomery(_data->tmp0, a, _data->mont, _data->ctx));
+    Q_ASSERT(BN_to_montgomery(_data->tmp1, b, _data->mont, _data->ctx));
+
+    // tmp = a*b
+    Q_ASSERT(BN_mod_mul_montgomery(_data->tmp0, _data->tmp0, _data->tmp1, _data->mont, _data->ctx));
+
+    return BN_from_montgomery(r, _data->tmp0, _data->mont, _data->ctx);
   }
 
   bool OpenECGroup::SolveForY(EC_POINT *ret, BIGNUM *x) const
   {
     // y^2 = x^3 + ax + b (mod p)
 
-    CryptoPP::ModularArithmetic arith(_curve.FieldSize());
-
     // tmp = x
-    Q_ASSERT(BN_copy(_tmp0, x));
+    Q_ASSERT(BN_copy(_data->tmp0, x));
 
     // tmp = x^2
-    Q_ASSERT(BN_mod_sqr(_tmp0, _tmp0, _p, _ctx));
+    Q_ASSERT(BN_mod_sqr(_data->tmp0, _data->tmp0, _p, _data->ctx));
 
     // tmp = x^2 + a
-    Q_ASSERT(BN_mod_add(_tmp0, _tmp0, _a, _p, _ctx));
+    Q_ASSERT(BN_mod_add(_data->tmp0, _data->tmp0, _a, _p, _data->ctx));
 
     // tmp = x (x^2 + a) == (x^3 + ax)
-    Q_ASSERT(BN_mod_mul(_tmp0, _tmp0, x, _p, _ctx));
+    Q_ASSERT(FastModMul(_data->tmp0, _data->tmp0, x));
 
     // tmp = x^3 + ax + b
-    Q_ASSERT(BN_mod_add(_tmp0, _tmp0, _b, _p, _ctx));
+    Q_ASSERT(BN_mod_add(_data->tmp0, _data->tmp0, _b, _p, _data->ctx));
    
     // does there exist y such that (y^2 = x^3 + ax + b) mod p ?
-    Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_group, 
-            _generator, _gx, _gy, _ctx));
+    Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_data->group, 
+            _generator, _gx, _gy, _data->ctx));
 
     // jacobi symbol is 1 if tmp is a non-trivial 
     // quadratic residue mod p
-    bool solved = (BN_kronecker(_tmp0, _p, _ctx) == 1);
+    bool solved = (BN_kronecker(_data->tmp0, _p, _data->ctx) == 1);
 
     if(solved) {
-      Q_ASSERT(BN_mod_sqrt(_tmp1, _tmp0, _p, _ctx));
-      Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_group, ret, _tmp0, _tmp1, _ctx));
-      Q_ASSERT(EC_POINT_is_on_curve(_group, ret, _ctx));
+      Q_ASSERT(BN_mod_sqrt(_data->tmp1, _data->tmp0, _p, _data->ctx));
+      Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_data->group, ret, _data->tmp0, _data->tmp1, _data->ctx));
+      Q_ASSERT(EC_POINT_is_on_curve(_data->group, ret, _data->ctx));
     }
 
     return solved;
   }
 
-  void GetInteger(BIGNUM *ret, const Integer &i) const 
+  void OpenECGroup::GetInteger(BIGNUM *ret, const Integer &i) 
   {
     Q_ASSERT(ret);
-    Q_ASSERT(!BN_hex2bn(&ret, i.GetByteArray().constData().toHex()));  
-    return r;
+    const QByteArray data = i.GetByteArray();
+    Q_ASSERT(BN_bin2bn((const unsigned char*)data.constData(), data.count(), ret));
+  }
+  
+  Integer OpenECGroup::GetCppInteger(const BIGNUM *a) 
+  {
+    Q_ASSERT(a);
+    QByteArray data(BN_num_bytes(a), 0);
+    Q_ASSERT(BN_bn2bin(a, (unsigned char*)data.data()));
+
+    return Integer(data);
   }
 
-  EC_POINT *GetPoint(const Element &e) const
+  EC_POINT *OpenECGroup::GetPoint(const Element &e) 
   {
-    return OpenECGroup::GetPoint(e.GetData());
+    return OpenECElementData::GetPoint(e.GetData());
   }
 
 }

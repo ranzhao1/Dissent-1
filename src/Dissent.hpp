@@ -91,6 +91,8 @@
 #include "Crypto/AbstractGroup/ElementData.hpp"
 #include "Crypto/AbstractGroup/IntegerElementData.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
+#include "Crypto/AbstractGroup/OpenECElementData.hpp"
+#include "Crypto/AbstractGroup/OpenECGroup.hpp"
 #include "Crypto/AbstractGroup/PairingElementData.hpp"
 #include "Crypto/AbstractGroup/PairingGroup.hpp"
 #include "Crypto/AbstractGroup/PairingG1Group.hpp"

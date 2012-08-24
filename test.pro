@@ -33,6 +33,7 @@ HEADERS += ext/googletest/include/gtest/gtest-death-test.h \
            ext/googletest/include/gtest/internal/gtest-string.h \
            ext/googletest/include/gtest/internal/gtest-tuple.h \
            ext/googletest/include/gtest/internal/gtest-type-util.h \
+           src/Tests/AbstractGroupHelpers.hpp \
            src/Tests/BulkRoundHelpers.hpp \
            src/Tests/DissentTest.hpp \
            src/Tests/Mock.hpp \
@@ -78,6 +79,7 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/NeffKeyShuffleTest.cpp \
            src/Tests/NullRoundTest.cpp \
            src/Tests/OnionTest.cpp \
+           src/Tests/OpenECGroupTest.cpp \
            src/Tests/OverlayHelper.cpp \
            src/Tests/PackagersTest.cpp \
            src/Tests/PacketsTest.cpp \
