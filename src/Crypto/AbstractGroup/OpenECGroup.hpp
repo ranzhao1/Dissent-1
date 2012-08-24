@@ -145,8 +145,9 @@ namespace AbstractGroup {
        */
       inline virtual int BytesPerElement() const {
         // Bytes in field minus bytes in parameter k
-        // minus two padding bytes
-        return (_field_bytes - _k_bytes - 2);
+        // minus two padding bytes and one byte to 
+        // make x a point
+        return (_field_bytes - 3);
       }
 
       /**
@@ -201,15 +202,7 @@ namespace AbstractGroup {
       /**
        * Fast multiplication mod p using stored BN_MONT_CTX
        */
-      int FastModMul(BIGNUM *r, BIGNUM *a, BIGNUM *b) const;
-
-      /** 
-       * Try to solve EC equation for y given x
-       * @param x coordinate to try
-       * @param point returned ECP point if solution found
-       * @returns true if found solution
-       */
-      bool SolveForY(EC_POINT *ret, BIGNUM *x) const;
+      int FastModMul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b) const;
 
       /**
        * These are members of the class that will change
@@ -217,8 +210,6 @@ namespace AbstractGroup {
       class MutableData {
         public:
           MutableData() :
-            tmp0(BN_new()),
-            tmp1(BN_new()),
             ctx(BN_CTX_new()),
             mont(BN_MONT_CTX_new()),
             group(EC_GROUP_new(EC_GFp_nist_method())) 
@@ -228,12 +219,7 @@ namespace AbstractGroup {
             EC_GROUP_clear_free(group);
             BN_MONT_CTX_free(mont);
             BN_CTX_free(ctx);
-            BN_clear_free(tmp0);
-            BN_clear_free(tmp1);
           }
-
-          BIGNUM *tmp0;
-          BIGNUM *tmp1;
 
           BN_CTX *ctx;
           BN_MONT_CTX *mont;
@@ -256,9 +242,6 @@ namespace AbstractGroup {
       Integer _order;
 
       /** Serialization parameters */
-      BIGNUM *_k;
-      static const int _k_bytes = 1;
-      static const int _k_int = (1 << (_k_bytes*8));
       const int _field_bytes;
 
   };

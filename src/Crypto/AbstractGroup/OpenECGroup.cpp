@@ -17,7 +17,6 @@ namespace AbstractGroup {
       _one(BN_new()),
       _data(new MutableData()),
       _generator(EC_POINT_new(_data->group)), 
-      _k(BN_new()),
       _field_bytes(BN_num_bytes(_p)-1)
     {
       Q_ASSERT(_data->ctx);
@@ -25,7 +24,6 @@ namespace AbstractGroup {
 
       Q_ASSERT(BN_zero(_zero));
       Q_ASSERT(BN_one(_one));
-      Q_ASSERT(BN_set_word(_k, _k_int));
 
       /*
       BN_print_fp(stdout, _p);
@@ -64,8 +62,6 @@ namespace AbstractGroup {
     BN_clear_free(_gy);
     BN_free(_one);
     BN_free(_zero);
-
-    BN_clear_free(_k);
   }
 
   QSharedPointer<OpenECGroup> OpenECGroup::ProductionFixed() 
@@ -135,12 +131,15 @@ namespace AbstractGroup {
     const EC_POINT *ps[1];
     const BIGNUM *ms[1];
 
-    GetInteger(_data->tmp0, exp);
+    BIGNUM *tmp = BN_new();
+    GetInteger(tmp, exp);
 
     ps[0] = GetPoint(a);
-    ms[0] = _data->tmp0;
+    ms[0] = tmp;
 
     Q_ASSERT(EC_POINTs_mul(_data->group, r, _zero, 1, ps, ms, _data->ctx));
+
+    BN_clear_free(tmp);
 
     return NewElement(r);
   }
@@ -154,16 +153,21 @@ namespace AbstractGroup {
     const EC_POINT *ps[2];
     const BIGNUM *ms[2];
 
-    GetInteger(_data->tmp0, e1);
-    GetInteger(_data->tmp1, e2);
+    BIGNUM *tmp1 = BN_new();
+    BIGNUM *tmp2 = BN_new();
+
+    GetInteger(tmp1, e1);
+    GetInteger(tmp2, e2);
 
     ps[0] = GetPoint(a1);
     ps[1] = GetPoint(a2);
-    ms[0] = _data->tmp0;
-    ms[1] = _data->tmp1;
+    ms[0] = tmp1;
+    ms[1] = tmp2;
 
     Q_ASSERT(EC_POINTs_mul(_data->group, r, _zero, 2, ps, ms, _data->ctx));
 
+    BN_clear_free(tmp1);
+    BN_clear_free(tmp2);
     return NewElement(r);
   }
 
@@ -247,27 +251,39 @@ namespace AbstractGroup {
     data += in;
     data.append(0xff);
 
-    // tmp0 (r) is an encoding of the string in a big integer
-    Q_ASSERT(BN_hex2bn(&(_data->tmp0), (const char*)data.toHex().constData()));
+    // r is an encoding of the string in a big integer
+    BIGNUM *r = BN_new();
+    Q_ASSERT(BN_hex2bn(&r, (const char*)data.toHex().constData()));
       
-    Q_ASSERT(BN_cmp(_data->tmp0, _p) < 0);
+    Q_ASSERT(BN_cmp(r, _p) < 0);
 
     EC_POINT *point = EC_POINT_new(_data->group);
 
-    for(int i=0; i<_k_int; i++) {
-      Q_ASSERT(BN_set_word(_data->tmp1, i));
-
+    // Shift r left by one byte and then flip the
+    // bits in the last byte until we get a valid point
+    Q_ASSERT(BN_lshift(r, r, 8));
+    bool success = false;
+    for(int i=0; i<(1<<8); i++) {
       // x = rk + i mod p
-      Q_ASSERT(FastModMul(_data->tmp0, _data->tmp0, _k));
-      Q_ASSERT(BN_mod_add(_data->tmp0, _data->tmp0, _data->tmp1, _p, _data->ctx));
+      Q_ASSERT(BN_mod_add(r, r, _one, _p, _data->ctx));
 
-      if(SolveForY(point, _data->tmp0)) {
-        return NewElement(point);
+      if(EC_POINT_set_compressed_coordinates_GFp(_data->group, point, r, 1, _data->ctx)
+          && EC_POINT_is_on_curve(_data->group, point, _data->ctx)) {
+        success = true;
+        break;
       } 
+
+      qDebug() << "Trying k=" << i;
     }
 
-    qFatal("Failed to find point");
-    return NewElement(NULL);
+    BN_clear_free(r);
+
+    if(success) {
+        return NewElement(point);
+    } else {
+      qFatal("Failed to find point");
+      return NewElement(NULL);
+    }
   }
  
   bool OpenECGroup::DecodeBytes(const Element &a, QByteArray &out) const
@@ -276,11 +292,11 @@ namespace AbstractGroup {
     BIGNUM *y = BN_new();
     Q_ASSERT(EC_POINT_get_affine_coordinates_GFp(_data->group, GetPoint(a), x, y, _data->ctx));
 
-    // output value = floor( x/k )
-    Q_ASSERT(BN_div(_data->tmp0, NULL, x, _k, _data->ctx));
+    // shift off padding byte
+    Q_ASSERT(BN_rshift(x, x, 8));
    
-    QByteArray data(BN_num_bytes(_data->tmp0), 0);
-    Q_ASSERT(BN_bn2bin(_data->tmp0, (unsigned char*)data.data()));
+    QByteArray data(BN_num_bytes(x), 0);
+    Q_ASSERT(BN_bn2bin(x, (unsigned char*)data.data()));
 
     if(data.count() < 2) {
       qWarning() << "Data is too short";
@@ -291,7 +307,7 @@ namespace AbstractGroup {
     const unsigned char d0 = data[0];
     const unsigned char dlast = data[data.count()-1];
     if((d0 != c) || (dlast != c)) {
-      qWarning() << "Data has improper padding";
+      qWarning() << "Data has improper padding:" << data.toHex();
       return false;
     }
 
@@ -328,52 +344,24 @@ namespace AbstractGroup {
     return out;
   }
 
-  int OpenECGroup::FastModMul(BIGNUM *r, BIGNUM *a, BIGNUM *b) const
+  int OpenECGroup::FastModMul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b) const
   {
+    BIGNUM *tmp0 = BN_new();
+    BIGNUM *tmp1 = BN_new();
+
     // Convert a and b to montgomery rep mod p
-    Q_ASSERT(BN_to_montgomery(_data->tmp0, a, _data->mont, _data->ctx));
-    Q_ASSERT(BN_to_montgomery(_data->tmp1, b, _data->mont, _data->ctx));
+    Q_ASSERT(BN_to_montgomery(tmp0, a, _data->mont, _data->ctx));
+    Q_ASSERT(BN_to_montgomery(tmp1, b, _data->mont, _data->ctx));
 
     // tmp = a*b
-    Q_ASSERT(BN_mod_mul_montgomery(_data->tmp0, _data->tmp0, _data->tmp1, _data->mont, _data->ctx));
+    Q_ASSERT(BN_mod_mul_montgomery(tmp0, tmp0, tmp1, _data->mont, _data->ctx));
 
-    return BN_from_montgomery(r, _data->tmp0, _data->mont, _data->ctx);
-  }
+    int ret = BN_from_montgomery(r, tmp0, _data->mont, _data->ctx);
 
-  bool OpenECGroup::SolveForY(EC_POINT *ret, BIGNUM *x) const
-  {
-    // y^2 = x^3 + ax + b (mod p)
+    BN_clear_free(tmp0);
+    BN_clear_free(tmp1);
 
-    // tmp = x
-    Q_ASSERT(BN_copy(_data->tmp0, x));
-
-    // tmp = x^2
-    Q_ASSERT(BN_mod_sqr(_data->tmp0, _data->tmp0, _p, _data->ctx));
-
-    // tmp = x^2 + a
-    Q_ASSERT(BN_mod_add(_data->tmp0, _data->tmp0, _a, _p, _data->ctx));
-
-    // tmp = x (x^2 + a) == (x^3 + ax)
-    Q_ASSERT(FastModMul(_data->tmp0, _data->tmp0, x));
-
-    // tmp = x^3 + ax + b
-    Q_ASSERT(BN_mod_add(_data->tmp0, _data->tmp0, _b, _p, _data->ctx));
-   
-    // does there exist y such that (y^2 = x^3 + ax + b) mod p ?
-    Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_data->group, 
-            _generator, _gx, _gy, _data->ctx));
-
-    // jacobi symbol is 1 if tmp is a non-trivial 
-    // quadratic residue mod p
-    bool solved = (BN_kronecker(_data->tmp0, _p, _data->ctx) == 1);
-
-    if(solved) {
-      Q_ASSERT(BN_mod_sqrt(_data->tmp1, _data->tmp0, _p, _data->ctx));
-      Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_data->group, ret, _data->tmp0, _data->tmp1, _data->ctx));
-      Q_ASSERT(EC_POINT_is_on_curve(_data->group, ret, _data->ctx));
-    }
-
-    return solved;
+    return ret;
   }
 
   void OpenECGroup::GetInteger(BIGNUM *ret, const Integer &i) 

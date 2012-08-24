@@ -28,5 +28,15 @@ namespace Tests {
     AbstractGroup_Exponentiation(OpenECGroup::ProductionFixed());
   }
 
+  TEST(OpenECGroup, Serialize)
+  {
+    AbstractGroup_Serialize(OpenECGroup::ProductionFixed());
+  }
+
+  TEST(OpenECGroup, Encode)
+  {
+    AbstractGroup_Encode(OpenECGroup::ProductionFixed());
+  }
+
 }
 }

@@ -489,44 +489,19 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDrop, IntegerEndToEndNoThreads) 
+  TEST(BlogDrop, IntgerEndToEnd) 
   {
-    CryptoFactory &cf = CryptoFactory::GetInstance();
-    CryptoFactory::ThreadingType t = cf.GetThreadingType();
-    
-    cf.SetThreading(CryptoFactory::SingleThreaded);
-    EndToEndOnce(Parameters::Parameters::IntegerTestingFixed());
-    cf.SetThreading(t);
+    EndToEndOnce(Parameters::Parameters::IntegerProductionFixed());
   }
 
-  TEST(BlogDrop, IntgerEndToEndThreads) 
+  TEST(BlogDrop, CppECEndToEnd) 
   {
-    CryptoFactory &cf = CryptoFactory::GetInstance();
-    CryptoFactory::ThreadingType t = cf.GetThreadingType();
-    
-    cf.SetThreading(CryptoFactory::MultiThreaded);
-    EndToEndOnce(Parameters::Parameters::IntegerTestingFixed());
-    cf.SetThreading(t);
-  }
-
-  TEST(BlogDrop, ECEndToEndNoThreads) 
-  {
-    CryptoFactory &cf = CryptoFactory::GetInstance();
-    CryptoFactory::ThreadingType t = cf.GetThreadingType();
-    
-    cf.SetThreading(CryptoFactory::SingleThreaded);
     EndToEndOnce(Parameters::Parameters::CppECProductionFixed());
-    cf.SetThreading(t);
   }
 
-  TEST(BlogDrop, ECEndToEndThreads) 
+  TEST(BlogDrop, OpenECEndToEnd) 
   {
-    CryptoFactory &cf = CryptoFactory::GetInstance();
-    CryptoFactory::ThreadingType t = cf.GetThreadingType();
-    
-    cf.SetThreading(CryptoFactory::MultiThreaded);
-    EndToEndOnce(Parameters::Parameters::CppECProductionFixed());
-    cf.SetThreading(t);
+    EndToEndOnce(Parameters::Parameters::OpenECProductionFixed());
   }
 
   void BenchmarkGroup(QSharedPointer<const Parameters> params,

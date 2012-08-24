@@ -22,7 +22,7 @@ namespace Tests {
     AbstractGroup_Basic(IntegerGroup::TestingFixed());
   }
 
-TEST(IntegerGroup, RandomExponent)
+  TEST(IntegerGroup, RandomExponent)
   {
     AbstractGroup_RandomExponent(IntegerGroup::TestingFixed());
   }
@@ -38,6 +38,16 @@ TEST(IntegerGroup, RandomExponent)
     }
 
     EXPECT_TRUE(count > 30 && count < 70);
+  }
+
+  TEST(IntegerGroup, Serialize)
+  {
+    AbstractGroup_Serialize(IntegerGroup::TestingFixed());
+  }
+
+  TEST(IntegerGroup, Encode)
+  {
+    AbstractGroup_Encode(IntegerGroup::TestingFixed());
   }
 
 }

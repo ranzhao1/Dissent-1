@@ -16,6 +16,7 @@ namespace Tests {
     ASSERT_TRUE(group->IsProbablyValid());
     ASSERT_EQ(g, g);
     ASSERT_TRUE(group->IsElement(g));
+    ASSERT_TRUE(group->IsIdentity(group->GetIdentity()));
     ASSERT_FALSE(group->IsIdentity(g));
     ASSERT_TRUE(group->IsIdentity(group->Exponentiate(g, group->GetOrder())));
     ASSERT_TRUE(group->IsElement(group->Multiply(g, g)));
@@ -24,7 +25,10 @@ namespace Tests {
   inline void AbstractGroup_IsElement(QSharedPointer<AbstractGroup> group)
   {
     for(int i=0; i<100; i++) {
-      EXPECT_TRUE(group->IsElement(group->RandomElement()));
+      Element e = group->RandomElement();
+      EXPECT_TRUE(group->IsElement(e));
+      EXPECT_FALSE(group->IsIdentity(e));
+      EXPECT_FALSE(group->GetGenerator() == e);
     }
   }
 
@@ -62,6 +66,34 @@ namespace Tests {
       Integer c = group->RandomExponent();
 
       EXPECT_EQ(a, group->Exponentiate(a, Integer(1)));
+    }
+  }
+
+  inline void AbstractGroup_Serialize(QSharedPointer<AbstractGroup> group)
+  {
+    for(int i=0; i<100; i++) {
+      Element a = group->RandomElement();
+      QByteArray b = group->ElementToByteArray(a);
+      Element a2 = group->ElementFromByteArray(b);
+
+      EXPECT_EQ(a, a2);
+    }
+  }
+
+  inline void AbstractGroup_Encode(QSharedPointer<AbstractGroup> group)
+  {
+    Library *lib = CryptoFactory::GetInstance().GetLibrary();
+    QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
+
+    QByteArray out;
+    QByteArray msg(group->BytesPerElement(), 0);
+    for(int i=0; i<100; i++) {
+      rand->GenerateBlock(msg);
+
+      Element a = group->EncodeBytes(msg);
+      ASSERT_TRUE(group->DecodeBytes(a, out));
+
+      EXPECT_EQ(msg, out);
     }
   }
 

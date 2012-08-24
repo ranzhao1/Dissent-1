@@ -46,5 +46,15 @@ namespace Tests {
     AbstractGroup_Exponentiation(CppECGroup::ProductionFixed());
   }
 
+  TEST(CppECGroup, Serialize)
+  {
+    AbstractGroup_Serialize(CppECGroup::ProductionFixed());
+  }
+
+  TEST(CppECGroup, Encode)
+  {
+    AbstractGroup_Encode(CppECGroup::ProductionFixed());
+  }
+
 }
 }
