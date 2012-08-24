@@ -18,6 +18,7 @@ USE_PBC = "true"
 
 !isEmpty(USE_PBC) {
   DEFINES += "USE_PBC"
+  LIBS += "/usr/local/lib/libpbc.a"
   message( Using PBC library )
 }
 
