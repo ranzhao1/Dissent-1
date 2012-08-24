@@ -131,6 +131,7 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/AbstractGroup/PairingGroup.hpp \
            src/Crypto/AbstractGroup/PairingG1Group.hpp \
            src/Crypto/AbstractGroup/PairingGTGroup.hpp \
+           src/Crypto/AbstractGroup/PairingWrapper.hpp \
            src/Crypto/BlogDrop/BlogDropAuthor.hpp \
            src/Crypto/BlogDrop/BlogDropClient.hpp \
            src/Crypto/BlogDrop/BlogDropServer.hpp \
@@ -317,6 +318,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/AbstractGroup/PairingGroup.cpp \
            src/Crypto/AbstractGroup/PairingG1Group.cpp \
            src/Crypto/AbstractGroup/PairingGTGroup.cpp \
+           src/Crypto/AbstractGroup/PairingWrapper.cpp \
            src/Crypto/BlogDrop/BlogDropAuthor.cpp \
            src/Crypto/BlogDrop/BlogDropClient.cpp \
            src/Crypto/BlogDrop/BlogDropServer.cpp \

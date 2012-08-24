@@ -10,19 +10,15 @@ namespace AbstractGroup {
 
   QSharedPointer<PairingGTGroup> PairingGTGroup::ProductionFixed()
   {
-    const unsigned char generatorT_str[] = 
-          "[795021851328020033538485063506889346340348790473894916238866664663"
-          "9150616295447802746802629878913026197716951475548418491838118674043"
-          "19363059257332521718605, 678205493899729155525770728889429548658760"
-          "4094995139744601370103366002392787037597944280636791426667700330308"
-          "27851052673787698901892811486811655628074359316]";
+    const unsigned char generatorT_str[] = "generator";
 
     QSharedPointer<PairingGTGroup> group(new PairingGTGroup());
 
     GT identity(group->GetPairing(), true);
     Q_ASSERT(identity.isElementPresent());
 
-    GT generator(group->GetPairing(), generatorT_str, sizeof(generatorT_str), 10);
+    // Create generator from hash
+    GT generator(group->GetPairing(), generatorT_str, sizeof(generatorT_str));
     Q_ASSERT(generator.isElementPresent());
 
     group->SetIdentity(Element(new PairingElementData<GT>(identity)));
@@ -94,11 +90,9 @@ namespace AbstractGroup {
     return GetElement(a).isIdentity();
   }
 
-
   Element PairingGTGroup::RandomElement() const
   {
-    return Element(new PairingElementData<GT>(
-          GetElement(_generator) ^ IntegerToZr(RandomExponent())));
+    return Element(new PairingElementData<GT>(GT(_pairing, false)));
   }
 
   int PairingGTGroup::BytesPerElement() const
@@ -108,11 +102,13 @@ namespace AbstractGroup {
 
   Element PairingGTGroup::EncodeBytes(const QByteArray &) const
   {
+    qFatal("Not implemented");
     return Element(NULL);
   }
  
   bool PairingGTGroup::DecodeBytes(const Element &, QByteArray &) const
   {
+    qFatal("Not implemented");
     return false;
   }
 

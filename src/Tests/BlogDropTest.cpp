@@ -491,17 +491,17 @@ namespace Tests {
 
   TEST(BlogDrop, IntgerEndToEnd) 
   {
-    EndToEndOnce(Parameters::Parameters::IntegerProductionFixed());
+    EndToEndOnce(Parameters::Parameters::IntegerProductionFixed(), false);
   }
 
   TEST(BlogDrop, CppECEndToEnd) 
   {
-    EndToEndOnce(Parameters::Parameters::CppECProductionFixed());
+    EndToEndOnce(Parameters::Parameters::CppECProductionFixed(), false);
   }
 
   TEST(BlogDrop, OpenECEndToEnd) 
   {
-    EndToEndOnce(Parameters::Parameters::OpenECProductionFixed());
+    EndToEndOnce(Parameters::Parameters::OpenECProductionFixed(), false);
   }
 
   void BenchmarkGroup(QSharedPointer<const Parameters> params,

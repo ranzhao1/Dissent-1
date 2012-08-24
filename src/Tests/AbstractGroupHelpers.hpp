@@ -12,7 +12,6 @@ namespace Tests {
   {
     Element g = group->GetGenerator();
 
-    
     ASSERT_TRUE(group->IsProbablyValid());
     ASSERT_EQ(g, g);
     ASSERT_TRUE(group->IsElement(g));
@@ -20,6 +19,14 @@ namespace Tests {
     ASSERT_FALSE(group->IsIdentity(g));
     ASSERT_TRUE(group->IsIdentity(group->Exponentiate(g, group->GetOrder())));
     ASSERT_TRUE(group->IsElement(group->Multiply(g, g)));
+
+    for(int i=0; i<100; i++) {
+      Element a = group->RandomElement();
+      Element l = group->Exponentiate(group->Inverse(a), Integer(2));
+      Element r = group->Inverse(group->Exponentiate(a, Integer(2)));
+
+      EXPECT_EQ(l, r);
+    }
   }
 
   inline void AbstractGroup_IsElement(QSharedPointer<AbstractGroup> group)

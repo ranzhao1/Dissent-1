@@ -10,19 +10,15 @@ namespace AbstractGroup {
 
   QSharedPointer<PairingG1Group> PairingG1Group::ProductionFixed()
   {
-    const unsigned char generator1_str[] = 
-          "[538712375173038183821555581631853844285352387919914453116399420454"
-          "1137376522971355408731240080050842503736842668416236973599378729596"
-          "02509687274080553103856, 340137139421134791414450797594868030166258"
-          "5402549525116042526277980403076798915406057822392822856542520552755"
-          "4751130920668111433102590008400638591817819442]";
+    const unsigned char generator1_str[] = "generator";
 
     QSharedPointer<PairingG1Group> group(new PairingG1Group());
 
     G1 identity(group->GetPairing(), true);
     Q_ASSERT(identity.isElementPresent());
 
-    G1 generator(group->GetPairing(), generator1_str, sizeof(generator1_str), 10);
+    // Create generator from hash
+    G1 generator(group->GetPairing(), generator1_str, sizeof(generator1_str));
     Q_ASSERT(generator.isElementPresent());
 
     group->SetIdentity(Element(new PairingElementData<G1>(identity)));
@@ -97,8 +93,7 @@ namespace AbstractGroup {
 
   Element PairingG1Group::RandomElement() const
   {
-    return Element(new PairingElementData<G1>(
-          GetElement(_generator) ^ IntegerToZr(RandomExponent())));
+    return Element(new PairingElementData<G1>(G1(_pairing, false)));
   }
 
   int PairingG1Group::BytesPerElement() const
