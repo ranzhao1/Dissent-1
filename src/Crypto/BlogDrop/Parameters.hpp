@@ -34,7 +34,7 @@ namespace BlogDrop {
        * (Supposedly 256-bit ECs are equivalent to 3072-bit 
        * RSA/DH groups)
        */
-      static QSharedPointer<Parameters> ECProductionFixed();
+      static QSharedPointer<Parameters> CppECProductionFixed();
 
       /**
        * Constructor that uses a type-A pairing group from

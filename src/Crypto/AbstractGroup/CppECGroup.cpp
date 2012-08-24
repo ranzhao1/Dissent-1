@@ -1,14 +1,14 @@
 
 #include <cryptopp/nbtheory.h>
 
-#include "ECElementData.hpp"
-#include "ECGroup.hpp"
+#include "CppECElementData.hpp"
+#include "CppECGroup.hpp"
 
 namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
 
-  ECGroup::ECGroup(Integer p, Integer q, Integer a, Integer b, Integer gx, Integer gy) :
+  CppECGroup::CppECGroup(Integer p, Integer q, Integer a, Integer b, Integer gx, Integer gy) :
       _curve(ToCryptoInt(p), ToCryptoInt(a), ToCryptoInt(b)),
       _q(q),
       _g(ToCryptoInt(gx), ToCryptoInt(gy)),
@@ -24,7 +24,7 @@ namespace AbstractGroup {
     };
 
 
-  QSharedPointer<ECGroup> ECGroup::ProductionFixed() 
+  QSharedPointer<CppECGroup> CppECGroup::ProductionFixed() 
   {
     // RFC 5903 - 256-bit curve
     const Integer p(QByteArray::fromHex("0xFFFFFFFF000000010000000000"
@@ -41,42 +41,42 @@ namespace AbstractGroup {
     const Integer gy(QByteArray::fromHex("0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE3"
                                          "3576B315ECECBB6406837BF51F5"));
 
-    return QSharedPointer<ECGroup>(new ECGroup(p, q, a, b, gx, gy));
+    return QSharedPointer<CppECGroup>(new CppECGroup(p, q, a, b, gx, gy));
   }
 
-  Element ECGroup::Multiply(const Element &a, const Element &b) const
+  Element CppECGroup::Multiply(const Element &a, const Element &b) const
   {
-    return Element(new ECElementData(_curve.Add(GetPoint(a), GetPoint(b))));
+    return Element(new CppECElementData(_curve.Add(GetPoint(a), GetPoint(b))));
   }
 
-  Element ECGroup::Exponentiate(const Element &a, const Integer &exp) const
+  Element CppECGroup::Exponentiate(const Element &a, const Integer &exp) const
   {
-    return Element(new ECElementData(_curve.Multiply(ToCryptoInt(exp), GetPoint(a))));
+    return Element(new CppECElementData(_curve.Multiply(ToCryptoInt(exp), GetPoint(a))));
   }
   
-  Element ECGroup::CascadeExponentiate(const Element &a1, const Integer &e1,
+  Element CppECGroup::CascadeExponentiate(const Element &a1, const Integer &e1,
       const Element &a2, const Integer &e2) const
   {
     // For some reason, this is 50% faster than Crypto++'s native
     // CascadeMultiply
-    return Element(new ECElementData(_curve.Add(
+    return Element(new CppECElementData(_curve.Add(
             _curve.Multiply(ToCryptoInt(e1), GetPoint(a1)),
             _curve.Multiply(ToCryptoInt(e2), GetPoint(a2)))));
    
     /*
-    return Element(new ECElementData(_curve.CascadeMultiply(
+    return Element(new CppECElementData(_curve.CascadeMultiply(
           ToCryptoInt(e1), GetPoint(a1),
           ToCryptoInt(e2), GetPoint(a2))));
     */
     
   }
 
-  Element ECGroup::Inverse(const Element &a) const
+  Element CppECGroup::Inverse(const Element &a) const
   {
-    return Element(new ECElementData(_curve.Inverse(GetPoint(a))));
+    return Element(new CppECElementData(_curve.Inverse(GetPoint(a))));
   }
   
-  QByteArray ECGroup::ElementToByteArray(const Element &a) const
+  QByteArray CppECGroup::ElementToByteArray(const Element &a) const
   {
     const unsigned int nbytes = _curve.EncodedPointSize(false);
     QByteArray out(nbytes, 0);
@@ -84,41 +84,41 @@ namespace AbstractGroup {
     return out;
   }
   
-  Element ECGroup::ElementFromByteArray(const QByteArray &bytes) const 
+  Element CppECGroup::ElementFromByteArray(const QByteArray &bytes) const 
   { 
     CryptoPP::ECPPoint point;
     _curve.DecodePoint(point, 
         (const unsigned char*)(bytes.constData()), 
         bytes.count());
-    return Element(new ECElementData(point));
+    return Element(new CppECElementData(point));
   }
 
-  bool ECGroup::IsElement(const Element &a) const 
+  bool CppECGroup::IsElement(const Element &a) const 
   {
     return _curve.VerifyPoint(GetPoint(a));
   }
 
-  bool ECGroup::IsIdentity(const Element &a) const 
+  bool CppECGroup::IsIdentity(const Element &a) const 
   {
     return (a == GetIdentity());
   }
 
-  Integer ECGroup::RandomExponent() const
+  Integer CppECGroup::RandomExponent() const
   {
     return Integer::GetRandomInteger(1, GetOrder(), false); 
   }
 
-  Element ECGroup::RandomElement() const
+  Element CppECGroup::RandomElement() const
   {
     return Exponentiate(GetGenerator(), RandomExponent());
   }
 
-  CryptoPP::ECPPoint ECGroup::GetPoint(const Element &e) const
+  CryptoPP::ECPPoint CppECGroup::GetPoint(const Element &e) const
   {
-    return ECElementData::GetPoint(e.GetData());
+    return CppECElementData::GetPoint(e.GetData());
   }
 
-  Element ECGroup::EncodeBytes(const QByteArray &in) const
+  Element CppECGroup::EncodeBytes(const QByteArray &in) const
   {
     /*
     * See the article 
@@ -170,10 +170,10 @@ namespace AbstractGroup {
     }
 
     qFatal("Failed to find point");
-    return Element(new ECElementData(CryptoPP::ECPPoint()));
+    return Element(new CppECElementData(CryptoPP::ECPPoint()));
   }
  
-  bool ECGroup::DecodeBytes(const Element &a, QByteArray &out) const
+  bool CppECGroup::DecodeBytes(const Element &a, QByteArray &out) const
   {
     // output value = floor( x/k )
     CryptoPP::Integer x = GetPoint(a).x;
@@ -203,7 +203,7 @@ namespace AbstractGroup {
     return true;
   }
 
-  bool ECGroup::IsProbablyValid() const
+  bool CppECGroup::IsProbablyValid() const
   {
     qDebug() << IsElement(GetGenerator());
     qDebug() << IsIdentity(Exponentiate(GetGenerator(), GetOrder()));
@@ -214,7 +214,7 @@ namespace AbstractGroup {
       CryptoPP::IsPrime(ToCryptoInt(GetOrder()));
   }
 
-  QByteArray ECGroup::GetByteArray() const
+  QByteArray CppECGroup::GetByteArray() const
   {
     QByteArray out;
     QDataStream stream(&out, QIODevice::WriteOnly);
@@ -226,7 +226,7 @@ namespace AbstractGroup {
     return out;
   }
 
-  bool ECGroup::SolveForY(const CryptoPP::Integer &x, Element &point) const
+  bool CppECGroup::SolveForY(const CryptoPP::Integer &x, Element &point) const
   {
     // y^2 = x^3 + ax + b (mod p)
 
@@ -256,7 +256,7 @@ namespace AbstractGroup {
     if(solved) {
       const CryptoPP::Integer y = CryptoPP::ModularSquareRoot(tmp, _curve.FieldSize());
 
-      point = Element(new ECElementData(CryptoPP::ECPPoint(x, y)));
+      point = Element(new CppECElementData(CryptoPP::ECPPoint(x, y)));
       Q_ASSERT(IsElement(point));
     }
 

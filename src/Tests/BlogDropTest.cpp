@@ -19,7 +19,7 @@ namespace Tests {
 
   TEST(BlogDrop, ECPlaintextEmpty) 
   {
-    TestPlaintextEmpty(Parameters::Parameters::ECProductionFixed());
+    TestPlaintextEmpty(Parameters::Parameters::CppECProductionFixed());
   }
 
   void TestPlaintextShort(QSharedPointer<const Parameters> params)
@@ -39,7 +39,7 @@ namespace Tests {
   }
 
   TEST(BlogDrop, ECPlaintextShort) {
-    TestPlaintextShort(Parameters::Parameters::ECProductionFixed());
+    TestPlaintextShort(Parameters::Parameters::CppECProductionFixed());
   }
 
   void TestPlaintextRandom(QSharedPointer<const Parameters> params, int divby)
@@ -76,9 +76,9 @@ namespace Tests {
   }
 
   TEST(BlogDrop, ECPlaintextRandom) {
-    TestPlaintextRandom(Parameters::Parameters::ECProductionFixed(), 1);
-    TestPlaintextRandom(Parameters::Parameters::ECProductionFixed(), 2);
-    TestPlaintextRandom(Parameters::Parameters::ECProductionFixed(), 4);
+    TestPlaintextRandom(Parameters::Parameters::CppECProductionFixed(), 1);
+    TestPlaintextRandom(Parameters::Parameters::CppECProductionFixed(), 2);
+    TestPlaintextRandom(Parameters::Parameters::CppECProductionFixed(), 4);
   }
 
   void TestKeys(QSharedPointer<const Parameters> params)
@@ -110,7 +110,7 @@ namespace Tests {
   }
 
   TEST(BlogDrop, ECKeys) {
-    TestKeys(Parameters::Parameters::ECProductionFixed());
+    TestKeys(Parameters::Parameters::CppECProductionFixed());
   }
 
   void TestPublicKeySet(QSharedPointer<const Parameters> params)
@@ -136,7 +136,7 @@ namespace Tests {
   }
 
   TEST(BlogDrop, ECPublicKeySet) {
-    TestPublicKeySet(Parameters::Parameters::ECProductionFixed());
+    TestPublicKeySet(Parameters::Parameters::CppECProductionFixed());
   }
 
   void TestElGamalServerCiphertext(QSharedPointer<const Parameters> params)
@@ -179,7 +179,7 @@ namespace Tests {
   }
 
   TEST(BlogDrop, ECServerCiphertext) {
-    TestElGamalServerCiphertext(Parameters::Parameters::ECProductionFixed());
+    TestElGamalServerCiphertext(Parameters::Parameters::CppECProductionFixed());
   }
 
   void TestElGamalClientOnce(QSharedPointer<const Parameters> params)
@@ -234,7 +234,7 @@ namespace Tests {
 
   TEST(BlogDrop, ECClientProof) {
     for(int i=0; i<10; i++) {
-      TestElGamalClientOnce(Parameters::Parameters::ECProductionFixed());
+      TestElGamalClientOnce(Parameters::Parameters::CppECProductionFixed());
     }
   }
 
@@ -293,7 +293,7 @@ namespace Tests {
 
   TEST(BlogDrop, ECAuthorProof) {
     for(int i=0; i<10; i++) {
-      TestAuthorOnce(Parameters::Parameters::ECProductionFixed());
+      TestAuthorOnce(Parameters::Parameters::CppECProductionFixed());
     }
   }
   
@@ -388,7 +388,7 @@ namespace Tests {
 
   TEST(BlogDrop, ECReveal) {
     for(int i=0; i<10; i++) {
-      TestReveal(Parameters::Parameters::ECProductionFixed());
+      TestReveal(Parameters::Parameters::CppECProductionFixed());
     }
   }
 
@@ -515,7 +515,7 @@ namespace Tests {
     CryptoFactory::ThreadingType t = cf.GetThreadingType();
     
     cf.SetThreading(CryptoFactory::SingleThreaded);
-    EndToEndOnce(Parameters::Parameters::ECProductionFixed());
+    EndToEndOnce(Parameters::Parameters::CppECProductionFixed());
     cf.SetThreading(t);
   }
 
@@ -525,7 +525,7 @@ namespace Tests {
     CryptoFactory::ThreadingType t = cf.GetThreadingType();
     
     cf.SetThreading(CryptoFactory::MultiThreaded);
-    EndToEndOnce(Parameters::Parameters::ECProductionFixed());
+    EndToEndOnce(Parameters::Parameters::CppECProductionFixed());
     cf.SetThreading(t);
   }
 
@@ -555,7 +555,7 @@ namespace Tests {
 
   TEST(BlogDrop, BenchmarkEC) 
   {
-    Benchmark(Parameters::Parameters::ECProductionFixed());
+    Benchmark(Parameters::Parameters::CppECProductionFixed());
   }
 
   TEST(BlogDrop, BenchmarkIntegerRaw) 

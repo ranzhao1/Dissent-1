@@ -3,9 +3,9 @@
 namespace Dissent {
 namespace Tests {
 
-  TEST(ECGroup, Basic)
+  TEST(CppECGroup, Basic)
   {
-    QSharedPointer<ECGroup> group(ECGroup::ProductionFixed());
+    QSharedPointer<CppECGroup> group(CppECGroup::ProductionFixed());
 
     Element g = group->GetGenerator();
 
@@ -20,18 +20,18 @@ namespace Tests {
     ASSERT_TRUE(group->IsElement(group->Multiply(g, g)));
   }
 
-  TEST(ECGroup, IsElement) 
+  TEST(CppECGroup, IsElement) 
   {
-    QSharedPointer<ECGroup> group = ECGroup::ProductionFixed();
+    QSharedPointer<CppECGroup> group = CppECGroup::ProductionFixed();
 
     for(int i=0; i<100; i++) {
       EXPECT_TRUE(group->IsElement(group->RandomElement()));
     }
   }
 
-  TEST(ECGroup, RandomExponent) 
+  TEST(CppECGroup, RandomExponent) 
   {
-    QSharedPointer<ECGroup> group = ECGroup::ProductionFixed();
+    QSharedPointer<CppECGroup> group = CppECGroup::ProductionFixed();
 
     for(int i=0; i<100; i++) {
       EXPECT_TRUE(group->IsElement(group->Exponentiate(group->GetGenerator(),
@@ -39,9 +39,9 @@ namespace Tests {
     }
   }
 
-  TEST(ECGroup, NotElement) 
+  TEST(CppECGroup, NotElement) 
   {
-    QSharedPointer<ECGroup> group = ECGroup::ProductionFixed();
+    QSharedPointer<CppECGroup> group = CppECGroup::ProductionFixed();
 
     int count = 0;
     for(int i=0; i<100; i++) {
@@ -50,7 +50,7 @@ namespace Tests {
 
       CryptoPP::ECPPoint p(CryptoPP::Integer(x.GetByteArray().constData()), 
           CryptoPP::Integer(y.GetByteArray().constData()));
-      Element e(new ECElementData(p));
+      Element e(new CppECElementData(p));
       if(group->IsElement(e)) count++;
     }
 

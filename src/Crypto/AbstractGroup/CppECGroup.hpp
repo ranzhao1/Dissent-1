@@ -1,11 +1,11 @@
-#ifndef DISSENT_CRYPTO_ABSTRACT_GROUP_EC_GROUP_H_GUARD
-#define DISSENT_CRYPTO_ABSTRACT_GROUP_EC_GROUP_H_GUARD
+#ifndef DISSENT_CRYPTO_ABSTRACT_GROUP_CPP_EC_GROUP_H_GUARD
+#define DISSENT_CRYPTO_ABSTRACT_GROUP_CPP_EC_GROUP_H_GUARD
 
 #include <QSharedPointer>
 
 #include "Crypto/CppIntegerData.hpp"
 #include "AbstractGroup.hpp"
-#include "ECElementData.hpp"
+#include "CppECElementData.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -16,7 +16,7 @@ namespace AbstractGroup {
    * a prime. The curves take the form:
    *   y^2 = x^3 + ax + b (mod p)
    */
-  class ECGroup : public AbstractGroup {
+  class CppECGroup : public AbstractGroup {
 
     public:
 
@@ -29,18 +29,18 @@ namespace AbstractGroup {
        * @param gx x-coordinate of generating point
        * @param gy y-coordinate of generating point
        */
-      ECGroup(Integer p, Integer q,
+      CppECGroup(Integer p, Integer q,
           Integer a, Integer b, Integer gx, Integer gy);
 
       /**
        * Get a fixed group using the RFC 5093 256-bit curve
        */
-      static QSharedPointer<ECGroup> ProductionFixed();
+      static QSharedPointer<CppECGroup> ProductionFixed();
 
       /**
        * Destructor
        */
-      virtual ~ECGroup() {}
+      virtual ~CppECGroup() {}
 
       /**
        * Add two elliptic curve points
@@ -112,7 +112,7 @@ namespace AbstractGroup {
        * Return the group generating point (g)
        */
       inline virtual Element GetGenerator() const { 
-        return Element(new ECElementData(_g)); 
+        return Element(new CppECElementData(_g)); 
       }
       
       /**
@@ -126,7 +126,7 @@ namespace AbstractGroup {
        * Return the group identity element O
        */
       inline virtual Element GetIdentity() const { 
-        return Element(new ECElementData(_curve.Identity())); 
+        return Element(new CppECElementData(_curve.Identity())); 
       }
 
       /**

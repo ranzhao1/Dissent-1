@@ -2,7 +2,7 @@
 
 #include <pbc/pbc.h>
 
-#include "Crypto/AbstractGroup/ECGroup.hpp"
+#include "Crypto/AbstractGroup/CppECGroup.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
 #include "Crypto/AbstractGroup/PairingG1Group.hpp"
 #include "Parameters.hpp"
@@ -25,9 +25,9 @@ namespace BlogDrop {
     return QSharedPointer<Parameters>(new Parameters(fixed, fixed, 1));
   }
 
-  QSharedPointer<Parameters> Parameters::ECProductionFixed() 
+  QSharedPointer<Parameters> Parameters::CppECProductionFixed() 
   {
-    QSharedPointer<const AbstractGroup> fixed = ECGroup::ProductionFixed();
+    QSharedPointer<const AbstractGroup> fixed = CppECGroup::ProductionFixed();
     return QSharedPointer<Parameters>(new Parameters(fixed, fixed, 8));
   }
 
