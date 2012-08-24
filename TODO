@@ -1,3 +1,11 @@
+BlogDrop (23 August 2012)
+- Add encode and decode to Pairing groups
+- Implement pairing proof 
+- OpenSSL EC implementation
+
+
+-----------------
+
 Anonymity
 - Design a dynamic group -- handles new connections, disconnections, and blame
 - Need some structure to communicate group status / change
