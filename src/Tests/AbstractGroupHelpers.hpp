@@ -13,10 +13,14 @@ namespace Tests {
     Element g = group->GetGenerator();
 
     ASSERT_TRUE(group->IsProbablyValid());
+    ASSERT_EQ(g, group->GetGenerator());
     ASSERT_EQ(g, g);
     ASSERT_TRUE(group->IsElement(g));
+    ASSERT_EQ(g, group->GetGenerator());
     ASSERT_TRUE(group->IsIdentity(group->GetIdentity()));
+    ASSERT_EQ(g, group->GetGenerator());
     ASSERT_FALSE(group->IsIdentity(g));
+    ASSERT_EQ(g, group->GetGenerator());
     ASSERT_TRUE(group->IsIdentity(group->Exponentiate(g, group->GetOrder())));
     ASSERT_TRUE(group->IsElement(group->Multiply(g, g)));
 
@@ -98,6 +102,15 @@ namespace Tests {
       rand->GenerateBlock(msg);
 
       Element a = group->EncodeBytes(msg);
+      Element b = group->RandomElement();
+      Element binv = group->Inverse(b);
+
+      // a * b
+      a = group->Multiply(a, b);
+
+      // a * b * b^-1
+      a = group->Multiply(a, binv);
+
       ASSERT_TRUE(group->DecodeBytes(a, out));
 
       EXPECT_EQ(msg, out);

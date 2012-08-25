@@ -28,7 +28,7 @@ GT::GT(const Pairing &e, const unsigned char *data,
 	//if (compressed)
 	//  element_from_bytes_compressed(g,*(unsigned char**)&data);
 	//else
-	if( base == 16){
+	if(base == 16){
 	  if(!element_from_bytes(g,*(unsigned char**)&data))
 		throw CorruptDataException();}
 	else{

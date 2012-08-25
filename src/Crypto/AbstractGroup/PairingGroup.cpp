@@ -5,6 +5,7 @@
 namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
+   // Note that these values are in base-10
    const char PairingGroup::_param_bytes[] = "type a\n"
             "q 80446847579655582597444149989235076764876194923554360266341368662"
             "3305841804412818608112457890014205661401911491189163051225232968716"
@@ -18,14 +19,24 @@ namespace AbstractGroup {
             "sign1 -1\n"
             "sign0 1\n";
 
+   // This value is in hex. Note that PBC calls the order "r", while we call it
+   // "q."
   const char PairingGroup::_order_bytes[] = 
             "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
             "fffffffffffffffffffffffffffffffffffffffffffffffffffffff00000001";
 
+  // This value is in hex. Note that PBC calls the field size "q" while we
+  // call it p. This is the field size of G1 and G2 in a type-A pairing.
+  // The field size for GT is (field_size)^2
+  const char PairingGroup::_field_bytes[] = 
+            "0x3bfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+            "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffc40000003b";
+
   PairingGroup::PairingGroup() :
     _param_str(QByteArray(_param_bytes)),
     _pairing(_param_str.constData(), _param_str.count()),
-    _order(Integer(QByteArray::fromHex(_order_bytes)))
+    _order(Integer(QByteArray::fromHex(_order_bytes))),
+    _field(Integer(QByteArray::fromHex(_field_bytes)))
   {
     Q_ASSERT(_pairing.isPairingPresent());
 
@@ -48,8 +59,10 @@ namespace AbstractGroup {
   Zr PairingGroup::IntegerToZr(const Integer &in) const
   { 
     const char *bytes = in.GetByteArray().toHex().constData();
-    if(gmp_sscanf(bytes, "%Zx", *_z_tmp) != 1) {
-      qDebug() << "Bad string" << bytes;
+    int ret;
+    if((ret = gmp_sscanf(bytes, "%Zx", *_z_tmp)) != 1) {
+      qDebug() << "Bad string of len" << in.GetByteArray().toHex().count() << ":" << bytes;
+      qDebug() << "Read" << ret;
       qFatal("Could not convert integer");
     }
 

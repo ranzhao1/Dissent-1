@@ -16,7 +16,7 @@ public:
 
   //Create an element from import 
   GT(const Pairing &e, const unsigned char *data, 
-	 unsigned short len, unsigned short base = 16);
+	 unsigned short len, unsigned short base);
 
   //Create an element from hash
   GT(const Pairing &e, const void *data, 

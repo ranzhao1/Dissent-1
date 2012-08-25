@@ -20,7 +20,6 @@ namespace AbstractGroup {
   class OpenECGroup : public AbstractGroup {
 
     public:
-
       /**
        * Constructor: OpenECGroup will free all 
        * of these BIGNUMs on exit.
@@ -30,12 +29,25 @@ namespace AbstractGroup {
        * @param b constant term of curve
        * @param gx x-coordinate of generating point
        * @param gy y-coordinate of generating point
+       * @param is_nist_curve curve is a NIST-recommended curve
+       *        (allows some optimizations)
        */
       OpenECGroup(BIGNUM *p, BIGNUM *q,
-          BIGNUM *a, BIGNUM *b, BIGNUM *gx, BIGNUM *gy);
+          BIGNUM *a, BIGNUM *b, BIGNUM *gx, BIGNUM *gy, 
+          bool is_nist_curve);
 
       /**
-       * Get a fixed group using the RFC 5093 256-bit curve
+       * A convenience constructor for above, using genertic Integer
+       * instead of BIGNUM*
+       */
+      static QSharedPointer<OpenECGroup> NewGroup(const Integer &p, 
+          const Integer &q, const Integer &a, 
+          const Integer &b, const Integer &gx, 
+          const Integer &gy, bool is_nist_curve);
+
+      /**
+       * Get a fixed group using the RFC 5903 256-bit curve
+       * (is a NIST curve)
        */
       static QSharedPointer<OpenECGroup> ProductionFixed();
 
@@ -183,13 +195,27 @@ namespace AbstractGroup {
        */
       inline Integer GetFieldSize() const;
 
+      /**
+       * Get (x,y) coordinates of an element point
+       * @param a Element from which to get points
+       * @param x return x value
+       * @param y return y value
+       */
+      void GetCoordinates(const Element &a, Integer &x, Integer &y) const;
+
+      /**
+       * Get a point from (x,y) coordinates
+       * @param x coordinate
+       * @param y coordinate
+       */
+      Element ElementFromCoordinates(const Integer &x, const Integer &y) const;
+
     private:
 
       inline Element NewElement(EC_POINT *e) const 
       {
         return Element(new OpenECElementData(e, _data->group, _data->ctx)); 
       }
-
 
       /**
        * Create a new BIGNUM from Integer. ret
@@ -209,10 +235,11 @@ namespace AbstractGroup {
        */
       class MutableData {
         public:
-          MutableData() :
+          MutableData(bool is_nist_curve) :
             ctx(BN_CTX_new()),
             mont(BN_MONT_CTX_new()),
-            group(EC_GROUP_new(EC_GFp_nist_method())) 
+            group(EC_GROUP_new(
+                  is_nist_curve ? EC_GFp_nist_method() : EC_GFp_mont_method())) 
           {}
 
           ~MutableData() {

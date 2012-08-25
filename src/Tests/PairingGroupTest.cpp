@@ -53,6 +53,28 @@ namespace Tests {
     AbstractGroup_Exponentiation(PairingGTGroup::ProductionFixed());
   }
 
+  TEST(PairingGroupG1, Serialize)
+  {
+    AbstractGroup_Serialize(PairingG1Group::ProductionFixed());
+  }
+
+  TEST(PairingGroupGT, Serialize)
+  {
+    AbstractGroup_Serialize(PairingGTGroup::ProductionFixed());
+  }
+
+  /* not implemented yet
+  TEST(PairingGroupG1, Encode)
+  {
+    AbstractGroup_Encode(PairingG1Group::ProductionFixed());
+  }
+  */
+
+  TEST(PairingGroupGT, Encode)
+  {
+    AbstractGroup_Encode(PairingGTGroup::ProductionFixed());
+  }
+
   TEST(PairingWrapper, Basic)
   {
     QSharedPointer<PairingG1Group> group1(PairingG1Group::ProductionFixed());

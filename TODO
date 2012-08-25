@@ -4,7 +4,7 @@ BlogDrop (23 August 2012)
 - Implement pairing proof 
 - Implement Bryan's proof
 - Implement Bryan's scheme
-
+- Use QThreadPool in BlogDropRound to avoid disconnect problems
 
 -----------------
 

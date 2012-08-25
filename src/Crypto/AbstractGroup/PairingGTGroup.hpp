@@ -3,6 +3,7 @@
 
 #include <gmp.h>
 
+#include "OpenECGroup.hpp"
 #include "PairingGroup.hpp"
 #include "PairingElementData.hpp"
 
@@ -107,6 +108,14 @@ namespace AbstractGroup {
       {
         return GT(PairingElementData<GT>::GetElement(a.GetData())); 
       }
+
+      void GetPBCElementCoordinates(const Element &a, Integer &x, Integer &y) const;
+
+      /** 
+       * We use this curve for encoding and decoding bytes to/from
+       * EC points
+       */
+      QSharedPointer<OpenECGroup> _open_curve;
  
   };
 

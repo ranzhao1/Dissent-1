@@ -30,6 +30,9 @@ public:
   bool isElementPresent() const{return elementPresent;}
 
   string toString() const;
+
+  // Dump the element to a buffer (calls element_snprintf)
+  int dump(char *buf, int buflen) const;
   
   // Dump the element to stdout (print friendly)
   void dump(FILE *f, const char *label = NULL,

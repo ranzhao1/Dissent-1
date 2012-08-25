@@ -6,7 +6,7 @@ namespace Crypto {
 namespace AbstractGroup {
 
   OpenECGroup::OpenECGroup(BIGNUM *p, BIGNUM *q, BIGNUM *a, 
-      BIGNUM *b, BIGNUM *gx, BIGNUM *gy) :
+      BIGNUM *b, BIGNUM *gx, BIGNUM *gy, bool is_nist_curve) :
       _p(p),
       _q(q),
       _a(a),
@@ -15,7 +15,7 @@ namespace AbstractGroup {
       _gy(gy),
       _zero(BN_new()),
       _one(BN_new()),
-      _data(new MutableData()),
+      _data(new MutableData(is_nist_curve)),
       _generator(EC_POINT_new(_data->group)), 
       _field_bytes(BN_num_bytes(_p)-1)
     {
@@ -47,6 +47,28 @@ namespace AbstractGroup {
       // Precomupte factors of generator
       Q_ASSERT(EC_GROUP_precompute_mult(_data->group, _data->ctx));
     };
+
+  QSharedPointer<OpenECGroup> OpenECGroup::NewGroup(const Integer &p_in, 
+      const Integer &q_in, const Integer &a_in, 
+      const Integer &b_in, const Integer &gx_in, 
+      const Integer &gy_in, bool is_nist_curve)
+  {
+    BIGNUM *p = BN_new();
+    BIGNUM *q = BN_new();
+    BIGNUM *a = BN_new();
+    BIGNUM *b = BN_new();
+    BIGNUM *gx = BN_new();
+    BIGNUM *gy = BN_new();
+
+    GetInteger(p, p_in);
+    GetInteger(q, q_in);
+    GetInteger(a, a_in);
+    GetInteger(b, b_in);
+    GetInteger(gx, gx_in);
+    GetInteger(gy, gy_in);
+
+    return QSharedPointer<OpenECGroup>(new OpenECGroup(p, q, a, b, gx, gy, is_nist_curve));
+  }
 
   OpenECGroup::~OpenECGroup() 
   {
@@ -109,7 +131,7 @@ namespace AbstractGroup {
     Q_ASSERT(gx);
     Q_ASSERT(gy);
 
-    return QSharedPointer<OpenECGroup>(new OpenECGroup(p, q, a, b, gx, gy));
+    return QSharedPointer<OpenECGroup>(new OpenECGroup(p, q, a, b, gx, gy, true));
   }
 
   Element OpenECGroup::Multiply(const Element &a, const Element &b) const
@@ -344,6 +366,25 @@ namespace AbstractGroup {
     return out;
   }
 
+  void OpenECGroup::GetCoordinates(const Element &a, Integer &x_out, Integer &y_out) const
+  {
+    BIGNUM *x = BN_new();
+    BIGNUM *y = BN_new();
+    Q_ASSERT(EC_POINT_get_affine_coordinates_GFp(_data->group, GetPoint(a), x, y, _data->ctx));
+
+    char *x_char = BN_bn2hex(x);
+    char *y_char = BN_bn2hex(y);
+
+    x_out = Integer("0x" + QByteArray(x_char));
+    y_out = Integer("0x" + QByteArray(y_char));
+    
+    OPENSSL_free(x_char);
+    OPENSSL_free(y_char);
+
+    BN_clear_free(x);
+    BN_clear_free(y);
+  }
+
   int OpenECGroup::FastModMul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b) const
   {
     BIGNUM *tmp0 = BN_new();
@@ -383,6 +424,25 @@ namespace AbstractGroup {
   EC_POINT *OpenECGroup::GetPoint(const Element &e) 
   {
     return OpenECElementData::GetPoint(e.GetData());
+  }
+
+  Element OpenECGroup::ElementFromCoordinates(const Integer &x_in, const Integer &y_in) const
+  {
+    BIGNUM *x = BN_new();
+    BIGNUM *y = BN_new();
+
+    GetInteger(x, x_in);
+    GetInteger(y, y_in);
+
+    EC_POINT *point = EC_POINT_new(_data->group);
+
+    Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_data->group, 
+          point, x, y, _data->ctx));
+
+    BN_clear_free(x);
+    BN_clear_free(y);
+
+    return NewElement(point);
   }
 
 }

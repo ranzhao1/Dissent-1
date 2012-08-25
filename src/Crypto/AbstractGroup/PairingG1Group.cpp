@@ -10,32 +10,30 @@ namespace AbstractGroup {
 
   QSharedPointer<PairingG1Group> PairingG1Group::ProductionFixed()
   {
-    const unsigned char generator1_str[] = "generator";
-
-    QSharedPointer<PairingG1Group> group(new PairingG1Group());
-
-    G1 identity(group->GetPairing(), true);
-    Q_ASSERT(identity.isElementPresent());
-
-    // Create generator from hash
-    G1 generator(group->GetPairing(), generator1_str, sizeof(generator1_str));
-    Q_ASSERT(generator.isElementPresent());
-
-    group->SetIdentity(Element(new PairingElementData<G1>(identity)));
-    group->SetGenerator(Element(new PairingElementData<G1>(generator)));
-
-    Element ident = group->GetIdentity();
-    Element gen = group->GetGenerator();
-
-    return group;
+    return QSharedPointer<PairingG1Group>(new PairingG1Group());
   }
 
   PairingG1Group::PairingG1Group() :
-    PairingGroup() {}
+    PairingGroup() 
+  {
+    // it doesn't matter what this string is as long as 
+    // all nodes agree on what it is
+    const unsigned char generator1_str[] = "generator";
+
+    G1 identity(GetPairing(), true);
+    Q_ASSERT(identity.isElementPresent());
+
+    // Create generator from hash
+    G1 generator(GetPairing(), generator1_str, sizeof(generator1_str));
+    Q_ASSERT(generator.isElementPresent());
+
+    //generator.dump(stdout, "gen", 16);
+    _identity = Element(new PairingElementData<G1>(identity));
+    _generator = Element(new PairingElementData<G1>(generator));
+  }
 
   PairingG1Group::~PairingG1Group() 
-  {
-  }
+  {}
 
   Element PairingG1Group::Multiply(const Element &a, const Element &b) const
   {
@@ -80,13 +78,14 @@ namespace AbstractGroup {
   { 
     Q_ASSERT(bytes.count());
     const unsigned char *data = (const unsigned char*)(bytes.constData());
-    G1 a(_pairing, data, bytes.count(), false);
+    G1 a(_pairing, data, bytes.count(), false, 16);
     Q_ASSERT(a.isElementPresent());
     return Element(new PairingElementData<G1>(a));
   }
 
   bool PairingG1Group::IsIdentity(const Element &a) const 
   {
+    //GetElement(a).dump(stdout, "a", 10);
     return GetElement(a).isIdentity();
   }
 

@@ -16,7 +16,7 @@ public:
 
   //Create an element from import 
   G1(const Pairing &e, const unsigned char *data, unsigned short len, 
-	 bool compressed = false, unsigned short base = 16);
+	 bool compressed, unsigned short base);
 
   //Create an element from hash
   G1(const Pairing &e, const void *data, unsigned short len);

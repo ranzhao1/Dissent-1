@@ -106,6 +106,15 @@ namespace AbstractGroup {
       }
 
       /**
+       * Return the size of the field used in groups G1 and G2
+       * in a PBC type-A symmetric pairing.
+       */
+      inline virtual Integer GetFieldSize() const 
+      {
+        return _field;
+      }
+
+      /**
        * Return the group identity element O
        */
       inline virtual Element GetIdentity() const
@@ -157,8 +166,6 @@ namespace AbstractGroup {
       PairingGroup();
 
       inline const Pairing &GetPairing() const { return _pairing; }
-      inline void SetIdentity(Element e) { _identity = e; }
-      inline void SetGenerator(Element e) { _generator = e; }
       Zr IntegerToZr(const Integer &in) const;
       
       QByteArray _param_str;
@@ -167,12 +174,14 @@ namespace AbstractGroup {
       Element _identity;
       Element _generator;
       Integer _order;
+      Integer _field;
 
       mpz_t *_z_tmp;
 
     private:
       static const char _param_bytes[]; 
       static const char _order_bytes[]; 
+      static const char _field_bytes[]; 
 
   };
 

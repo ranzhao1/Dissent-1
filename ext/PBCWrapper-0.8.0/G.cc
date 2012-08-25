@@ -191,3 +191,8 @@ void G::dump(FILE *f, const char *label,
 	fprintf(f,"Element_Not_Defined.");
   fprintf(f,"\n");
 }	
+
+// Dump the element to a string
+int G::dump(char* buf, int buflen) const{
+  return element_snprintf(buf, buflen, "%B", *(element_t*)&g);
+}

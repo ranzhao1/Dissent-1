@@ -22,7 +22,9 @@ namespace AbstractGroup {
     G1 g_a1(PairingElementData<G1>::GetElement(a1.GetData())); 
     G1 g_a2(PairingElementData<G1>::GetElement(a2.GetData())); 
 
-    return Element(new PairingElementData<GT>(_pairing.apply(g_a1, g_a2)));
+    GT gt(_pairing.apply(g_a1, g_a2));
+  
+    return Element(new PairingElementData<GT>(gt));
   }
 
 }
