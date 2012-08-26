@@ -33,16 +33,6 @@ namespace AbstractGroup {
     Integer gx, gy;
     GetPBCElementCoordinates(_generator, gx, gy);
 
-    Integer p = (-1) % GetFieldSize();
-    Integer lhs = (gy*gy)%p;
-    Integer rhs = ((gx*gx*gx)+gx)%p;
-
-    qDebug() << "lhs" << lhs.GetByteArray().toHex();
-    qDebug() << "rhs" << rhs.GetByteArray().toHex();
-
-    qDebug() << "gx" << gx.GetByteArray().toHex();
-    qDebug() << "gy" << gy.GetByteArray().toHex();
-
     // params: p, q, a, b, gx, gy, is_nist_curve
     _open_curve = OpenECGroup::NewGroup(
         GetFieldSize()*GetFieldSize(), // GT has field size p^2
@@ -52,7 +42,7 @@ namespace AbstractGroup {
         gx, gy,     // generator
         false);     // is not a NIST curve
 
-    Q_ASSERT(_open_curve->IsElement(_open_curve->GetGenerator()));
+//    Q_ASSERT(_open_curve->IsElement(_open_curve->GetGenerator()));
   }
 
   PairingGTGroup::~PairingGTGroup() 
@@ -102,7 +92,7 @@ namespace AbstractGroup {
   { 
     Q_ASSERT(bytes.count());
     const unsigned char *data = (const unsigned char*)(bytes.constData());
-    GT a(_pairing, data, bytes.count(), 16);
+    GT a(_pairing, data, bytes.count(), 16, true);
     Q_ASSERT(a.isElementPresent());
     return Element(new PairingElementData<GT>(a));
   }
@@ -140,7 +130,7 @@ namespace AbstractGroup {
     b.append("]");
 
     qDebug() << "gt" << b;
-    GT gt(_pairing, (const unsigned char*)b.constData(), b.count(), 16);
+    GT gt(_pairing, (const unsigned char*)b.constData(), b.count(), 16, false);
     return Element(new PairingElementData<GT>(gt));
   }
  

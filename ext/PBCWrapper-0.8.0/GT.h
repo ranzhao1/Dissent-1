@@ -15,8 +15,8 @@ public:
   GT(const Pairing &e, bool identity);
 
   //Create an element from import 
-  GT(const Pairing &e, const unsigned char *data, 
-	 unsigned short len, unsigned short base);
+  explicit GT(const Pairing &e, const unsigned char *data, 
+	 unsigned short len, unsigned short base, bool use_binary);
 
   //Create an element from hash
   GT(const Pairing &e, const void *data, 

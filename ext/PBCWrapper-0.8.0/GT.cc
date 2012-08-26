@@ -22,13 +22,13 @@ GT::GT(const Pairing &e, bool identity): G(e){
 
 //Create an element from import 
 GT::GT(const Pairing &e, const unsigned char *data, 
-	   unsigned short len, unsigned short base): G(e){
+	   unsigned short len, unsigned short base, bool use_binary): G(e){
   if(elementPresent){
 	element_init_GT(g, *(pairing_t*)&e.getPairing());
 	//if (compressed)
 	//  element_from_bytes_compressed(g,*(unsigned char**)&data);
 	//else
-	if(base == 16){
+	if(use_binary){
 	  if(!element_from_bytes(g,*(unsigned char**)&data))
 		throw CorruptDataException();}
 	else{
