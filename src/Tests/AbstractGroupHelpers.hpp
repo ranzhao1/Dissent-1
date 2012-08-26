@@ -102,6 +102,7 @@ namespace Tests {
       rand->GenerateBlock(msg);
 
       Element a = group->EncodeBytes(msg);
+      EXPECT_EQ(group->GetIdentity(), group->Exponentiate(a, group->GetOrder()));
       Element b = group->RandomElement();
       Element binv = group->Inverse(b);
 

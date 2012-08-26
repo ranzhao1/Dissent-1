@@ -108,6 +108,9 @@ namespace AbstractGroup {
       {
         return GT(PairingElementData<GT>::GetElement(a.GetData())); 
       }
+      inline int BytesPerCoordinate() const {
+        return _field.GetByteArray().count() - 4;
+      }
 
       void GetPBCElementCoordinates(const Element &a, Integer &x, Integer &y) const;
   };

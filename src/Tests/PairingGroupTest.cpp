@@ -164,5 +164,43 @@ namespace Tests {
     }
   }
 
+  TEST(PairingWrapper, EncodeAndPair)
+  {
+    QSharedPointer<PairingG1Group> group1(PairingG1Group::ProductionFixed());
+    QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::ProductionFixed());
+
+    PairingWrapper wrap(group1, groupT);
+
+    ASSERT_EQ(group1->GetByteArray(), groupT->GetByteArray());
+    ASSERT_EQ(group1->GetByteArray(), wrap.GetByteArray());
+
+    Library *lib = CryptoFactory::GetInstance().GetLibrary();
+    QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
+
+    QByteArray out;
+
+    for(int i=0; i<100; i++) {
+      QByteArray msg(rand->GetInt(1, groupT->BytesPerElement()), 0);
+      rand->GenerateBlock(msg);
+
+      Element a = group1->RandomElement();
+      Element b = group1->RandomElement();
+
+      Element m = groupT->EncodeBytes(msg);
+
+      // compute c = m * e(a,b) * e(a, b^-1)
+      Element t1 = wrap.Apply(a, b);
+      Element t2 = wrap.Apply(a, group1->Inverse(b));
+
+      Element c = groupT->Multiply(groupT->Multiply(t1, t2), m);
+
+      // check m == c
+      EXPECT_EQ(m, c);
+
+      EXPECT_TRUE(groupT->DecodeBytes(c, out));
+      EXPECT_EQ(msg, out);
+    }
+  }
+
 }
 }

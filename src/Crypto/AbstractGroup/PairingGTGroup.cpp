@@ -28,8 +28,6 @@ namespace AbstractGroup {
     _identity = Element(new PairingElementData<GT>(identity));
     _generator = Element(new PairingElementData<GT>(generator));
 
-    // Curve is y^2 = x^3 + ax + b
-    // Group GT for type-A PBC curve has a = 1, b = 0
     Integer gx, gy;
     GetPBCElementCoordinates(_generator, gx, gy);
 
@@ -99,15 +97,21 @@ namespace AbstractGroup {
 
   int PairingGTGroup::BytesPerElement() const
   {
-    return (_field.GetByteArray().count() - 3)*2;
+    return (BytesPerCoordinate()*2);
   }
 
   Element PairingGTGroup::EncodeBytes(const QByteArray &bytes) const
   {
+    /*
+     * GT is a finite field mod q^2 (NOT an elliptic curve over a finite
+     * field, but just a finite field). PBC represents this field as 
+     * complex coordinates x+yi for i=sqrt(-1) in the field. Thus we
+     * encode the byte array as (x,y) points and not simple integers.
+     */
     if(bytes.count() > BytesPerElement())
       qFatal("String is too long");
 
-    const int bytes_per = _field.GetByteArray().count() - 2;
+    const int bytes_per = BytesPerCoordinate();
     QByteArray left = bytes.left(bytes_per);
     QByteArray right = bytes.mid(bytes_per);
 
@@ -115,30 +119,43 @@ namespace AbstractGroup {
     Integer x(pad+left+pad);
     Integer y(pad+right+pad);
 
+    Q_ASSERT(x < _field);
+    Q_ASSERT(y < _field);
+
+    qDebug() << "x" << x.GetByteArray().toHex();
+    qDebug() << "y" << y.GetByteArray().toHex();
+
     Element e;
-    // convert into string "[x, y]" in base 16
-    QByteArray b;
-    b.append("[");
-    b.append(x.GetByteArray().toHex());
-    b.append(",");
-    b.append(y.GetByteArray().toHex());
-    b.append("]");
 
-    qDebug() << "gt" << b;
+    mpz_t gx, gy;
+    mpz_init(gx);
+    mpz_init(gy);
 
-    GT gt(_pairing, (const unsigned char*)b.constData(), b.count(), 16, false);
+    // read into gmp integers
+    if(gmp_sscanf(x.GetByteArray().toHex().constData(), "%Zx", gx) != 1)
+      qFatal("Could not read x");
+    if(gmp_sscanf(y.GetByteArray().toHex().constData(), "%Zx", gy) != 1)
+      qFatal("Could not read y");
+
+    // convert into string "[x, y]" in base 10
+    int ret;
+    const int maxlen = 1024*64;
+    QByteArray buf(maxlen, 0);
+    if((ret = gmp_snprintf(buf.data(), maxlen, "[%Zd, %Zd]", gx, gy)) >= maxlen)
+      qFatal("Buf not long enough");
+
+    // convert into GT element
+    GT gt(_pairing, (const unsigned char*)buf.constData(), ret, 10, false);
 
     e = Element(new PairingElementData<GT>(gt));
-    GetElement(Exponentiate(e, GetOrder())).dump(stdout, "e", 10);
 
-    Q_ASSERT((Exponentiate(e, GetOrder())) == GetIdentity());
-
+    mpz_clear(gx);
+    mpz_clear(gy);
     return e;
   }
  
   bool PairingGTGroup::DecodeBytes(const Element &a, QByteArray &bytes) const
   {
-    bytes.clear();
     // Get coordinates of PBC point
     Integer x, y;
     GetPBCElementCoordinates(a, x, y);
@@ -166,7 +183,7 @@ namespace AbstractGroup {
     ybytes = ybytes.left(yc-1).mid(1);
 
     qDebug() << "out" << xbytes.toHex() << ybytes.toHex();
-    bytes = (xbytes + bytes);
+    bytes = (xbytes + ybytes);
     return true;
   }
 
@@ -209,8 +226,11 @@ namespace AbstractGroup {
       qFatal("Could not convert y to hex");
     hex_y = hex_y.left(ret);
 
-    x_out = Integer("0x"+hex_x);
-    y_out = Integer("0x"+hex_y);
+    qDebug() << "hx" << hex_x;
+    qDebug() << "hy" << hex_y;
+
+    x_out = Integer(QByteArray::fromHex("0x"+hex_x));
+    y_out = Integer(QByteArray::fromHex("0x"+hex_y));
 
     mpz_clear(x);
     mpz_clear(y);
