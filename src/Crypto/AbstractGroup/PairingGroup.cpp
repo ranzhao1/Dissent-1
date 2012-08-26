@@ -40,16 +40,10 @@ namespace AbstractGroup {
   {
     Q_ASSERT(_pairing.isPairingPresent());
 
-    _z_tmp = (mpz_t*)malloc(sizeof(*_z_tmp));
-    Q_ASSERT(_z_tmp);
-    mpz_init(*_z_tmp);
   };
 
   PairingGroup::~PairingGroup()
-  {
-    mpz_clear(*_z_tmp);
-    free(_z_tmp);
-  }
+  {}
 
   Integer PairingGroup::RandomExponent() const
   {
@@ -58,16 +52,22 @@ namespace AbstractGroup {
   
   Zr PairingGroup::IntegerToZr(const Integer &in) const
   { 
-    const char *bytes = in.GetByteArray().toHex().constData();
+    mpz_t z;
+    mpz_init(z);
+    QByteArray b = in.GetByteArray().toHex();
+    const char *bytes = b.constData();
     int ret;
-    if((ret = gmp_sscanf(bytes, "%Zx", *_z_tmp)) != 1) {
-      qDebug() << "Bad string of len" << in.GetByteArray().toHex().count() << ":" << bytes;
+
+    if((ret = gmp_sscanf(bytes, "%Zx", z)) != 1) {
+      qDebug() << "Bad string of len" << b.count() << ":" << bytes;
       qDebug() << "Read" << ret;
       qFatal("Could not convert integer");
     }
 
-    Zr e(_pairing, *_z_tmp);
+    Zr e(_pairing, z);
     Q_ASSERT(e.isElementPresent());
+
+    mpz_clear(z);
     return e; 
   }
 

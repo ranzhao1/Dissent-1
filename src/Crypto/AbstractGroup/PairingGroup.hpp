@@ -176,8 +176,6 @@ namespace AbstractGroup {
       Integer _order;
       Integer _field;
 
-      mpz_t *_z_tmp;
-
     private:
       static const char _param_bytes[]; 
       static const char _order_bytes[]; 

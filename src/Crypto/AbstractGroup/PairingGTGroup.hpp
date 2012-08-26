@@ -110,13 +110,6 @@ namespace AbstractGroup {
       }
 
       void GetPBCElementCoordinates(const Element &a, Integer &x, Integer &y) const;
-
-      /** 
-       * We use this curve for encoding and decoding bytes to/from
-       * EC points
-       */
-      QSharedPointer<OpenECGroup> _open_curve;
- 
   };
 
 }

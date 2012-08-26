@@ -1,3 +1,4 @@
+#include "AbstractGroupHelpers.hpp"
 #include "DissentTest.hpp"
 #include <cryptopp/ecp.h>
 #include <cryptopp/nbtheory.h>

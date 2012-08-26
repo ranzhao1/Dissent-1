@@ -9,7 +9,6 @@
 #include <gtest/gtest.h>
 
 #include "Dissent.hpp"
-#include "AbstractGroupHelpers.hpp"
 #include "Mock.hpp"
 #include "MockEdgeHandler.hpp"
 #include "MockSender.hpp"

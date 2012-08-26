@@ -1,3 +1,4 @@
+#include "AbstractGroupHelpers.hpp"
 #include "DissentTest.hpp"
 
 namespace Dissent {

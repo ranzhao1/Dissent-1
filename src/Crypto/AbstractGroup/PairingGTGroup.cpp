@@ -33,16 +33,6 @@ namespace AbstractGroup {
     Integer gx, gy;
     GetPBCElementCoordinates(_generator, gx, gy);
 
-    // params: p, q, a, b, gx, gy, is_nist_curve
-    _open_curve = OpenECGroup::NewGroup(
-        GetFieldSize()*GetFieldSize(), // GT has field size p^2
-        GetOrder(), // q = same as G1 and G2
-        Integer(1), // a = 1
-        Integer(0), // b = 0
-        gx, gy,     // generator
-        false);     // is not a NIST curve
-
-//    Q_ASSERT(_open_curve->IsElement(_open_curve->GetGenerator()));
   }
 
   PairingGTGroup::~PairingGTGroup() 
@@ -109,18 +99,23 @@ namespace AbstractGroup {
 
   int PairingGTGroup::BytesPerElement() const
   {
-    return _open_curve->BytesPerElement();
+    return (_field.GetByteArray().count() - 3)*2;
   }
 
   Element PairingGTGroup::EncodeBytes(const QByteArray &bytes) const
   {
-    // a is an OpenEC element
-    Element a = _open_curve->EncodeBytes(bytes);
+    if(bytes.count() > BytesPerElement())
+      qFatal("String is too long");
 
-    // get coordinates of OpenEC point
-    Integer x, y;
-    _open_curve->GetCoordinates(a, x, y);
+    const int bytes_per = _field.GetByteArray().count() - 2;
+    QByteArray left = bytes.left(bytes_per);
+    QByteArray right = bytes.mid(bytes_per);
 
+    const QByteArray pad(1, 0xff);
+    Integer x(pad+left+pad);
+    Integer y(pad+right+pad);
+
+    Element e;
     // convert into string "[x, y]" in base 16
     QByteArray b;
     b.append("[");
@@ -130,21 +125,49 @@ namespace AbstractGroup {
     b.append("]");
 
     qDebug() << "gt" << b;
+
     GT gt(_pairing, (const unsigned char*)b.constData(), b.count(), 16, false);
-    return Element(new PairingElementData<GT>(gt));
+
+    e = Element(new PairingElementData<GT>(gt));
+    GetElement(Exponentiate(e, GetOrder())).dump(stdout, "e", 10);
+
+    Q_ASSERT((Exponentiate(e, GetOrder())) == GetIdentity());
+
+    return e;
   }
  
   bool PairingGTGroup::DecodeBytes(const Element &a, QByteArray &bytes) const
   {
+    bytes.clear();
     // Get coordinates of PBC point
     Integer x, y;
     GetPBCElementCoordinates(a, x, y);
 
-    // Convert into OpenSSL
-    Element e = _open_curve->ElementFromCoordinates(x, y);
-
     // Decode bytes
-    return _open_curve->DecodeBytes(e, bytes);
+    QByteArray xbytes = x.GetByteArray();
+    QByteArray ybytes = y.GetByteArray();
+
+    const int xc = xbytes.count();
+    const int yc = ybytes.count();
+    if(xc < 2) return false;
+    if(yc < 2) return false;
+
+    const unsigned char pad = 0xff;
+    const unsigned char x0 = xbytes[0], xl = xbytes[xc-1];
+    const unsigned char y0 = ybytes[0], yl = ybytes[yc-1];
+
+    if(x0 != pad || y0 != pad || xl != pad || yl != pad) {
+      qWarning() << "Improper padding" << xbytes.toHex() << ybytes.toHex();
+      return false; 
+    }
+
+    // Remove leading and trailing pads
+    xbytes = xbytes.left(xc-1).mid(1);
+    ybytes = ybytes.left(yc-1).mid(1);
+
+    qDebug() << "out" << xbytes.toHex() << ybytes.toHex();
+    bytes = (xbytes + bytes);
+    return true;
   }
 
   void PairingGTGroup::GetPBCElementCoordinates(const Element &a, 
@@ -155,6 +178,7 @@ namespace AbstractGroup {
     GT e(GetElement(a));
 
     QByteArray bytes(maxlen, 0);
+    // bytes now holds base-10 pair [x, y]
     int ret = e.dump(bytes.data(), bytes.count());
 
     qDebug() << "bytes" << bytes;
@@ -169,14 +193,14 @@ namespace AbstractGroup {
     mpz_init(x);
     mpz_init(y);
 
-    // bytes now holds base-10 pair [x, y]
+    // Read base-10 digits into integers x, y
     if(gmp_sscanf(bytes.data(), "[%Zd, %Zd]", x, y) != 2) 
       qFatal("Could not read integers");
 
     QByteArray hex_x(maxlen, 0);
     QByteArray hex_y(maxlen, 0);
 
-    // base 10 --> hex
+    // write the integers out in hex
     if((ret = gmp_snprintf(hex_x.data(), hex_x.count(), "%Zx", x)) >= maxlen) 
       qFatal("Could not convert x to hex");
     hex_x = hex_x.left(ret);
@@ -185,10 +209,8 @@ namespace AbstractGroup {
       qFatal("Could not convert y to hex");
     hex_y = hex_y.left(ret);
 
-    Q_ASSERT(hex_x != hex_y);
-
-    x_out = Integer(QByteArray::fromHex(hex_x));
-    y_out = Integer(QByteArray::fromHex(hex_y));
+    x_out = Integer("0x"+hex_x);
+    y_out = Integer("0x"+hex_y);
 
     mpz_clear(x);
     mpz_clear(y);

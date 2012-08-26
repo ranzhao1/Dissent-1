@@ -1,7 +1,7 @@
 #ifndef DISSENT_TESTS_ABSTRACT_GROUP_HELPERS_H_GUARD
 #define DISSENT_TESTS_ABSTRACT_GROUP_HELPERS_H_GUARD
 
-#include "Dissent.hpp"
+#include "DissentTest.hpp"
 
 namespace Dissent {
 namespace Tests {
@@ -97,7 +97,7 @@ namespace Tests {
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
 
     QByteArray out;
-    QByteArray msg(group->BytesPerElement(), 0);
+    QByteArray msg(rand->GetInt(1, group->BytesPerElement()), 0);
     for(int i=0; i<100; i++) {
       rand->GenerateBlock(msg);
 
@@ -107,13 +107,20 @@ namespace Tests {
 
       // a * b
       a = group->Multiply(a, b);
+      a = group->Multiply(a, b);
+      a = group->Multiply(a, b);
+      a = group->Multiply(a, b);
 
       // a * b * b^-1
+      a = group->Multiply(a, binv);
+      a = group->Multiply(a, binv);
+      a = group->Multiply(a, binv);
       a = group->Multiply(a, binv);
 
       ASSERT_TRUE(group->DecodeBytes(a, out));
 
       EXPECT_EQ(msg, out);
+      qDebug() << out;
     }
   }
 
