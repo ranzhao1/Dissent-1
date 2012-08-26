@@ -10,8 +10,21 @@ namespace BlogDrop {
   /**
    * Object holding BlogDrop client ciphertext using
    * ElGamal-style construction. Every ciphertext 
-   * element is actually a tuple:
+   * element is a tuple:
    *   g^r, g^ar
+   *
+   * The proof for a ciphertext of length k has the form:
+   *   PoK{ a1, ..., ak , y: 
+   *      ( C1 = (prod_server_pks)^a1 AND A1 = g^a1 AND
+   *        ... AND
+   *        Ck = (prod_server_pks)^aj AND Ak = g^ak )
+   *      OR
+   *        Y = g^y
+   *   }
+   * where C1, ..., Ck are the k ciphertext elements, 
+   * prod_server_pks is the product of server public keys,
+   * A1, ..., Ak are the ephemeral client public keys,
+   * and Y is the author public key.
    */
   class ElGamalClientCiphertext : public ClientCiphertext {
 

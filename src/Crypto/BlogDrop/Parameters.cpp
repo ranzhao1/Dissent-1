@@ -41,10 +41,9 @@ namespace BlogDrop {
   QSharedPointer<Parameters> Parameters::PairingProductionFixed() 
   {
     QSharedPointer<const AbstractGroup> g1 = PairingG1Group::ProductionFixed();
-    QSharedPointer<const AbstractGroup> gT = PairingG1Group::ProductionFixed();
+    QSharedPointer<const AbstractGroup> gT = PairingGTGroup::ProductionFixed();
     return QSharedPointer<Parameters>(new Parameters(g1, gT, 8));
   }
-
 
   QSharedPointer<Parameters> Parameters::Empty() 
   {
