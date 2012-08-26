@@ -47,7 +47,8 @@ namespace BlogDrop {
        * @param author_priv author private key used to generate proof
        * @param m author's plaintext message
        */
-      virtual void SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, const Plaintext &m) = 0;
+      virtual void SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, 
+          const Plaintext &m) = 0;
 
       /**
        * Initialize elements proving correctness of ciphertext
@@ -73,11 +74,30 @@ namespace BlogDrop {
        */
       static QSet<int> VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c);
 
-      virtual inline QList<Element> GetElements() const { return _elements; }
-      virtual inline QSharedPointer<const Parameters> GetParameters() const { return _params; }
-      virtual inline QSharedPointer<const PublicKeySet> GetServerKeys() const { return _server_pks; }
-      virtual inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; } 
-      virtual inline int GetNElements() const { return _n_elms; }
+      virtual inline QList<Element> GetElements() const 
+      { 
+        return _elements; 
+      }
+
+      virtual inline QSharedPointer<const Parameters> GetParameters() const 
+      { 
+        return _params; 
+      }
+
+      virtual inline QSharedPointer<const PublicKeySet> GetServerKeys() const 
+      { 
+        return _server_pks; 
+      }
+
+      virtual inline QSharedPointer<const PublicKey> GetAuthorKey() const 
+      { 
+        return _author_pub; 
+      }
+
+      virtual inline int GetNElements() const 
+      { 
+        return _n_elms; 
+      }
 
     protected:
 
