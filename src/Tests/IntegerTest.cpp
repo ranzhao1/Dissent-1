@@ -64,8 +64,8 @@ namespace Tests {
   void IntegerRandom()
   {
     Integer val0 = Integer::GetRandomInteger(1024);
-    Integer val1 = Integer::GetRandomInteger(1024, val0);
-    Integer val2 = Integer::GetRandomInteger(1024, val0, true);
+    Integer val1 = Integer::GetRandomInteger(0, val0);
+    Integer val2 = Integer::GetRandomInteger(0, val0, true);
 
     EXPECT_NE(val0, val1);
     EXPECT_NE(val0, val2);

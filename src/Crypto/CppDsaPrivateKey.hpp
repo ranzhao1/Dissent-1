@@ -20,7 +20,7 @@ namespace Crypto {
       /**
        * Creates a new random key
        */
-      explicit CppDsaPrivateKey();
+      explicit CppDsaPrivateKey(int modulus = DefaultKeySize, int subgroup = -1);
 
       /**
        * Creates a private Dsa key given the private parameters
@@ -74,6 +74,13 @@ namespace Crypto {
        * @param data to decrypt
        */
       QByteArray SeriesDecrypt(const QByteArray &data) const;
+
+      /**
+       * DSA allows multiple encryptions of the same data to require only two elements.
+       * This should be called after all the decryption layers have been removed
+       * @param data to decrypt
+       */
+      static QByteArray SeriesDecryptFinish(const QByteArray &data);
 
     protected:
       inline virtual const Parameters &GetGroupParameters() const

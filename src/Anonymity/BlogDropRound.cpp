@@ -39,9 +39,7 @@ namespace Anonymity {
     _state_machine.AddState(PROCESS_DATA_SHUFFLE, -1, 0,
         &BlogDropRound::ProcessDataShuffle);
     _state_machine.AddTransition(SHUFFLING, PROCESS_DATA_SHUFFLE);
-    _state_machine.AddTransition(PROCESS_DATA_SHUFFLE, WAIT_FOR_SERVER_PUBLIC_KEYS);
-    _state_machine.AddTransition(WAIT_FOR_SERVER_PUBLIC_KEYS, 
-        PREPARE_FOR_BULK);
+    _state_machine.AddTransition(WAIT_FOR_SERVER_PUBLIC_KEYS, PREPARE_FOR_BULK);
 
     _state_machine.AddTransition(OFFLINE, SHUFFLING);
     _state_machine.SetState(OFFLINE);
@@ -75,8 +73,12 @@ namespace Anonymity {
       _server_state->allowed_clients.insert(con->GetRemoteId());
     }
 
+    _state_machine.AddState(SERVER_WAIT_FOR_CLIENT_PUBLIC_KEYS,
+        CLIENT_PUBLIC_KEY, &BlogDropRound::HandleClientPublicKey,
+        &BlogDropRound::SubmitServerPublicKey);
+
     _state_machine.AddState(WAIT_FOR_SERVER_PUBLIC_KEYS,
-        SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey,
+        SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey, 
         &BlogDropRound::SubmitServerPublicKey);
 
     _state_machine.AddState(SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
@@ -98,6 +100,10 @@ namespace Anonymity {
     _state_machine.AddState(SERVER_PUSH_CLEARTEXT, -1, 0,
         &BlogDropRound::PushCleartext);
 
+    _state_machine.AddTransition(PROCESS_DATA_SHUFFLE, 
+        SERVER_WAIT_FOR_CLIENT_PUBLIC_KEYS);
+    _state_machine.AddTransition(PROCESS_DATA_SHUFFLE, 
+        WAIT_FOR_SERVER_PUBLIC_KEYS);
     _state_machine.AddTransition(PREPARE_FOR_BULK,
         SERVER_WAIT_FOR_CLIENT_CIPHERTEXT);
     _state_machine.AddTransition(SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
@@ -129,11 +135,14 @@ namespace Anonymity {
     }
 
     _state_machine.AddState(WAIT_FOR_SERVER_PUBLIC_KEYS,
-        SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey);
+        SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey, 
+        &BlogDropRound::SubmitClientPublicKey);
     _state_machine.AddState(CLIENT_WAIT_FOR_CLEARTEXT,
         SERVER_CLEARTEXT, &BlogDropRound::HandleServerCleartext,
         &BlogDropRound::SubmitClientCiphertext);
 
+    _state_machine.AddTransition(PROCESS_DATA_SHUFFLE, 
+        WAIT_FOR_SERVER_PUBLIC_KEYS);
     _state_machine.AddTransition(PREPARE_FOR_BULK,
         CLIENT_WAIT_FOR_CLEARTEXT);
     _state_machine.AddTransition(CLIENT_WAIT_FOR_CLEARTEXT,
@@ -224,6 +233,37 @@ namespace Anonymity {
     return true;
   }
 
+  void BlogDropRound::HandleClientPublicKey(const Id &from, QDataStream &stream)
+  {
+    if(!IsServer()) {
+      throw QRunTimeError("Not a server");
+    }
+
+    Q_ASSERT(_server_state);
+
+    if(!_server_state->allowed_clients.contains(from)) {
+      throw QRunTimeError("Not allowed to submit a public key");
+    } else if(_server_state->client_pub_packets.contains(from)) {
+      throw QRunTimeError("Already have public key");
+    }
+
+    QPair<QByteArray, QByteArray> pair;
+    stream >> pair;
+
+    _server_state->client_pub_packets[from] = pair;
+
+    qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
+      ": received client public key from" << GetGroup().GetIndex(from) <<
+      from.ToString() << "Have" << _server_state->client_pub_packets.count()
+      << "expecting" << _server_state->allowed_clients.count();
+
+    if(_server_state->allowed_clients.count() ==
+        _server_state->client_pub_packets.count())
+    {
+      _state_machine.StateComplete();
+    } 
+  }
+
   void BlogDropRound::HandleServerPublicKey(const Id &from, QDataStream &stream)
   {
     if(!GetGroup().GetSubgroup().Contains(from)) {
@@ -238,7 +278,8 @@ namespace Anonymity {
 
     QByteArray public_key;
     QByteArray proof;
-    stream >> public_key >> proof;
+    QHash<Id, QPair<QByteArray, QByteArray> > client_pub_packets;
+    stream >> public_key >> proof >> client_pub_packets;
 
     _state->server_pks[server_idx] = QSharedPointer<const PublicKey>(
         new PublicKey(_state->params, public_key));
@@ -251,6 +292,27 @@ namespace Anonymity {
     if(!_state->server_pks[server_idx]->VerifyKnowledge(proof)) {
       Stop("Server failed to prove knowledge of secret key--aborting");
       return;
+    }
+
+    const QList<Id> keys = client_pub_packets.keys();
+    for(int idx=0; idx<keys.count(); idx++) {
+      const Id &client_id = keys[idx];
+
+      QPair<QByteArray, QByteArray> pair = client_pub_packets[client_id];
+      if(!GetGroup().GetSubgroup().GetKey(client_id)->Verify(pair.first, pair.second))
+        throw QRunTimeError("Got public key with invalid signature");
+
+      Id round_id;
+      QByteArray key_bytes;
+      QDataStream stream(pair.first);
+      stream >> round_id >> key_bytes;
+
+      if(round_id != GetRoundId())
+        throw QRunTimeError("Got public key with invalid round ID");
+
+      _state->client_pks[client_id] = QSharedPointer<const PublicKey>(new PublicKey(_state->params, key_bytes));
+      if(!_state->client_pks[client_id]->IsValid()) 
+        throw QRunTimeError("Got invalid client public key");
     }
 
     qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
@@ -491,13 +553,33 @@ namespace Anonymity {
     _state_machine.StateComplete();
   }
 
+  void BlogDropRound::SubmitClientPublicKey()
+  {
+    // Sign the public key with my long-term key and send it 
+    // to my server
+    QByteArray packet;
+    QDataStream pstream(&packet, QIODevice::WriteOnly);
+    pstream << GetRoundId() << _state->client_pub->GetByteArray();
+    QByteArray signature = GetPrivateIdentity().GetSigningKey()->Sign(packet);
+
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream << CLIENT_PUBLIC_KEY << GetRoundId() << QPair<QByteArray, QByteArray>(packet, signature);
+
+    VerifiableSend(_state->my_server, payload);
+  }
+
   void BlogDropRound::SubmitServerPublicKey()
   {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << SERVER_PUBLIC_KEY << GetRoundId() << _state_machine.GetPhase() 
       << _server_state->server_pub->GetByteArray()
-      << _server_state->server_pub->ProveKnowledge(_server_state->server_priv);
+      << _server_state->server_pub->ProveKnowledge(_server_state->server_priv)
+      << _server_state->client_pub_packets;
+
+    // Once we send the client PKs we can throw them away
+    _server_state->client_pub_packets.clear();
 
     VerifiableBroadcast(payload);
   }
@@ -507,10 +589,10 @@ namespace Anonymity {
     _state->server_pk_set = QSharedPointer<const PublicKeySet>(
         new PublicKeySet(_state->params, _state->server_pks.values()));
     _state->blogdrop_author = QSharedPointer<BlogDropAuthor>(
-        new BlogDropAuthor(_state->params, _state->server_pk_set, _state->anonymous_priv));
+        new BlogDropAuthor(_state->params, _state->client_priv, _state->server_pk_set, _state->anonymous_priv));
 
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      QSharedPointer<BlogDropClient> c(new BlogDropClient(_state->params,
+      QSharedPointer<BlogDropClient> c(new BlogDropClient(_state->params, _state->client_priv,
         _state->server_pk_set, _state->slot_pks[slot_idx])); 
       _state->blogdrop_clients.append(c);
     }
@@ -621,12 +703,6 @@ namespace Anonymity {
 
   void BlogDropRound::GenerateServerCiphertext()
   {
-    // by_slot[slot_idx][client_idx] = ciphertext
-    QList<QList<QByteArray> > by_slot;
-    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      by_slot.append(QList<QByteArray>());
-    }
-
     // For each user
     foreach(const Id& id, _server_state->client_ciphertexts.keys()) {
 
@@ -640,17 +716,13 @@ namespace Anonymity {
 
       // For each slot
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        by_slot[slot_idx].append(ctexts[slot_idx]);
+        _server_state->blogdrop_servers[slot_idx]->AddClientCiphertext(ctexts[slot_idx],
+            _state->client_pks[id]);
       }
     }
 
-    // Sort byte arrays so that hashes match across servers
-    QList<QByteArray> values = _server_state->client_ciphertexts.values();
-    qSort(values);
-
     QList<QByteArray> server_ctexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx]);
       server_ctexts.append(_server_state->blogdrop_servers[slot_idx]->CloseBin());
     }
 

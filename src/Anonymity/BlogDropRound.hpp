@@ -38,8 +38,9 @@ namespace Anonymity {
       typedef Crypto::BlogDrop::PublicKeySet PublicKeySet;
 
       enum MessageType {
-        CLIENT_CIPHERTEXT = 0,
+        CLIENT_PUBLIC_KEY = 0,
         SERVER_PUBLIC_KEY,
+        CLIENT_CIPHERTEXT,
         SERVER_CLIENT_LIST,
         SERVER_CIPHERTEXT,
         SERVER_VALIDATION,
@@ -50,6 +51,7 @@ namespace Anonymity {
         OFFLINE = 0,
         SHUFFLING,
         PROCESS_DATA_SHUFFLE,
+        SERVER_WAIT_FOR_CLIENT_PUBLIC_KEYS,
         WAIT_FOR_SERVER_PUBLIC_KEYS,
         PREPARE_FOR_BULK,
         CLIENT_WAIT_FOR_CLEARTEXT,
@@ -169,6 +171,8 @@ namespace Anonymity {
         public:
           State() : 
             params(Parameters::CppECProductionFixed()),
+            client_priv(new PrivateKey(params)),
+            client_pub(new PublicKey(client_priv)),
             anonymous_priv(new PrivateKey(params)),
             anonymous_pub(new PublicKey(anonymous_priv)) {}
 
@@ -176,12 +180,19 @@ namespace Anonymity {
 
           /* My blogdrop keys */
           const QSharedPointer<const Parameters> params;
+          const QSharedPointer<const PrivateKey> client_priv;
+          const QSharedPointer<const PublicKey> client_pub;
           const QSharedPointer<const PrivateKey> anonymous_priv;
           const QSharedPointer<const PublicKey> anonymous_pub;
 
           /* Set of all server PKs */
           QHash<int, QSharedPointer<const PublicKey> > server_pks;
           QSharedPointer<const PublicKeySet> server_pk_set;
+
+          /* Set of all client PKs */
+          QHash<Id, QSharedPointer<const PublicKey> > client_pks;
+
+          /* Anon author PKs */
           QList<QSharedPointer<const PublicKey> > slot_pks;
 
           /* Blogdrop ciphertext generators */
@@ -216,6 +227,11 @@ namespace Anonymity {
 
           int expected_clients;
           QSet<Id> allowed_clients;
+
+          /* Temporary data holding my client's public keys 
+           *   packets[client_id] = (packet, signature)
+           */
+          QHash<Id, QPair<QByteArray, QByteArray> > client_pub_packets;
 
           /* Blogdrop server keys */
           QSharedPointer<PrivateKey> server_priv;
@@ -278,6 +294,13 @@ namespace Anonymity {
       virtual void ShuffleFinished();
 
       /**
+       * Server handles public key from client 
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleClientPublicKey(const Id &from, QDataStream &stream);
+
+      /**
        * Client handles public key from server
        * @param from sender of the message
        * @param stream message
@@ -323,6 +346,7 @@ namespace Anonymity {
       void StartShuffle();
       void ProcessDataShuffle();
       void ProcessKeyShuffle();
+      void SubmitClientPublicKey();
       void SubmitServerPublicKey();
       void PrepareForBulk();
       void SubmitClientCiphertext();

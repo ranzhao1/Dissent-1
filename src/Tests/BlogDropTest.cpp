@@ -18,9 +18,14 @@ namespace Tests {
     TestPlaintextEmpty(Parameters::Parameters::IntegerTestingFixed());
   }
 
-  TEST(BlogDrop, ECPlaintextEmpty) 
+  TEST(BlogDrop, CppECPlaintextEmpty) 
   {
     TestPlaintextEmpty(Parameters::Parameters::CppECProductionFixed());
+  }
+
+  TEST(BlogDrop, OpenECPlaintextEmpty) 
+  {
+    TestPlaintextEmpty(Parameters::Parameters::OpenECProductionFixed());
   }
 
   void TestPlaintextShort(QSharedPointer<const Parameters> params)
@@ -39,8 +44,12 @@ namespace Tests {
     TestPlaintextShort(Parameters::Parameters::IntegerTestingFixed());
   }
 
-  TEST(BlogDrop, ECPlaintextShort) {
+  TEST(BlogDrop, CppECPlaintextShort) {
     TestPlaintextShort(Parameters::Parameters::CppECProductionFixed());
+  }
+
+  TEST(BlogDrop, OpenECPlaintextShort) {
+    TestPlaintextShort(Parameters::Parameters::OpenECProductionFixed());
   }
 
   void TestPlaintextRandom(QSharedPointer<const Parameters> params, int divby)
@@ -76,10 +85,16 @@ namespace Tests {
     TestPlaintextRandom(Parameters::Parameters::IntegerTestingFixed(), 4);
   }
 
-  TEST(BlogDrop, ECPlaintextRandom) {
+  TEST(BlogDrop, CppECPlaintextRandom) {
     TestPlaintextRandom(Parameters::Parameters::CppECProductionFixed(), 1);
     TestPlaintextRandom(Parameters::Parameters::CppECProductionFixed(), 2);
     TestPlaintextRandom(Parameters::Parameters::CppECProductionFixed(), 4);
+  }
+
+  TEST(BlogDrop, OpenECPlaintextRandom) {
+    TestPlaintextRandom(Parameters::Parameters::OpenECProductionFixed(), 1);
+    TestPlaintextRandom(Parameters::Parameters::OpenECProductionFixed(), 2);
+    TestPlaintextRandom(Parameters::Parameters::OpenECProductionFixed(), 4);
   }
 
   void TestKeys(QSharedPointer<const Parameters> params)
@@ -110,8 +125,12 @@ namespace Tests {
     TestKeys(Parameters::Parameters::IntegerTestingFixed());
   }
 
-  TEST(BlogDrop, ECKeys) {
+  TEST(BlogDrop, CppECKeys) {
     TestKeys(Parameters::Parameters::CppECProductionFixed());
+  }
+
+  TEST(BlogDrop, OpenECKeys) {
+    TestKeys(Parameters::Parameters::OpenECProductionFixed());
   }
 
   void TestPublicKeySet(QSharedPointer<const Parameters> params)
@@ -179,8 +198,12 @@ namespace Tests {
     TestElGamalServerCiphertext(Parameters::Parameters::IntegerTestingFixed());
   }
 
-  TEST(BlogDrop, ECServerCiphertext) {
+  TEST(BlogDrop, CppECServerCiphertext) {
     TestElGamalServerCiphertext(Parameters::Parameters::CppECProductionFixed());
+  }
+
+  TEST(BlogDrop, OpenECServerCiphertext) {
+    TestElGamalServerCiphertext(Parameters::Parameters::OpenECProductionFixed());
   }
 
   void TestElGamalClientOnce(QSharedPointer<const Parameters> params)
@@ -191,19 +214,22 @@ namespace Tests {
     QSharedPointer<const PublicKey> author_pk(new PublicKey(priv));
 
     // Generate list of server pks
-    const int nkeys = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
+    const int nservers = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
     QList<QSharedPointer<const PublicKey> > server_pks;
-    for(int i=0; i<nkeys; i++) {
+    for(int i=0; i<nservers; i++) {
       QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
       QSharedPointer<const PublicKey> pub(new PublicKey(priv));
       server_pks.append(pub);
     }
 
+    QSharedPointer<const PrivateKey> client_priv(new PrivateKey(params));
+    QSharedPointer<const PublicKey> client_pub(new PublicKey(client_priv));
+
     QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, server_pks));
 
     // Generate ciphertext
     ElGamalClientCiphertext c(params, server_pk_set, author_pk);
-    c.SetProof();
+    c.SetProof(client_priv);
 
     const Integer q = params->GetGroupOrder();
     ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
@@ -224,7 +250,7 @@ namespace Tests {
 
     ASSERT_EQ(params->GetNElements()+3, set.count());
 
-    ASSERT_TRUE(c.VerifyProof());
+    ASSERT_TRUE(c.VerifyProof(client_pub));
   }
 
   TEST(BlogDrop, IntegerClientProof) {
@@ -233,9 +259,15 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDrop, ECClientProof) {
+  TEST(BlogDrop, CppECClientProof) {
     for(int i=0; i<10; i++) {
       TestElGamalClientOnce(Parameters::Parameters::CppECProductionFixed());
+    }
+  }
+
+  TEST(BlogDrop, OpenECClientProof) {
+    for(int i=0; i<10; i++) {
+      TestElGamalClientOnce(Parameters::Parameters::OpenECProductionFixed());
     }
   }
 
@@ -253,6 +285,9 @@ namespace Tests {
       QSharedPointer<const PublicKey> pub(new PublicKey(priv));
       server_pks.append(pub);
     }
+
+    QSharedPointer<const PrivateKey> client_priv(new PrivateKey(params));
+    QSharedPointer<const PublicKey> client_pub(new PublicKey(client_priv));
 
     QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, server_pks));
 
@@ -283,7 +318,7 @@ namespace Tests {
 
     ASSERT_EQ(params->GetNElements()+3, set.count());
 
-    ASSERT_TRUE(c.VerifyProof());
+    ASSERT_TRUE(c.VerifyProof(client_pub));
   }
 
   TEST(BlogDrop, IntegerAuthorProof) {
@@ -292,9 +327,15 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDrop, ECAuthorProof) {
+  TEST(BlogDrop, CppECAuthorProof) {
     for(int i=0; i<10; i++) {
       TestAuthorOnce(Parameters::Parameters::CppECProductionFixed());
+    }
+  }
+
+  TEST(BlogDrop, OpenECAuthorProof) {
+    for(int i=0; i<10; i++) {
+      TestAuthorOnce(Parameters::Parameters::OpenECProductionFixed());
     }
   }
   
@@ -327,20 +368,27 @@ namespace Tests {
     // Generate non-author ciphertext
     QList<QSharedPointer<const ElGamalClientCiphertext> > cover;
     const int ncover = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
+    QList<QSharedPointer<const PrivateKey> > client_sks;
+    QList<QSharedPointer<const PublicKey> > client_pks;
     for(int i=0; i<ncover; i++) {
+      QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
+      QSharedPointer<const PublicKey> pub(new PublicKey(priv));
+      client_sks.append(priv);
+      client_pks.append(pub);
+
       QSharedPointer<ElGamalClientCiphertext> cov(new ElGamalClientCiphertext(params, server_pk_set, author_pk));
-      cov->SetProof();
+      cov->SetProof(client_sks[i]);
       cover.append(cov);
     }
 
     // Get client pk set
-    QList<QList<QSharedPointer<const PublicKey> > > client_pks;
-    client_pks.append(c.GetOneTimeKeys());
+    QList<QList<QSharedPointer<const PublicKey> > > client_pk_sets;
+    client_pk_sets.append(c.GetOneTimeKeys());
     for(int i=0; i<ncover; i++) {
-      client_pks.append(cover[i]->GetOneTimeKeys());
+      client_pk_sets.append(cover[i]->GetOneTimeKeys());
     }
 
-    QList<QSharedPointer<const PublicKeySet> > sets = PublicKeySet::CreateClientKeySets(params, client_pks);
+    QList<QSharedPointer<const PublicKeySet> > sets = PublicKeySet::CreateClientKeySets(params, client_pk_sets);
 
     const Integer q = params->GetGroupOrder();
     ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
@@ -360,7 +408,11 @@ namespace Tests {
     }
     ASSERT_EQ(params->GetNElements()+3, set.count());
 
-    ASSERT_TRUE(c.VerifyProof());
+    // Verify client proofs
+    ASSERT_TRUE(c.VerifyProof(client_pks[0]));
+    for(int i=0; i<ncover; i++) {
+      cover[i]->VerifyProof(client_pks[i]);
+    }
 
     Plaintext out(params);
     out.Reveal(c.GetElements());
@@ -387,9 +439,15 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDrop, ECReveal) {
+  TEST(BlogDrop, CppECReveal) {
     for(int i=0; i<10; i++) {
       TestReveal(Parameters::Parameters::CppECProductionFixed());
+    }
+  }
+
+  TEST(BlogDrop, OpenECReveal) {
+    for(int i=0; i<10; i++) {
+      TestReveal(Parameters::Parameters::OpenECProductionFixed());
     }
   }
 
@@ -423,6 +481,16 @@ namespace Tests {
       server_pks.append(pub);
     }
 
+    // Generate list of client pks
+    QList<QSharedPointer<const PublicKey> > client_pks;
+    QList<QSharedPointer<const PrivateKey> > client_sks;
+    for(int i=0; i<nclients; i++) {
+      QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
+      QSharedPointer<const PublicKey> pub(new PublicKey(priv));
+      client_sks.append(priv);
+      client_pks.append(pub);
+    }
+
     QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, server_pks));
 
     qDebug() << "CREATE_SERVER";
@@ -436,7 +504,7 @@ namespace Tests {
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
 
-    BlogDropAuthor auth(params, server_pk_set, author_priv);
+    BlogDropAuthor auth(params, client_sks[author_idx], server_pk_set, author_priv);
 
     QByteArray msg(auth.MaxPlaintextLength(), 0);
     rand->GenerateBlock(msg);
@@ -449,7 +517,7 @@ namespace Tests {
     qDebug() << "CLIENTS";
     // Generate client ciphertext and give it to all servers
     for(int client_idx=0; client_idx<nclients; client_idx++) {
-      QByteArray c = BlogDropClient(params, server_pk_set, 
+      QByteArray c = BlogDropClient(params, client_sks[client_idx], server_pk_set, 
             author_pk).GenerateCoverCiphertext();
 
       if(client_idx == author_idx) {
@@ -463,7 +531,7 @@ namespace Tests {
 
     qDebug() << "ADD_CLIENT_TO_SERVER";
     for(int server_idx=0; server_idx<nservers; server_idx++) {
-      servers[server_idx].AddClientCiphertexts(for_servers[server_idx]);
+      servers[server_idx].AddClientCiphertexts(for_servers[server_idx], client_pks);
     }
 
     qDebug() << "CLOSE_BIN";

@@ -45,17 +45,22 @@ namespace Crypto {
     Validate();
   }
 
-  CppDsaPrivateKey::CppDsaPrivateKey() :
+  CppDsaPrivateKey::CppDsaPrivateKey(int modulus, int subgroup) :
     CppDsaPublicKey(new KeyBase::PrivateKey())
   {
     AutoSeededX917RNG<DES_EDE3> rng;
     KeyBase::PrivateKey *key = const_cast<KeyBase::PrivateKey *>(GetDsaPrivateKey());
 
-    int keysize = std::max(DefaultKeySize, GetMinimumKeySize());
+    modulus = std::max(modulus, GetMinimumKeySize());
+    subgroup = (subgroup == -1) ? GetSubgroupOrderSize(modulus) : subgroup;
+    if(modulus <= subgroup) {
+      qFatal("Subgroup should be < Modulus");
+    }
+
     key->GenerateRandom(rng,
         MakeParameters
-          (Name::ModulusSize(), keysize)
-          (Name::SubgroupOrderSize(), GetSubgroupOrderSize(keysize)));
+          (Name::ModulusSize(), modulus)
+          (Name::SubgroupOrderSize(), subgroup));
     _key_size = GetDsaPrivateKey()->GetGroupParameters().GetModulus().BitCount();
     Validate();
   }
@@ -145,6 +150,15 @@ namespace Crypto {
     QDataStream ostream(&out, QIODevice::WriteOnly);
     ostream << shared << result;
     return out;
+  }
+
+  QByteArray CppDsaPrivateKey::SeriesDecryptFinish(const QByteArray &data)
+  {
+    Integer shared, encrypted;
+    QDataStream stream(data);
+    stream >> shared >> encrypted;
+
+    return encrypted.GetByteArray();
   }
 }
 }

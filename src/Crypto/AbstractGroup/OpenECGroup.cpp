@@ -312,7 +312,8 @@ namespace AbstractGroup {
   {
     BIGNUM *x = BN_new();
     BIGNUM *y = BN_new();
-    Q_ASSERT(EC_POINT_get_affine_coordinates_GFp(_data->group, GetPoint(a), x, y, _data->ctx));
+    if(!EC_POINT_get_affine_coordinates_GFp(_data->group, GetPoint(a), x, y, _data->ctx))
+      return false;
 
     // shift off padding byte
     Q_ASSERT(BN_rshift(x, x, 8));

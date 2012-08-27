@@ -119,7 +119,7 @@ namespace BlogDrop {
     }
   }
 
-  void ElGamalClientCiphertext::SetProof(const QSharedPointer<const PrivateKey>)
+  void ElGamalClientCiphertext::SetProof()
   {
     const Element g_key = _params->GetKeyGroup()->GetGenerator();
     const Integer q = _params->GetGroupOrder();
@@ -179,7 +179,7 @@ namespace BlogDrop {
     }
   }
 
-  bool ElGamalClientCiphertext::VerifyProof(const QSharedPointer<const PublicKey>) const
+  bool ElGamalClientCiphertext::VerifyProof() const
   {
     if(_elements.count() != _n_elms) {
       qWarning() << "Got proof with incorrect number of elements (" << _elements.count() << ")";

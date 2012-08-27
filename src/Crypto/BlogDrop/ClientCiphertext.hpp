@@ -52,14 +52,15 @@ namespace BlogDrop {
 
       /**
        * Initialize elements proving correctness of ciphertext
+       * @param the client (NOT author) private key
        */
-      virtual void SetProof() = 0;
+      virtual void SetProof(const QSharedPointer<const PrivateKey> client_priv) = 0;
 
       /**
        * Check ciphertext proof
        * @returns true if proof is okay
        */
-      virtual bool VerifyProof() const = 0;
+      virtual bool VerifyProof(const QSharedPointer<const PublicKey> client_pub) const = 0;
 
       /**
        * Get a byte array for this ciphertext
@@ -72,7 +73,8 @@ namespace BlogDrop {
        * @param c list of ciphertexts
        * @returns set of indices of valid proofs
        */
-      static QSet<int> VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c);
+      static QSet<int> VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c, 
+        const QList<QSharedPointer<const PublicKey> > &pubs);
 
       virtual inline QList<Element> GetElements() const 
       { 
@@ -109,7 +111,6 @@ namespace BlogDrop {
       const int _n_elms;
 
     private:
-      static bool VerifyOnce(QSharedPointer<const ClientCiphertext> c); 
 
   };
 

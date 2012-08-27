@@ -20,34 +20,18 @@ namespace BlogDrop {
     _n_elms(n_elms)
   {}
 
-  QSet<int> ClientCiphertext::VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c)
+  QSet<int> ClientCiphertext::VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c,
+      const QList<QSharedPointer<const PublicKey> > &pubs)
   {
-    // XXX Only allowing single-threaded mode for now. Need to add
-    // synchronization to ECGroup classes if for multi-threading to
-    // work.
-    // CryptoFactory::ThreadingType t = CryptoFactory::GetInstance().GetThreadingType();
-    CryptoFactory::ThreadingType t = CryptoFactory::SingleThreaded;
+    Q_ASSERT(pubs.count() == c.count());
+
     QSet<int> valid;
 
-    if(t == CryptoFactory::SingleThreaded) {
-      for(int idx=0; idx<c.count(); idx++) {
-        if(c[idx]->VerifyProof()) valid.insert(idx);
-      }
-    } else if(t == CryptoFactory::MultiThreaded) {
-      QList<bool> results = QtConcurrent::blockingMapped(c, &VerifyOnce);
-      for(int idx=0; idx<c.count(); idx++) {
-        if(results[idx]) valid.insert(idx);
-      }
-    } else {
-      qFatal("Unknown threading type");
+    for(int idx=0; idx<c.count(); idx++) {
+      if(c[idx]->VerifyProof(pubs[idx])) valid.insert(idx);
     }
 
     return valid;
-  }
-
-  bool ClientCiphertext::VerifyOnce(QSharedPointer<const ClientCiphertext> c) 
-  {
-    return c->VerifyProof();
   }
 
 }

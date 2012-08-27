@@ -1,5 +1,5 @@
-#ifndef DISSENT_CRYPTO_BLOGDROP_EL_GAMAL_CLIENT_CIPHERTEXT_H_GUARD
-#define DISSENT_CRYPTO_BLOGDROP_EL_GAMAL_CLIENT_CIPHERTEXT_H_GUARD
+#ifndef DISSENT_CRYPTO_BLOGDROP_PAIRING_CLIENT_CIPHERTEXT_H_GUARD
+#define DISSENT_CRYPTO_BLOGDROP_PAIRING_CLIENT_CIPHERTEXT_H_GUARD
 
 #include "ClientCiphertext.hpp"
 
@@ -9,22 +9,21 @@ namespace BlogDrop {
 
   /**
    * Object holding BlogDrop client ciphertext using
-   * ElGamal-style construction. Every ciphertext 
-   * element is a tuple:
-   *   g^r, g^ar
-   *
+   * pairing-based construction. Every ciphertext 
+   * element is an element of the pairing target group GT
+   *   
    * The proof for a ciphertext of length k has the form:
-   *   PoK{ a1, ..., ak , y: 
-   *      ( C1 = (prod_server_pks)^a1 AND A1 = g^a1 AND
+   *   PoK{ a, y: 
+   *      ( C1 = e(prod_server_pks, t1)^a AND
    *        ... AND
-   *        Ck = (prod_server_pks)^aj AND Ak = g^ak )
+   *        Ck = e(prod_server_pks, tk)^a AND A = g^a )
    *      OR
    *        Y = g^y
    *   }
    * where C1, ..., Ck are the k ciphertext elements, 
    * prod_server_pks is the product of server public keys,
-   * A1, ..., Ak are the ephemeral client public keys,
-   * and Y is the author public key.
+   * A is the client's public key, and Y is 
+   * the author public key.
    */
   class ElGamalClientCiphertext : public ClientCiphertext {
 
@@ -67,15 +66,14 @@ namespace BlogDrop {
 
       /**
        * Initialize elements proving correctness of ciphertext
-       * @param author (NOT client) private key
        */
-      virtual void SetProof(const QSharedPointer<const PrivateKey> client_priv);
+      virtual void SetProof();
 
       /**
        * Check ciphertext proof
        * @returns true if proof is okay
        */
-      virtual bool VerifyProof(const QSharedPointer<const PublicKey> client_pub) const;
+      virtual bool VerifyProof() const;
 
       /**
        * Get a byte array for this ciphertext

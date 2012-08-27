@@ -43,12 +43,22 @@ namespace BlogDrop {
       void ClearBin(); 
 
       /**
+       * Add a client ciphertext. 
+       * @param serialized ciphertext to add
+       * @param pub client public key
+       */
+      bool AddClientCiphertext(const QByteArray &in, 
+          const QSharedPointer<const PublicKey> &pub);
+
+      /**
        * Add a list of client ciphertexts. Silently discards invalid
        * ciphertexts. Uses threading (where available) to speed up
        * the proof verification process.
        * @param in the list of ciphertexts to add
+       * @param pubs in the list of client public keys
        */
-      bool AddClientCiphertexts(const QList<QByteArray> &in);
+      bool AddClientCiphertexts(const QList<QByteArray> &in, 
+        const QList<QSharedPointer<const PublicKey> > &pubs);
 
       /**
        * Reveal server ciphertext corresponding to added client

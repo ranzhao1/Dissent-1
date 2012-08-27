@@ -6,6 +6,7 @@
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
 #include "Crypto/AbstractGroup/OpenECGroup.hpp"
 #include "Crypto/AbstractGroup/PairingG1Group.hpp"
+#include "Crypto/AbstractGroup/PairingGTGroup.hpp"
 #include "Parameters.hpp"
 
 using namespace Dissent::Crypto::AbstractGroup;

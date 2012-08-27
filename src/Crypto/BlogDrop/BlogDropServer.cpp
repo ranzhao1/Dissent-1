@@ -24,7 +24,20 @@ namespace BlogDrop {
     _client_pks.clear();
   }
 
-  bool BlogDropServer::AddClientCiphertexts(const QList<QByteArray> &in) 
+  bool BlogDropServer::AddClientCiphertext(const QByteArray &in, 
+      const QSharedPointer<const PublicKey> &pub) 
+  {
+    QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(_params, 
+            _server_pk_set, _author_pub, in);
+
+    bool valid = c->VerifyProof(pub);
+    if(valid) _client_ciphertexts.append(c);
+
+    return valid;
+  }
+
+  bool BlogDropServer::AddClientCiphertexts(const QList<QByteArray> &in, 
+      const QList<QSharedPointer<const PublicKey> > &pubs) 
   {
     if(!in.count()) qWarning() << "Added empty client ciphertext list";
 
@@ -37,7 +50,7 @@ namespace BlogDrop {
             _server_pk_set, _author_pub, in[client_idx]));
     }
 
-    QSet<int> valid = ClientCiphertext::VerifyProofs(list);
+    QSet<int> valid = ClientCiphertext::VerifyProofs(list, pubs);
 
     foreach(int i, valid) {
       _client_ciphertexts.append(list[i]);
