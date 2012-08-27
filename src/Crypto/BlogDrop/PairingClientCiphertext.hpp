@@ -25,7 +25,7 @@ namespace BlogDrop {
    * A is the client's public key, and Y is 
    * the author public key.
    */
-  class ElGamalClientCiphertext : public ClientCiphertext {
+  class PairingClientCiphertext : public ClientCiphertext {
 
     public:
 
@@ -36,7 +36,7 @@ namespace BlogDrop {
        * @param server_pks Server public keys
        * @param author_pub author public key
        */
-      explicit ElGamalClientCiphertext(const QSharedPointer<const Parameters> params, 
+      explicit PairingClientCiphertext(const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKeySet> server_pks,
           const QSharedPointer<const PublicKey> author_pub);
 
@@ -47,7 +47,7 @@ namespace BlogDrop {
        * @param author_pub author public key
        * @param the byte array
        */
-      explicit ElGamalClientCiphertext(const QSharedPointer<const Parameters> params, 
+      explicit PairingClientCiphertext(const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKeySet> server_pks,
           const QSharedPointer<const PublicKey> author_pub, 
           const QByteArray &serialized);
@@ -55,7 +55,7 @@ namespace BlogDrop {
       /**
        * Destructor
        */
-      virtual ~ElGamalClientCiphertext() {}
+      virtual ~PairingClientCiphertext() {}
 
       /**
        * Initialize elements proving correctness of ciphertext
@@ -67,29 +67,22 @@ namespace BlogDrop {
       /**
        * Initialize elements proving correctness of ciphertext
        */
-      virtual void SetProof();
+      virtual void SetProof(const QSharedPointer<const PrivateKey> client_priv);
 
       /**
        * Check ciphertext proof
        * @returns true if proof is okay
        */
-      virtual bool VerifyProof() const;
+      virtual bool VerifyProof(const QSharedPointer<const PublicKey> client_pub) const;
 
       /**
        * Get a byte array for this ciphertext
        */
       virtual QByteArray GetByteArray() const;
 
-      /**
-       * Get the one-time public keys for this ciphertext
-       */
-      inline QList<QSharedPointer<const PublicKey> > GetOneTimeKeys() const { 
-        return _one_time_pubs;
-      }
-
       inline Integer GetChallenge1() const { return _challenge_1; }
       inline Integer GetChallenge2() const { return _challenge_2; }
-      inline QList<Integer> GetResponses() const { return _responses; }
+      inline Integer GetResponse() const { return _response; }
 
     private:
       Integer Commit(const QSharedPointer<const Parameters> &params,
@@ -99,12 +92,9 @@ namespace BlogDrop {
 
       void InitializeLists(QList<Element> &gs, QList<Element> &ys) const;
 
-      Integer _challenge_1, _challenge_2;
-      QList<Integer> _responses;
-
-      QList<QSharedPointer<const PrivateKey> > _one_time_privs;
-      QList<QSharedPointer<const PublicKey> > _one_time_pubs;
-
+      Integer _challenge_1;
+      Integer _challenge_2;
+      Integer _response;
   };
 }
 }

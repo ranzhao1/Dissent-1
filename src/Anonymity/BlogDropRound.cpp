@@ -75,7 +75,7 @@ namespace Anonymity {
 
     _state_machine.AddState(SERVER_WAIT_FOR_CLIENT_PUBLIC_KEYS,
         CLIENT_PUBLIC_KEY, &BlogDropRound::HandleClientPublicKey,
-        &BlogDropRound::SubmitServerPublicKey);
+        &BlogDropRound::SubmitClientPublicKey);
 
     _state_machine.AddState(WAIT_FOR_SERVER_PUBLIC_KEYS,
         SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey, 
@@ -102,7 +102,7 @@ namespace Anonymity {
 
     _state_machine.AddTransition(PROCESS_DATA_SHUFFLE, 
         SERVER_WAIT_FOR_CLIENT_PUBLIC_KEYS);
-    _state_machine.AddTransition(PROCESS_DATA_SHUFFLE, 
+    _state_machine.AddTransition(SERVER_WAIT_FOR_CLIENT_PUBLIC_KEYS, 
         WAIT_FOR_SERVER_PUBLIC_KEYS);
     _state_machine.AddTransition(PREPARE_FOR_BULK,
         SERVER_WAIT_FOR_CLIENT_CIPHERTEXT);
@@ -299,7 +299,7 @@ namespace Anonymity {
       const Id &client_id = keys[idx];
 
       QPair<QByteArray, QByteArray> pair = client_pub_packets[client_id];
-      if(!GetGroup().GetSubgroup().GetKey(client_id)->Verify(pair.first, pair.second))
+      if(!GetGroup().GetKey(client_id)->Verify(pair.first, pair.second))
         throw QRunTimeError("Got public key with invalid signature");
 
       Id round_id;
@@ -564,9 +564,10 @@ namespace Anonymity {
 
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
-    stream << CLIENT_PUBLIC_KEY << GetRoundId() << QPair<QByteArray, QByteArray>(packet, signature);
+    stream << CLIENT_PUBLIC_KEY << GetRoundId() << _state_machine.GetPhase() 
+      << QPair<QByteArray, QByteArray>(packet, signature);
 
-    VerifiableSend(_state->my_server, payload);
+    VerifiableSend(IsServer() ? GetLocalId() : _state->my_server, payload);
   }
 
   void BlogDropRound::SubmitServerPublicKey()

@@ -4,28 +4,20 @@
 #include "Crypto/CryptoFactory.hpp"
 
 #include "BlogDropUtils.hpp"
-#include "ElGamalClientCiphertext.hpp"
+#include "PairingClientCiphertext.hpp"
 
 namespace Dissent {
 namespace Crypto {
 namespace BlogDrop {
 
-  ElGamalClientCiphertext::ElGamalClientCiphertext(const QSharedPointer<const Parameters> params, 
+  PairingClientCiphertext::PairingClientCiphertext(const QSharedPointer<const Parameters> params, 
       const QSharedPointer<const PublicKeySet> server_pks,
       const QSharedPointer<const PublicKey> author_pub) :
     ClientCiphertext(params, server_pks, author_pub, params->GetNElements())
   {
-    for(int i=0; i<_n_elms; i++) { 
-      QSharedPointer<const PrivateKey> priv(new PrivateKey(_params));
-      QSharedPointer<const PublicKey> pub(new PublicKey(priv));
-      _one_time_privs.append(priv);
-      _one_time_pubs.append(pub);
-      _elements.append(_params->GetMessageGroup()->Exponentiate(_server_pks->GetElement(),
-          _one_time_privs[i]->GetInteger())); 
-    }
   }
 
-  ElGamalClientCiphertext::ElGamalClientCiphertext(const QSharedPointer<const Parameters> params, 
+  PairingClientCiphertext::PairingClientCiphertext(const QSharedPointer<const Parameters> params, 
       const QSharedPointer<const PublicKeySet> server_pks,
       const QSharedPointer<const PublicKey> author_pub,
       const QByteArray &serialized) :
@@ -35,8 +27,8 @@ namespace BlogDrop {
     QDataStream stream(serialized);
     stream >> list;
 
-    // 2 challenges, k public keys, k elements, k+1 responses
-    if(list.count() != (2 + _n_elms + _n_elms + (1+_n_elms))) {
+    // 2 challenges, 1 response, k elements
+    if(list.count() != (3 + _n_elms)) {
       qWarning() << "Failed to unserialize";
       return; 
     }
@@ -44,24 +36,14 @@ namespace BlogDrop {
     int list_idx = 0;
     _challenge_1 = Integer(list[list_idx++]);
     _challenge_2 = Integer(list[list_idx++]); 
+    _response = Integer(list[list_idx++]); 
 
     for(int j=0; j<_n_elms; j++) { 
       _elements.append(_params->GetMessageGroup()->ElementFromByteArray(list[list_idx++]));
     }
-
-    for(int j=0; j<_n_elms; j++) { 
-      _one_time_pubs.append(QSharedPointer<const PublicKey>(
-            new PublicKey(params, list[list_idx++])));
-    }
-
-    _responses.append(Integer(list[list_idx++])); 
-
-    for(int j=0; j<_n_elms; j++) { 
-      _responses.append(Integer(list[list_idx++]));
-    }
   }
 
-  void ElGamalClientCiphertext::SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, 
+  void PairingClientCiphertext::SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, 
       const Plaintext &m)
   {
     QList<Element> ms = m.GetElements();
@@ -119,7 +101,7 @@ namespace BlogDrop {
     }
   }
 
-  void ElGamalClientCiphertext::SetProof()
+  void PairingClientCiphertext::SetProof()
   {
     const Element g_key = _params->GetKeyGroup()->GetGenerator();
     const Integer q = _params->GetGroupOrder();
@@ -179,7 +161,7 @@ namespace BlogDrop {
     }
   }
 
-  bool ElGamalClientCiphertext::VerifyProof() const
+  bool PairingClientCiphertext::VerifyProof() const
   {
     if(_elements.count() != _n_elms) {
       qWarning() << "Got proof with incorrect number of elements (" << _elements.count() << ")";
@@ -240,23 +222,16 @@ namespace BlogDrop {
     return (sum == hash);
   }
 
-  QByteArray ElGamalClientCiphertext::GetByteArray() const 
+  QByteArray PairingClientCiphertext::GetByteArray() const 
   {
     QList<QByteArray> list;
 
     list.append(_challenge_1.GetByteArray());
     list.append(_challenge_2.GetByteArray());
+    list.append(_response.GetByteArray());
 
     for(int i=0; i<_n_elms; i++) { 
       list.append(_params->GetMessageGroup()->ElementToByteArray(_elements[i]));
-    }
-
-    for(int i=0; i<_n_elms; i++) { 
-      list.append(_one_time_pubs[i]->GetByteArray());
-    }
-
-    for(int i=0; i<_responses.count(); i++) { 
-      list.append(_responses[i].GetByteArray());
     }
 
     QByteArray out;
@@ -265,8 +240,9 @@ namespace BlogDrop {
     return out;
   }
   
-  void ElGamalClientCiphertext::InitializeLists(QList<Element> &gs, QList<Element> &ys) const
+  void PairingClientCiphertext::InitializeLists(QList<Element> &gs, QList<Element> &ys) const
   { 
+    XXX
     const Element g_key = _params->GetKeyGroup()->GetGenerator();
     const Integer q = _params->GetGroupOrder();
 
@@ -291,11 +267,12 @@ namespace BlogDrop {
     }
   }
 
-  Integer ElGamalClientCiphertext::Commit(const QSharedPointer<const Parameters> &params,
+  Integer PairingClientCiphertext::Commit(const QSharedPointer<const Parameters> &params,
       const QList<Element> &gs, 
       const QList<Element> &ys, 
       const QList<Element> &ts) const
   {
+    XXX
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
 
     hash->Restart();

@@ -1,6 +1,4 @@
 BlogDrop (23 August 2012)
-- Add encode and decode to Pairing groups
-  * Use OpenECGroup to do encoding and decoding
 - Implement pairing proof 
 - Implement Bryan's proof
 - Implement Bryan's scheme

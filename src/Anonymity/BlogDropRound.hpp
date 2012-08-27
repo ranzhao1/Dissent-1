@@ -170,7 +170,7 @@ namespace Anonymity {
       class State {
         public:
           State() : 
-            params(Parameters::CppECProductionFixed()),
+            params(Parameters::IntegerTestingFixed()),
             client_priv(new PrivateKey(params)),
             client_pub(new PublicKey(client_priv)),
             anonymous_priv(new PrivateKey(params)),
