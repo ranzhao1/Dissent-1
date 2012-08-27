@@ -97,7 +97,7 @@ namespace AbstractGroup {
 
   int PairingGTGroup::BytesPerElement() const
   {
-    return (BytesPerCoordinate()*2);
+    return BytesPerCoordinate();
   }
 
   Element PairingGTGroup::EncodeBytes(const QByteArray &bytes) const
@@ -117,7 +117,7 @@ namespace AbstractGroup {
 
     const QByteArray pad(1, 0xff);
     Integer x(pad+left+pad);
-    Integer y(pad+right+pad);
+    Integer y = 0;
 
     Q_ASSERT(x < _field);
     Q_ASSERT(y < _field);
@@ -162,28 +162,23 @@ namespace AbstractGroup {
 
     // Decode bytes
     QByteArray xbytes = x.GetByteArray();
-    QByteArray ybytes = y.GetByteArray();
 
     const int xc = xbytes.count();
-    const int yc = ybytes.count();
     if(xc < 2) return false;
-    if(yc < 2) return false;
 
     const unsigned char pad = 0xff;
     const unsigned char x0 = xbytes[0], xl = xbytes[xc-1];
-    const unsigned char y0 = ybytes[0], yl = ybytes[yc-1];
 
-    if(x0 != pad || y0 != pad || xl != pad || yl != pad) {
-      qWarning() << "Improper padding" << xbytes.toHex() << ybytes.toHex();
+    if(x0 != pad || xl != pad) {
+      qWarning() << "Improper padding" << xbytes.toHex(); 
       return false; 
     }
 
     // Remove leading and trailing pads
     xbytes = xbytes.left(xc-1).mid(1);
-    ybytes = ybytes.left(yc-1).mid(1);
 
-    qDebug() << "out" << xbytes.toHex() << ybytes.toHex();
-    bytes = (xbytes + ybytes);
+    qDebug() << "out" << xbytes.toHex();
+    bytes = xbytes;
     return true;
   }
 
@@ -234,6 +229,15 @@ namespace AbstractGroup {
 
     mpz_clear(x);
     mpz_clear(y);
+  }
+
+  Element PairingGTGroup::ApplyPairing(const Element &a, const Element &b) const
+  {
+    G1 g_a(PairingElementData<G1>::GetElement(a.GetData())); 
+    G1 g_b(PairingElementData<G1>::GetElement(b.GetData())); 
+
+    GT gt(_pairing.apply(g_a, g_b));
+    return Element(new PairingElementData<GT>(gt));
   }
 
 }

@@ -20,7 +20,8 @@ namespace BlogDrop {
     _n_elms(n_elms)
   {}
 
-  QSet<int> ClientCiphertext::VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c,
+  QSet<int> ClientCiphertext::VerifyProofs(int phase, 
+      const QList<QSharedPointer<const ClientCiphertext> > &c,
       const QList<QSharedPointer<const PublicKey> > &pubs)
   {
     Q_ASSERT(pubs.count() == c.count());
@@ -28,7 +29,7 @@ namespace BlogDrop {
     QSet<int> valid;
 
     for(int idx=0; idx<c.count(); idx++) {
-      if(c[idx]->VerifyProof(pubs[idx])) valid.insert(idx);
+      if(c[idx]->VerifyProof(phase, pubs[idx])) valid.insert(idx);
     }
 
     return valid;

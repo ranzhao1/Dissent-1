@@ -35,7 +35,7 @@ namespace BlogDrop {
        * @param in the byte array to encode
        * @returns true on success
        */
-      bool GenerateAuthorCiphertext(QByteArray &out, const QByteArray &in) const;
+      bool GenerateAuthorCiphertext(QByteArray &out, const QByteArray &in);
 
       /**
        * Maximum length of a plaintext message

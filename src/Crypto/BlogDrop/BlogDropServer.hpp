@@ -91,6 +91,8 @@ namespace BlogDrop {
 
     private:
 
+      int _phase;
+
       QSharedPointer<const Parameters> _params;
       QSharedPointer<const PublicKeySet> _server_pk_set;
       QSharedPointer<const PublicKey> _author_pub;

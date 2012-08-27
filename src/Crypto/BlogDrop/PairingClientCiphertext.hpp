@@ -29,6 +29,9 @@ namespace BlogDrop {
 
     public:
 
+      typedef Crypto::AbstractGroup::PairingG1Group PairingG1Group;
+      typedef Crypto::AbstractGroup::PairingGTGroup PairingGTGroup;
+
       /**
        * Constructor: Initialize a ciphertext with a fresh
        * one-time public key
@@ -59,21 +62,28 @@ namespace BlogDrop {
 
       /**
        * Initialize elements proving correctness of ciphertext
+       * @param phase the message transmission phase/round index
+       * @param client_priv client private key used to generate proof
        * @param author_priv author private key used to generate proof
        * @param m author's plaintext message
        */
-      virtual void SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, const Plaintext &m);
+      virtual void SetAuthorProof(int phase, 
+          const QSharedPointer<const PrivateKey> client_priv,
+          const QSharedPointer<const PrivateKey> author_priv, 
+          const Plaintext &m);
 
       /**
        * Initialize elements proving correctness of ciphertext
+       * @param phase the message transmission phase/round index
+       * @param client_priv client private key used to generate proof
        */
-      virtual void SetProof(const QSharedPointer<const PrivateKey> client_priv);
+      virtual void SetProof(int phase, const QSharedPointer<const PrivateKey> client_priv);
 
       /**
        * Check ciphertext proof
        * @returns true if proof is okay
        */
-      virtual bool VerifyProof(const QSharedPointer<const PublicKey> client_pub) const;
+      virtual bool VerifyProof(int phase, const QSharedPointer<const PublicKey> client_pub) const;
 
       /**
        * Get a byte array for this ciphertext
@@ -82,7 +92,8 @@ namespace BlogDrop {
 
       inline Integer GetChallenge1() const { return _challenge_1; }
       inline Integer GetChallenge2() const { return _challenge_2; }
-      inline Integer GetResponse() const { return _response; }
+      inline Integer GetResponse1() const { return _response_1; }
+      inline Integer GetResponse2() const { return _response_2; }
 
     private:
       Integer Commit(const QSharedPointer<const Parameters> &params,
@@ -90,11 +101,17 @@ namespace BlogDrop {
           const QList<Element> &ys, 
           const QList<Element> &ts) const;
 
-      void InitializeLists(QList<Element> &gs, QList<Element> &ys) const;
+      Element GetPairedBase(const QSharedPointer<const PublicKeySet> server_pks, 
+          int phase, int element_idx) const;
+      void InitializeLists(int phase, QSharedPointer<const PublicKey> client_pub,
+          QList<Element> &gs, QList<Element> &ys) const;
+      void InitCiphertext(int phase, const QSharedPointer<const PrivateKey> priv);
 
       Integer _challenge_1;
       Integer _challenge_2;
-      Integer _response;
+      Integer _response_1;
+      Integer _response_2;
+
   };
 }
 }

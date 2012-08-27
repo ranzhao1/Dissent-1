@@ -99,6 +99,8 @@ namespace AbstractGroup {
        */
       virtual bool DecodeBytes(const Element &a, QByteArray &out) const;
 
+      virtual Element ApplyPairing(const Element &a, const Element &b) const;
+
     private:
 
       // Private Constructor

@@ -24,8 +24,7 @@ namespace BlogDrop {
       /**
        * Constructor: Initialize a ciphertext
        * @param params Group parameters
-       * @param n_elms number of elements per ciphertext
-       */
+       * @param n_elms number of elements per ciphertext */
       ServerCiphertext(const QSharedPointer<const Parameters> params, int n_elms);
 
       /**
@@ -35,16 +34,18 @@ namespace BlogDrop {
 
       /**
        * Initialize elements proving correctness of ciphertext
+       * @param phase transmisssion round/phase index
        * @param Server private key used to generate proof
        */
-      virtual void SetProof(const QSharedPointer<const PrivateKey> priv) = 0;
+      virtual void SetProof(int phase, const QSharedPointer<const PrivateKey> priv) = 0;
 
       /**
        * Check ciphertext proof
+       * @param phase transmisssion round/phase index
        * @param pub public key of server
        * @returns true if proof is okay
        */
-      virtual bool VerifyProof(const QSharedPointer<const PublicKey> pub) const = 0;
+      virtual bool VerifyProof(int phase, const QSharedPointer<const PublicKey> pub) const = 0;
 
       /**
        * Get serialized version

@@ -11,6 +11,7 @@ namespace BlogDrop {
       const QSharedPointer<const PrivateKey> client_priv, 
       const QSharedPointer<const PublicKeySet> server_pks,
       const QSharedPointer<const PublicKey> author_pub) :
+    _phase(0),
     _params(params),
     _client_priv(client_priv),
     _server_pks(server_pks),
@@ -18,10 +19,11 @@ namespace BlogDrop {
   {
   }
 
-  QByteArray BlogDropClient::GenerateCoverCiphertext() const 
+  QByteArray BlogDropClient::GenerateCoverCiphertext() 
   {
     QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(_params, _server_pks, _author_pub);
-    c->SetProof(_client_priv);
+    c->SetProof(GetPhase(), _client_priv);
+    NextPhase();
     return c->GetByteArray();
   }
 

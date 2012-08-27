@@ -10,6 +10,7 @@ namespace BlogDrop {
       const QSharedPointer<const PublicKeySet> server_pk_set,
       const QSharedPointer<const PublicKey> author_pub,
       const QSharedPointer<const PrivateKey> server_priv) :
+    _phase(0),
     _params(params),
     _server_pk_set(server_pk_set),
     _author_pub(author_pub),
@@ -22,6 +23,8 @@ namespace BlogDrop {
     _client_ciphertexts.clear();
     _server_ciphertexts.clear();
     _client_pks.clear();
+
+    _phase ++;
   }
 
   bool BlogDropServer::AddClientCiphertext(const QByteArray &in, 
@@ -30,7 +33,7 @@ namespace BlogDrop {
     QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(_params, 
             _server_pk_set, _author_pub, in);
 
-    bool valid = c->VerifyProof(pub);
+    bool valid = c->VerifyProof(_phase, pub);
     if(valid) _client_ciphertexts.append(c);
 
     return valid;
@@ -50,7 +53,7 @@ namespace BlogDrop {
             _server_pk_set, _author_pub, in[client_idx]));
     }
 
-    QSet<int> valid = ClientCiphertext::VerifyProofs(list, pubs);
+    QSet<int> valid = ClientCiphertext::VerifyProofs(_phase, list, pubs);
 
     foreach(int i, valid) {
       _client_ciphertexts.append(list[i]);
@@ -63,7 +66,7 @@ namespace BlogDrop {
   {
     QSharedPointer<ServerCiphertext> s = CiphertextFactory::CreateServerCiphertext(
         _params, _client_ciphertexts);
-    s->SetProof(_server_priv);
+    s->SetProof(_phase, _server_priv);
     return s->GetByteArray();
   }
 
@@ -73,7 +76,7 @@ namespace BlogDrop {
     QSharedPointer<const ServerCiphertext> s = CiphertextFactory::CreateServerCiphertext(
         _params, _client_ciphertexts, in);
 
-    if(!s->VerifyProof(from)) return false;
+    if(!s->VerifyProof(_phase, from)) return false;
     _server_ciphertexts.append(s);
 
     return true;

@@ -56,7 +56,7 @@ namespace Anonymity {
 
   void BlogDropRound::InitServer()
   {
-    _server_state = QSharedPointer<ServerState>(new ServerState());
+    _server_state = QSharedPointer<ServerState>(new ServerState(GetRoundId().GetByteArray()));
     _state = _server_state;
     Q_ASSERT(_state);
 
@@ -122,7 +122,7 @@ namespace Anonymity {
 
   void BlogDropRound::InitClient()
   {
-    _state = QSharedPointer<State>(new State());
+    _state = QSharedPointer<State>(new State(GetRoundId().GetByteArray()));
 
     foreach(const QSharedPointer<Connection> &con,
         GetNetwork()->GetConnectionManager()->

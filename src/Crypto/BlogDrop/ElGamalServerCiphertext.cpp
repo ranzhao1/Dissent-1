@@ -43,7 +43,7 @@ namespace BlogDrop {
     }
   }
 
-  void ElGamalServerCiphertext::SetProof(const QSharedPointer<const PrivateKey> priv)
+  void ElGamalServerCiphertext::SetProof(int /*phase*/, const QSharedPointer<const PrivateKey> priv)
   {
     for(int i=0; i<_n_elms; i++) {
       // element[i] = (prod of client_pks[i])^-server_sk mod p
@@ -96,7 +96,7 @@ namespace BlogDrop {
     _response = (v - (_challenge.MultiplyMod(priv->GetInteger(), q))) % q;
   }
 
-  bool ElGamalServerCiphertext::VerifyProof(const QSharedPointer<const PublicKey> pub) const
+  bool ElGamalServerCiphertext::VerifyProof(int /* phase */, const QSharedPointer<const PublicKey> pub) const
   {
     // g0 = DH generator 
     // g(i) = product of all client pub keys i

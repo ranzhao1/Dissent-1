@@ -15,8 +15,7 @@ namespace BlogDrop {
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
 
     hash->Restart();
-    hash->Update(params->GetKeyGroup()->GetByteArray());
-    hash->Update(params->GetMessageGroup()->GetByteArray());
+    hash->Update(params->GetByteArray());
 
     Q_ASSERT(gs.count() == ys.count());
     Q_ASSERT(gs.count() == ts.count());

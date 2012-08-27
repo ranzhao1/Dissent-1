@@ -61,7 +61,9 @@ namespace BlogDrop {
     }
   }
 
-  void ElGamalClientCiphertext::SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, 
+  void ElGamalClientCiphertext::SetAuthorProof(int /*phase*/, 
+      const QSharedPointer<const PrivateKey> /*client_priv*/, 
+      const QSharedPointer<const PrivateKey> author_priv, 
       const Plaintext &m)
   {
     QList<Element> ms = m.GetElements();
@@ -119,7 +121,7 @@ namespace BlogDrop {
     }
   }
 
-  void ElGamalClientCiphertext::SetProof(const QSharedPointer<const PrivateKey>)
+  void ElGamalClientCiphertext::SetProof(int /*phase*/, const QSharedPointer<const PrivateKey>)
   {
     const Element g_key = _params->GetKeyGroup()->GetGenerator();
     const Integer q = _params->GetGroupOrder();
@@ -179,7 +181,7 @@ namespace BlogDrop {
     }
   }
 
-  bool ElGamalClientCiphertext::VerifyProof(const QSharedPointer<const PublicKey>) const
+  bool ElGamalClientCiphertext::VerifyProof(int /*phase*/, const QSharedPointer<const PublicKey>) const
   {
     if(_elements.count() != _n_elms) {
       qWarning() << "Got proof with incorrect number of elements (" << _elements.count() << ")";
@@ -299,8 +301,7 @@ namespace BlogDrop {
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
 
     hash->Restart();
-    hash->Update(params->GetKeyGroup()->GetByteArray());
-    hash->Update(params->GetMessageGroup()->GetByteArray());
+    hash->Update(params->GetByteArray());
 
     Q_ASSERT(gs.count() == ys.count());
     Q_ASSERT(gs.count() == ts.count());

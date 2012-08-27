@@ -39,16 +39,18 @@ namespace BlogDrop {
 
       /**
        * Initialize elements proving correctness of ciphertext
+       * @param phase transmisssion round/phase index
        * @param Server private key used to generate proof
        */
-      virtual void SetProof(const QSharedPointer<const PrivateKey> priv);
+      virtual void SetProof(int phase, const QSharedPointer<const PrivateKey> priv);
 
       /**
        * Check ciphertext proof
        * @param pub public key of server
+       * @param phase transmisssion round/phase index
        * @returns true if proof is okay
        */
-      virtual bool VerifyProof(const QSharedPointer<const PublicKey> pub) const;
+      virtual bool VerifyProof(int phase, const QSharedPointer<const PublicKey> pub) const;
 
       /**
        * Get serialized version

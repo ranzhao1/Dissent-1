@@ -47,7 +47,7 @@ namespace AbstractGroup {
         if(elmdata) {
           return elmdata->_integer;
         } else {
-          qFatal("Invalid cast");
+          qFatal("Invalid cast (IntegerElementData)");
         }
 
         return Integer();

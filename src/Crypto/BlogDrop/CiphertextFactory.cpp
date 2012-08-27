@@ -2,6 +2,7 @@
 #include "CiphertextFactory.hpp"
 #include "ElGamalClientCiphertext.hpp"
 #include "ElGamalServerCiphertext.hpp"
+#include "PairingClientCiphertext.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -12,8 +13,13 @@ namespace BlogDrop {
       const QSharedPointer<const PublicKeySet> server_pks,
       const QSharedPointer<const PublicKey> author_pub)
   {
-    return QSharedPointer<ClientCiphertext>(new ElGamalClientCiphertext(
-          params, server_pks, author_pub));
+    if(params->UsesPairing()) {
+      return QSharedPointer<ClientCiphertext>(new PairingClientCiphertext(
+            params, server_pks, author_pub));
+    } else {
+      return QSharedPointer<ClientCiphertext>(new ElGamalClientCiphertext(
+            params, server_pks, author_pub));
+    }
   }
  
   QSharedPointer<ClientCiphertext> CiphertextFactory::CreateClientCiphertext(
@@ -22,8 +28,13 @@ namespace BlogDrop {
       const QSharedPointer<const PublicKey> author_pub,
       const QByteArray &serialized)
   {
-    return QSharedPointer<ClientCiphertext>(new ElGamalClientCiphertext(
-          params, server_pks, author_pub, serialized));
+    if(params->UsesPairing()) {
+      return QSharedPointer<ClientCiphertext>(new PairingClientCiphertext(
+            params, server_pks, author_pub, serialized));
+    } else {
+      return QSharedPointer<ClientCiphertext>(new ElGamalClientCiphertext(
+            params, server_pks, author_pub, serialized));
+    }
   }
 
   QSharedPointer<ServerCiphertext> CiphertextFactory::CreateServerCiphertext(

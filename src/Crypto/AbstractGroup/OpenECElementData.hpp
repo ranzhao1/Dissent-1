@@ -54,7 +54,7 @@ namespace AbstractGroup {
         if(elmdata) {
           return elmdata->_point;
         } else {
-          qFatal("Invalid cast");
+          qFatal("Invalid cast (OpenECElementData)");
         }
 
         return NULL;

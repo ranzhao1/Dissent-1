@@ -169,8 +169,8 @@ namespace Anonymity {
        */
       class State {
         public:
-          State() : 
-            params(Parameters::IntegerTestingFixed()),
+          State(QByteArray round_nonce) : 
+            params(Parameters::IntegerProductionFixed(round_nonce)),
             client_priv(new PrivateKey(params)),
             client_pub(new PublicKey(client_priv)),
             anonymous_priv(new PrivateKey(params)),
@@ -219,7 +219,8 @@ namespace Anonymity {
        */
       class ServerState : public State {
         public:
-          ServerState() :
+          ServerState(QByteArray round_nonce) :
+            State(round_nonce),
             server_priv(new PrivateKey(params)),
             server_pub(new PublicKey(server_priv)) {}
 

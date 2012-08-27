@@ -46,7 +46,7 @@ namespace AbstractGroup {
           //elmdata->_element.dump(stderr, "element: ", 10);
           return elmdata->_element;
         } else {
-          qFatal("Invalid cast");
+          qFatal("Invalid cast (PairingElementData)");
         }
 
         return T();

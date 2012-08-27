@@ -36,15 +36,21 @@ namespace BlogDrop {
       /**
        * Generate a client cover-traffic ciphertext
        */
-      QByteArray GenerateCoverCiphertext() const;
+      QByteArray GenerateCoverCiphertext();
 
     protected: 
 
       inline QSharedPointer<const Parameters> GetParameters() const { return _params; }
+      inline QSharedPointer<const PrivateKey> GetClientKey() const { return _client_priv; }
       inline QSharedPointer<const PublicKeySet> GetServerKeys() const { return _server_pks; }
       inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; }
 
+      inline int GetPhase() const { return _phase; }
+      inline void NextPhase() { _phase++; }
+
     private:
+
+      int _phase;
 
       QSharedPointer<const Parameters> _params;
       QSharedPointer<const PrivateKey> _client_priv;

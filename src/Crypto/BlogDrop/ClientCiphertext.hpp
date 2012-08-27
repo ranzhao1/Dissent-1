@@ -44,23 +44,30 @@ namespace BlogDrop {
 
       /**
        * Initialize elements proving correctness of ciphertext
+       * @param transmission round/phase index
+       * @param client_priv client private key used to generate proof
        * @param author_priv author private key used to generate proof
        * @param m author's plaintext message
        */
-      virtual void SetAuthorProof(const QSharedPointer<const PrivateKey> author_priv, 
+      virtual void SetAuthorProof(int phase, 
+          const QSharedPointer<const PrivateKey> client_priv, 
+          const QSharedPointer<const PrivateKey> author_priv, 
           const Plaintext &m) = 0;
 
       /**
        * Initialize elements proving correctness of ciphertext
-       * @param the client (NOT author) private key
+       * @param phase the message transmission phase/round index
+       * @param client_priv client private key used to generate proof
        */
-      virtual void SetProof(const QSharedPointer<const PrivateKey> client_priv) = 0;
+      virtual void SetProof(int phase, const QSharedPointer<const PrivateKey> client_priv) = 0;
 
       /**
        * Check ciphertext proof
+       * @param transmission round/phase index
+       * @param client (NOT author) private key
        * @returns true if proof is okay
        */
-      virtual bool VerifyProof(const QSharedPointer<const PublicKey> client_pub) const = 0;
+      virtual bool VerifyProof(int phase, const QSharedPointer<const PublicKey> client_pub) const = 0;
 
       /**
        * Get a byte array for this ciphertext
@@ -70,10 +77,11 @@ namespace BlogDrop {
       /**
        * Verify a set of proofs. Uses threading if available, so this might
        * be much faster than verifying each proof in turn
+       * @param phase transmisssion round/phase index
        * @param c list of ciphertexts
        * @returns set of indices of valid proofs
        */
-      static QSet<int> VerifyProofs(const QList<QSharedPointer<const ClientCiphertext> > &c, 
+      static QSet<int> VerifyProofs(int phase, const QList<QSharedPointer<const ClientCiphertext> > &c, 
         const QList<QSharedPointer<const PublicKey> > &pubs);
 
       virtual inline QList<Element> GetElements() const 

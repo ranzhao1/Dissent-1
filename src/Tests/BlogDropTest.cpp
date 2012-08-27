@@ -28,6 +28,11 @@ namespace Tests {
     TestPlaintextEmpty(Parameters::Parameters::OpenECProductionFixed());
   }
 
+  TEST(BlogDrop, PairingECPlaintextEmpty) 
+  {
+    TestPlaintextEmpty(Parameters::Parameters::PairingProductionFixed());
+  }
+
   void TestPlaintextShort(QSharedPointer<const Parameters> params)
   {
     Plaintext p(params);
@@ -52,6 +57,10 @@ namespace Tests {
     TestPlaintextShort(Parameters::Parameters::OpenECProductionFixed());
   }
 
+  TEST(BlogDrop, PairingPlaintextShort) {
+    TestPlaintextShort(Parameters::Parameters::PairingProductionFixed());
+  }
+
   void TestPlaintextRandom(QSharedPointer<const Parameters> params, int divby)
   {
     Plaintext p(params);
@@ -62,7 +71,7 @@ namespace Tests {
     EXPECT_EQ(params->GetGroupOrder(), params->GetKeyGroup()->GetOrder());
     EXPECT_EQ(params->GetGroupOrder(), params->GetMessageGroup()->GetOrder());
 
-    for(int i=0; i<1000; i++) {
+    for(int i=0; i<10; i++) {
       QByteArray msg(Plaintext::CanFit(params)/divby, 0);
       rand->GenerateBlock(msg);
 
@@ -70,10 +79,10 @@ namespace Tests {
 
       QByteArray output;
       EXPECT_TRUE(p.Decode(output));
-      EXPECT_TRUE(output.count() > 0);
-      EXPECT_TRUE(output.count() < (params->GetNElements()*
+      EXPECT_GT(output.count(), 0);
+      EXPECT_LT(output.count(), (params->GetNElements()*
             (params->GetMessageGroup()->GetOrder().GetByteCount()/divby)));
-      EXPECT_TRUE(output.count() > (params->GetNElements()*
+      EXPECT_GT(output.count(), (params->GetNElements()*
             ((params->GetMessageGroup()->GetOrder().GetByteCount()-5)/divby)));
       EXPECT_EQ(msg, output);
     }
@@ -95,6 +104,12 @@ namespace Tests {
     TestPlaintextRandom(Parameters::Parameters::OpenECProductionFixed(), 1);
     TestPlaintextRandom(Parameters::Parameters::OpenECProductionFixed(), 2);
     TestPlaintextRandom(Parameters::Parameters::OpenECProductionFixed(), 4);
+  }
+
+  TEST(BlogDrop, PairingPlaintextRandom) {
+    TestPlaintextRandom(Parameters::Parameters::PairingProductionFixed(), 1);
+    TestPlaintextRandom(Parameters::Parameters::PairingProductionFixed(), 2);
+    TestPlaintextRandom(Parameters::Parameters::PairingProductionFixed(), 4);
   }
 
   void TestKeys(QSharedPointer<const Parameters> params)
@@ -133,6 +148,10 @@ namespace Tests {
     TestKeys(Parameters::Parameters::OpenECProductionFixed());
   }
 
+  TEST(BlogDrop, PairingKeys) {
+    TestKeys(Parameters::Parameters::PairingProductionFixed());
+  }
+
   void TestPublicKeySet(QSharedPointer<const Parameters> params)
   {
     const int nkeys = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
@@ -155,9 +174,17 @@ namespace Tests {
     TestPublicKeySet(Parameters::Parameters::IntegerTestingFixed());
   }
 
-  TEST(BlogDrop, ECPublicKeySet) {
+  TEST(BlogDrop, CppECPublicKeySet) {
     TestPublicKeySet(Parameters::Parameters::CppECProductionFixed());
   }
+
+  TEST(BlogDrop, OpenECPublicKeySet) {
+    TestPublicKeySet(Parameters::Parameters::OpenECProductionFixed());
+  }
+ 
+  TEST(BlogDrop, PairingPublicKeySet) {
+    TestPublicKeySet(Parameters::Parameters::PairingProductionFixed());
+  } 
 
   void TestElGamalServerCiphertext(QSharedPointer<const Parameters> params)
   {
@@ -180,7 +207,7 @@ namespace Tests {
 
       EXPECT_FALSE(params.isNull());
       ElGamalServerCiphertext c(params, sets);
-      c.SetProof(server_sk);
+      c.SetProof(0, server_sk);
 
       for(int j=0; j<params->GetNElements(); j++) {
         Element expected = params->GetMessageGroup()->Exponentiate(sets[j]->GetElement(), 
@@ -190,7 +217,7 @@ namespace Tests {
         ASSERT_EQ(expected, c.GetElements()[j]);
       }
 
-      ASSERT_TRUE(c.VerifyProof(server_pk));
+      ASSERT_TRUE(c.VerifyProof(0, server_pk));
     }
   }
 
@@ -206,9 +233,8 @@ namespace Tests {
     TestElGamalServerCiphertext(Parameters::Parameters::OpenECProductionFixed());
   }
 
-  void TestElGamalClientOnce(QSharedPointer<const Parameters> params)
+  void TestClientOnce(QSharedPointer<const Parameters> params)
   {
-
     // Generate an author PK
     QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
     QSharedPointer<const PublicKey> author_pk(new PublicKey(priv));
@@ -228,46 +254,59 @@ namespace Tests {
     QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, server_pks));
 
     // Generate ciphertext
-    ElGamalClientCiphertext c(params, server_pk_set, author_pk);
-    c.SetProof(client_priv);
+    QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(
+        params, server_pk_set, author_pk);
 
-    const Integer q = params->GetGroupOrder();
-    ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
-    ASSERT_TRUE(c.GetChallenge2() > 0 || c.GetChallenge2() < q);
+    c->SetProof(0, client_priv);
 
-    ASSERT_EQ(params->GetNElements()+1, c.GetResponses().count());
-    foreach(const Integer &i, c.GetResponses()) {
-      ASSERT_TRUE(i > 0 || i < q);
+    /*
+    QSharedPointer<ElGamalClientCiphertext> egc;
+    if((egc = qSharedPointerDynamicCast<ElGamalClientCiphertext>(c)) && !egc.isNull()) {
+      const Integer q = params->GetGroupOrder();
+      ASSERT_TRUE(egc->GetChallenge1() > 0 || egc->GetChallenge1() < q);
+      ASSERT_TRUE(egc->GetChallenge2() > 0 || egc->GetChallenge2() < q);
+
+      ASSERT_EQ(params->GetNElements()+1, egc->GetResponses().count());
+      foreach(const Integer &i, egc->GetResponses()) {
+        ASSERT_TRUE(i > 0 || i < q);
+      }
+
+      // Make sure all values are distinct
+      QSet<QByteArray> set;
+      set.insert(egc->GetChallenge1().GetByteArray());
+      set.insert(egc->GetChallenge2().GetByteArray());
+      foreach(const Integer &i, egc->GetResponses()) {
+        set.insert(i.GetByteArray());
+      }
+
+      ASSERT_EQ(params->GetNElements()+3, set.count());
     }
 
-    // Make sure all values are distinct
-    QSet<QByteArray> set;
-    set.insert(c.GetChallenge1().GetByteArray());
-    set.insert(c.GetChallenge2().GetByteArray());
-    foreach(const Integer &i, c.GetResponses()) {
-      set.insert(i.GetByteArray());
-    }
-
-    ASSERT_EQ(params->GetNElements()+3, set.count());
-
-    ASSERT_TRUE(c.VerifyProof(client_pub));
+    */
+    ASSERT_TRUE(c->VerifyProof(0, client_pub));
   }
 
   TEST(BlogDrop, IntegerClientProof) {
     for(int i=0; i<10; i++) {
-      TestElGamalClientOnce(Parameters::Parameters::IntegerTestingFixed());
+      TestClientOnce(Parameters::Parameters::IntegerTestingFixed());
     }
   }
 
   TEST(BlogDrop, CppECClientProof) {
     for(int i=0; i<10; i++) {
-      TestElGamalClientOnce(Parameters::Parameters::CppECProductionFixed());
+      TestClientOnce(Parameters::Parameters::CppECProductionFixed());
     }
   }
 
   TEST(BlogDrop, OpenECClientProof) {
     for(int i=0; i<10; i++) {
-      TestElGamalClientOnce(Parameters::Parameters::OpenECProductionFixed());
+      TestClientOnce(Parameters::Parameters::OpenECProductionFixed());
+    }
+  }
+
+  TEST(BlogDrop, PairingClientProof) {
+    for(int i=0; i<10; i++) {
+      TestClientOnce(Parameters::Parameters::PairingProductionFixed());
     }
   }
 
@@ -297,7 +336,7 @@ namespace Tests {
 
     // Generate ciphertext
     ElGamalClientCiphertext c(params, server_pk_set, author_pk);
-    c.SetAuthorProof(author_priv, m);
+    c.SetAuthorProof(0, client_priv, author_priv, m);
 
     const Integer q = params->GetGroupOrder();
     ASSERT_TRUE(c.GetChallenge1() > 0 || c.GetChallenge1() < q);
@@ -318,7 +357,7 @@ namespace Tests {
 
     ASSERT_EQ(params->GetNElements()+3, set.count());
 
-    ASSERT_TRUE(c.VerifyProof(client_pub));
+    ASSERT_TRUE(c.VerifyProof(0, client_pub));
   }
 
   TEST(BlogDrop, IntegerAuthorProof) {
@@ -362,8 +401,10 @@ namespace Tests {
     m.SetRandom();
 
     // Generate author ciphertext
+    QSharedPointer<const PrivateKey> client_priv(new PrivateKey(params));
+    QSharedPointer<const PublicKey> client_pub(new PublicKey(client_priv));
     ElGamalClientCiphertext c(params, server_pk_set, author_pk);
-    c.SetAuthorProof(author_priv, m);
+    c.SetAuthorProof(0, client_priv, author_priv, m);
 
     // Generate non-author ciphertext
     QList<QSharedPointer<const ElGamalClientCiphertext> > cover;
@@ -377,7 +418,7 @@ namespace Tests {
       client_pks.append(pub);
 
       QSharedPointer<ElGamalClientCiphertext> cov(new ElGamalClientCiphertext(params, server_pk_set, author_pk));
-      cov->SetProof(client_sks[i]);
+      cov->SetProof(0, client_sks[i]);
       cover.append(cov);
     }
 
@@ -409,9 +450,9 @@ namespace Tests {
     ASSERT_EQ(params->GetNElements()+3, set.count());
 
     // Verify client proofs
-    ASSERT_TRUE(c.VerifyProof(client_pks[0]));
+    ASSERT_TRUE(c.VerifyProof(0, client_pub));
     for(int i=0; i<ncover; i++) {
-      cover[i]->VerifyProof(client_pks[i]);
+      cover[i]->VerifyProof(0, client_pks[i]);
     }
 
     Plaintext out(params);
@@ -419,9 +460,9 @@ namespace Tests {
 
     for(int i=0; i<nkeys; i++) {
       ElGamalServerCiphertext s(params, sets);
-      s.SetProof(server_sks[i]);
+      s.SetProof(0, server_sks[i]);
 
-      ASSERT_TRUE(s.VerifyProof(server_pks[i]));
+      ASSERT_TRUE(s.VerifyProof(0, server_pks[i]));
 
       out.Reveal(s.GetElements()); 
     }

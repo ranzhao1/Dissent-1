@@ -17,7 +17,7 @@ namespace BlogDrop {
   }
 
   bool BlogDropAuthor::GenerateAuthorCiphertext(QByteArray &out,
-      const QByteArray &in) const
+      const QByteArray &in) 
   {
     const int can_fit = Plaintext::CanFit(GetParameters());
     if(in.count() > MaxPlaintextLength()) {
@@ -34,8 +34,10 @@ namespace BlogDrop {
 
     QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(
         GetParameters(), GetServerKeys(), GetAuthorKey());
-    c->SetAuthorProof(_author_priv, m);
+    c->SetAuthorProof(GetPhase(), GetClientKey(), _author_priv, m);
     out = c->GetByteArray();
+
+    NextPhase();
     
     return !data.count();
   }
