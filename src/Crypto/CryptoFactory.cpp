@@ -2,6 +2,7 @@
 
 #include "CppLibrary.hpp"
 #include "CppDsaLibrary.hpp"
+#include "OpenLibrary.hpp"
 #include "NullLibrary.hpp"
 #include "CryptoFactory.hpp"
 #include "ThreadedOnionEncryptor.hpp"
@@ -54,6 +55,9 @@ namespace Crypto {
         break;
       case CryptoPPDsa:
         _library.reset(new CppDsaLibrary());
+        break;
+      case OpenSSL:
+        _library.reset(new OpenLibrary());
         break;
       case Null:
         _library.reset(new NullLibrary());

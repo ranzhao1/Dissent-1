@@ -412,6 +412,7 @@ namespace Tests {
     // Generate list of server pks
     QList<QSharedPointer<const PublicKey> > server_pks;
     QList<QSharedPointer<const PrivateKey> > server_sks;
+
     for(int i=0; i<nservers; i++) {
       QSharedPointer<const PrivateKey> priv(new PrivateKey(params));
       QSharedPointer<const PublicKey> pub(new PublicKey(priv));
@@ -419,6 +420,7 @@ namespace Tests {
       server_pks.append(pub);
     }
 
+    qDebug() << "CLIENT_PK";
     // Generate list of client pks
     QList<QSharedPointer<const PublicKey> > client_pks;
     QList<QSharedPointer<const PrivateKey> > client_sks;

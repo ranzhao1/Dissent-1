@@ -117,6 +117,8 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/NullPrivateKey.hpp \
            src/Crypto/Library.hpp \
            src/Crypto/OnionEncryptor.hpp \
+           src/Crypto/OpenIntegerData.hpp \
+           src/Crypto/OpenLibrary.hpp \
            src/Crypto/ThreadedOnionEncryptor.hpp \
            src/Crypto/Serialization.hpp \
            src/Crypto/AbstractGroup/AbstractGroup.hpp \

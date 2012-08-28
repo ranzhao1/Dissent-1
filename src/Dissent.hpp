@@ -82,6 +82,8 @@
 #include "Crypto/NullLibrary.hpp"
 #include "Crypto/NullPrivateKey.hpp"
 #include "Crypto/NullPublicKey.hpp"
+#include "Crypto/OpenIntegerData.hpp"
+#include "Crypto/OpenLibrary.hpp"
 #include "Crypto/OnionEncryptor.hpp"
 #include "Crypto/Serialization.hpp"
 #include "Crypto/ThreadedOnionEncryptor.hpp"

@@ -121,7 +121,7 @@ namespace Tests {
   TEST(Integer, CppModInverse)
   {
     for(int i=0; i<10; i++) {
-      Integer p = Integer::GetRandomInteger(1024, 0, true);
+      Integer p = Integer::GetRandomInteger(1024, true);
       Integer a = Integer::GetRandomInteger(0, p);
       Integer inv = a.ModInverse(p);
       Integer out = (a*inv)%p;
@@ -164,6 +164,78 @@ namespace Tests {
     Integer result = (val * mi) % mod;
     qDebug() << result.ToString() << (val < mod) << (mi < mod);
     EXPECT_EQ(result, 1);
+  }
+
+  TEST(Integer, OpenBasic)
+  {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    IntegerBasicTest();
+    cf.SetLibrary(cname);
+  }
+
+  TEST(Integer, OpenNull)
+  {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    IntegerTestNull();
+    cf.SetLibrary(cname);
+  }
+
+  TEST(Integer, OpenTestCopy)
+  {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    IntegerTestCopy();
+    cf.SetLibrary(cname);
+  }
+
+  TEST(Integer, OpenInvalidString)
+  {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    IntegerInvalidString();
+    cf.SetLibrary(cname);
+  }
+
+  TEST(Integer, OpenPow)
+  {
+    Integer base(10);
+    Integer exp(100);
+    EXPECT_EQ(exp, base.Pow(Integer(10), Integer(101)));
+    EXPECT_EQ(Integer(0), base.Pow(Integer(10), Integer(100)));
+  }
+
+  TEST(Integer, OpenModInverse)
+  {
+    for(int i=0; i<10; i++) {
+      Integer p = Integer::GetRandomInteger(1024, true);
+      Integer a = Integer::GetRandomInteger(0, p);
+      Integer inv = a.ModInverse(p);
+      Integer out = (a*inv)%p;
+
+      ASSERT_TRUE(a > 0);
+      ASSERT_TRUE(p > a);
+
+      qDebug() << "a" << a.GetByteArray().toHex();
+      qDebug() << "p" << p.GetByteArray().toHex();
+      qDebug() << "out" << out.GetByteArray().toHex();
+
+      ASSERT_EQ(Integer(1), out);
+    }
+  }
+  
+  TEST(Integer, OpenRandom)
+  {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    IntegerRandom();
+    cf.SetLibrary(cname);
   }
 }
 }
