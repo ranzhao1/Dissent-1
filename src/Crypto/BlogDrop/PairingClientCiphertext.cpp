@@ -48,7 +48,7 @@ namespace BlogDrop {
       const QSharedPointer<const PrivateKey> client_priv) 
   {
     for(int i=0; i<GetNElements(); i++) { 
-      Element base = GetPairedBase(_cache, _server_pks, phase, i); 
+      Element base = BlogDropUtils::GetPairedBase(_params, _cache, _server_pks, GetAuthorKey(), phase, i); 
       _elements.append(_params->GetMessageGroup()->Exponentiate(base, client_priv->GetInteger())); 
     }
   }
@@ -262,7 +262,7 @@ namespace BlogDrop {
     gs.append(g_key);
     gs.append(g_key);
     for(int i=0; i<GetNElements(); i++) { 
-      gs.append(GetPairedBase(cache, _server_pks, phase, i));
+      gs.append(BlogDropUtils::GetPairedBase(_params, cache, _server_pks, GetAuthorKey(), phase, i));
     }
 
     // y_auth = author PK
@@ -298,38 +298,9 @@ namespace BlogDrop {
       hash->Update(group->ElementToByteArray(gs[i]));
       hash->Update(group->ElementToByteArray(ys[i]));
       hash->Update(group->ElementToByteArray(ts[i]));
-
-      qDebug() << "g" << i << group->ElementToByteArray(gs[i]).toHex();
-      qDebug() << "y" << i << group->ElementToByteArray(ys[i]).toHex();
-      qDebug() << "t" << i << group->ElementToByteArray(ts[i]).toHex();
     }
 
     return Integer(hash->ComputeHash()) % params->GetGroupOrder();
-  }
-
-  Crypto::AbstractGroup::Element PairingClientCiphertext::GetPairedBase(
-      QHash<int, Element> &cache,
-      const QSharedPointer<const PublicKeySet> server_pks, 
-      int phase, int element_idx) const
-  {
-    if(cache.contains(element_idx)) return cache[element_idx];
-
-    // e(server_pks, tau)
-    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
-    hash->Restart();
-    hash->Update(_params->GetByteArray());
-    hash->Update(_author_pub->GetByteArray());
-    hash->Update(
-        QString("%1 %2").arg(phase, 8, 16, QChar('0')).arg(
-          element_idx, 8, 16, QChar('0')).toAscii());
-
-    const Integer exp = Integer(hash->ComputeHash()) % _params->GetGroupOrder();
-    const Element tau = _params->GetKeyGroup()->Exponentiate(
-        _params->GetKeyGroup()->GetGenerator(), exp);
-
-    Element base = _params->ApplyPairing(server_pks->GetElement(), tau);
-    cache[element_idx] = base;
-    return base;
   }
 
 }

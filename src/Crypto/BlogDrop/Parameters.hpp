@@ -20,6 +20,13 @@ namespace BlogDrop {
       typedef Dissent::Crypto::AbstractGroup::AbstractGroup AbstractGroup;
       typedef Dissent::Crypto::AbstractGroup::Element Element;
 
+      typedef enum {
+        ProofType_ElGamal,
+        ProofType_Pairing, 
+        ProofType_HashedGenerator, 
+        ProofType_Invalid
+      } ProofType;
+
       /**
        * Constructor that uses 512-bit integer group (for testing)
        */
@@ -44,7 +51,7 @@ namespace BlogDrop {
        */
       static QSharedPointer<Parameters> OpenECProductionFixed(QByteArray round_nonce = QByteArray());
 
-      /**
+       /**
        * Constructor that uses a type-A pairing group from
        * the Stanford PBC library
        *   qbits = 512
@@ -81,9 +88,14 @@ namespace BlogDrop {
       QByteArray GetByteArray() const;
 
       /**
+       * Get type of proof being used
+       */
+      inline ProofType GetProofType() const { return _proof_type; }
+       
+      /**
        * Return true if parameters use a pairing
        */
-      bool UsesPairing() const;
+      inline bool UsesPairing() const { return (GetProofType() == ProofType_Pairing); }
 
       QByteArray GetRoundNonce() const { return _round_nonce; }
       virtual int GetNElements() const { return _n_elements; }
@@ -100,9 +112,21 @@ namespace BlogDrop {
 
       Parameters();
 
-      Parameters(QByteArray round_nonce, QSharedPointer<const AbstractGroup> key_group, 
-          QSharedPointer<const AbstractGroup> msg_group, int n_elements);
+      Parameters(ProofType proof_type, 
+          QByteArray round_nonce, 
+          QSharedPointer<const AbstractGroup> key_group, 
+          QSharedPointer<const AbstractGroup> msg_group, 
+          int n_elements);
 
+      /**
+       * Proof technique being used
+       */
+      const ProofType _proof_type;
+
+      /**
+       * This string must be different in every run of the protocol to 
+       * prevent replay attacks
+       */
       QByteArray _round_nonce;
 
       /**

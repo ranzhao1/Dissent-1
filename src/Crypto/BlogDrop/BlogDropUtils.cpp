@@ -1,5 +1,6 @@
 
 #include "Crypto/AbstractGroup/AbstractGroup.hpp"
+#include "Crypto/AbstractGroup/Element.hpp"
 
 #include "BlogDropUtils.hpp"
 
@@ -49,6 +50,33 @@ namespace BlogDrop {
     return Commit(params, gs, ys, ts);
   }
 
+  AbstractGroup::Element BlogDropUtils::GetPairedBase(QSharedPointer<const Parameters> params,
+      QHash<int, Element> &cache, 
+      const QSharedPointer<const PublicKeySet> prod_pks, 
+      const QSharedPointer<const PublicKey> author_pk, 
+      int phase, 
+      int element_idx) 
+  {
+    Q_ASSERT(params->UsesPairing());
+    if(cache.contains(element_idx)) return cache[element_idx];
+
+    // e(server_pks, tau)
+    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
+    hash->Restart();
+    hash->Update(params->GetByteArray());
+    hash->Update(params->GetKeyGroup()->ElementToByteArray(author_pk->GetElement()));
+    hash->Update(
+        QString("%1 %2").arg(phase, 8, 16, QChar('0')).arg(
+          element_idx, 8, 16, QChar('0')).toAscii());
+
+    const Integer exp = Integer(hash->ComputeHash()) % params->GetGroupOrder();
+    const Element tau = params->GetKeyGroup()->Exponentiate(
+        params->GetKeyGroup()->GetGenerator(), exp);
+
+    Element base = params->ApplyPairing(prod_pks->GetElement(), tau);
+    cache[element_idx] = base;
+    return base;
+  }
 }
 }
 }

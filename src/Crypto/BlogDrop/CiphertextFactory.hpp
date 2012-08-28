@@ -55,20 +55,28 @@ namespace BlogDrop {
        * Create a new server ciphertext that matches a set of 
        * client ciphertexts
        * @param params BlogDrop parameters
+       * @param client_pks client public keys
+       * @param author_pub author public key
        * @param client_ctexts the set of client ciphertexts
        */
       static QSharedPointer<ServerCiphertext> CreateServerCiphertext(
           const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKeySet> client_pks,
+          const QSharedPointer<const PublicKey> author_pub,
           const QList<QSharedPointer<const ClientCiphertext> > &client_ctexts);
 
       /**
        * Unserialize a server ciphertext 
        * @param params BlogDrop parameters
+       * @param client_pks client public keys
+       * @param author_pub author public key
        * @param client_ctexts the set of client ciphertexts
        * @param serialized the serialized ciphertext
        */
       static QSharedPointer<ServerCiphertext> CreateServerCiphertext(
           const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKeySet> client_pks,
+          const QSharedPointer<const PublicKey> author_pub,
           const QList<QSharedPointer<const ClientCiphertext> > &client_ctexts,
           const QByteArray &serialized);
   };

@@ -7,8 +7,9 @@ namespace Crypto {
 namespace BlogDrop {
 
   ElGamalServerCiphertext::ElGamalServerCiphertext(const QSharedPointer<const Parameters> params, 
+      const QSharedPointer<const PublicKey> author_pub,
       const QList<QSharedPointer<const PublicKeySet> > &client_pks) :
-    ServerCiphertext(params, params->GetNElements()),
+    ServerCiphertext(params, author_pub, params->GetNElements()),
     _client_pks(client_pks)
   {
     if(_client_pks.count() != (_params->GetNElements())) {
@@ -17,9 +18,10 @@ namespace BlogDrop {
   }
 
   ElGamalServerCiphertext::ElGamalServerCiphertext(const QSharedPointer<const Parameters> params, 
+      const QSharedPointer<const PublicKey> author_pub,
       const QList<QSharedPointer<const PublicKeySet> > &client_pks,
       const QByteArray &serialized) :
-    ServerCiphertext(params, params->GetNElements()),
+    ServerCiphertext(params, author_pub, params->GetNElements()),
     _client_pks(client_pks)
   {
     if(_client_pks.count() != (_params->GetNElements())) {

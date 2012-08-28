@@ -1,5 +1,5 @@
-#ifndef DISSENT_CRYPTO_BLOGDROP_EL_GAMAL_SERVER_CIPHERTEXT_H_GUARD
-#define DISSENT_CRYPTO_BLOGDROP_EL_GAMAL_SERVER_CIPHERTEXT_H_GUARD
+#ifndef DISSENT_CRYPTO_BLOGDROP_PAIRING_SERVER_CIPHERTEXT_H_GUARD
+#define DISSENT_CRYPTO_BLOGDROP_PAIRING_SERVER_CIPHERTEXT_H_GUARD
 
 #include "ServerCiphertext.hpp"
 
@@ -8,9 +8,9 @@ namespace Crypto {
 namespace BlogDrop {
 
   /**
-   * Object holding ElGamal-style BlogDrop server ciphertext
+   * Object holding Pairing-style BlogDrop server ciphertext
    */
-  class ElGamalServerCiphertext : public ServerCiphertext {
+  class PairingServerCiphertext : public ServerCiphertext {
 
     public:
 
@@ -20,9 +20,9 @@ namespace BlogDrop {
        * @param author_pub Author public key
        * @param client_pks Client public keys for ciphertexts
        */
-      ElGamalServerCiphertext(const QSharedPointer<const Parameters> params, 
+      PairingServerCiphertext(const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKey> author_pub,
-          const QList<QSharedPointer<const PublicKeySet> > &client_pks);
+          const QSharedPointer<const PublicKeySet> client_pks);
 
       /**
        * Constructor: Initialize a ciphertext from serialized version
@@ -31,15 +31,15 @@ namespace BlogDrop {
        * @param client_pks Client public keys
        * @param serialized serialized byte array
        */
-      ElGamalServerCiphertext(const QSharedPointer<const Parameters> params, 
+      PairingServerCiphertext(const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKey> author_pub,
-          const QList<QSharedPointer<const PublicKeySet> > &client_pks,
+          const QSharedPointer<const PublicKeySet> client_pks,
           const QByteArray &serialized);
 
       /**
        * Destructor
        */
-      virtual ~ElGamalServerCiphertext() {}
+      virtual ~PairingServerCiphertext() {}
 
       /**
        * Initialize elements proving correctness of ciphertext
@@ -66,7 +66,11 @@ namespace BlogDrop {
 
     private:
 
-      QList<QSharedPointer<const PublicKeySet> > _client_pks;
+      void InitializeLists(QHash<int, Element> &cache,
+          int phase, QSharedPointer<const PublicKey> client_pub,
+          QList<Element> &gs, QList<Element> &ys) const;
+
+      QSharedPointer<const PublicKeySet> _client_pks;
       Integer _challenge;
       Integer _response;
   };

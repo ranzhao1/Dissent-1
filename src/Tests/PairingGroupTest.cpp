@@ -152,7 +152,7 @@ namespace Tests {
     }
   }
 
-  TEST(PairingWrapper, EncodeAndPair)
+  TEST(Pairing, EncodeAndPair)
   {
     QSharedPointer<PairingG1Group> group1(PairingG1Group::ProductionFixed());
     QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::ProductionFixed());

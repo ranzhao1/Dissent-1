@@ -24,8 +24,11 @@ namespace BlogDrop {
       /**
        * Constructor: Initialize a ciphertext
        * @param params Group parameters
+       * @param author_pub Author public key
        * @param n_elms number of elements per ciphertext */
-      ServerCiphertext(const QSharedPointer<const Parameters> params, int n_elms);
+      ServerCiphertext(const QSharedPointer<const Parameters> params, 
+          const QSharedPointer<const PublicKey> author_pub,
+          int n_elms);
 
       /**
        * Destructor
@@ -53,10 +56,12 @@ namespace BlogDrop {
       virtual QByteArray GetByteArray() const = 0;
 
       virtual inline QList<Element> GetElements() const { return _elements; }
+      virtual inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; }
 
     protected:
 
       QSharedPointer<const Parameters> _params;
+      QSharedPointer<const PublicKey> _author_pub;
       QList<Element> _elements;
       const int _n_elms;
   };

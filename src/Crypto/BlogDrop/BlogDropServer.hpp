@@ -100,9 +100,10 @@ namespace BlogDrop {
 
       /* list[client] = ciphertext */
       QList<QSharedPointer<const ClientCiphertext> > _client_ciphertexts;
+      QList<QSharedPointer<const PublicKey> > _client_pubs;
       QList<QSharedPointer<const ServerCiphertext> > _server_ciphertexts;
 
-      QList<QSharedPointer<const PublicKeySet> > _client_pks;
+      QSharedPointer<const PublicKeySet> _client_pks;
   };
 }
 }

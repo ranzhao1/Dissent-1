@@ -18,32 +18,37 @@ namespace BlogDrop {
   QSharedPointer<Parameters> Parameters::IntegerTestingFixed() 
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::TestingFixed();
-    return QSharedPointer<Parameters>(new Parameters(QByteArray(), fixed, fixed, 2));
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_ElGamal, QByteArray(), fixed, fixed, 2));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerProductionFixed(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::Production2048Fixed();
-    return QSharedPointer<Parameters>(new Parameters(round_nonce, fixed, fixed, 1));
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 1));
   }
 
   QSharedPointer<Parameters> Parameters::CppECProductionFixed(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = CppECGroup::ProductionFixed();
-    return QSharedPointer<Parameters>(new Parameters(round_nonce, fixed, fixed, 8));
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
   }
 
   QSharedPointer<Parameters> Parameters::OpenECProductionFixed(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = OpenECGroup::ProductionFixed();
-    return QSharedPointer<Parameters>(new Parameters(round_nonce, fixed, fixed, 8));
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
   }
 
   QSharedPointer<Parameters> Parameters::PairingProductionFixed(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> g1 = PairingG1Group::ProductionFixed();
     QSharedPointer<const AbstractGroup> gT = PairingGTGroup::ProductionFixed();
-    return QSharedPointer<Parameters>(new Parameters(round_nonce, g1, gT, 4));
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_Pairing, round_nonce, g1, gT, 4));
   }
 
   QSharedPointer<Parameters> Parameters::Empty() 
@@ -51,12 +56,16 @@ namespace BlogDrop {
     return QSharedPointer<Parameters>(new Parameters());
   }
 
-  Parameters::Parameters() : _n_elements(0) {}
+  Parameters::Parameters() : 
+    _proof_type(ProofType_Invalid),
+    _n_elements(0) {}
 
-  Parameters::Parameters(QByteArray round_nonce,
+  Parameters::Parameters(ProofType proof_type, 
+      QByteArray round_nonce,
       QSharedPointer<const AbstractGroup> key_group, 
       QSharedPointer<const AbstractGroup> msg_group, 
       int n_elements) :
+    _proof_type(proof_type),
     _round_nonce(round_nonce),
     _key_group(key_group),
     _msg_group(msg_group),
@@ -76,17 +85,6 @@ namespace BlogDrop {
     out += GetMessageGroup()->GetByteArray();
     out += _n_elements;
     return out;
-  }
-
-  bool Parameters::UsesPairing() const
-  {
-    const AbstractGroup *a1 = GetKeyGroup().data();
-    const AbstractGroup *aT = GetMessageGroup().data();
-
-    const PairingG1Group *g1p = dynamic_cast<const PairingG1Group*>(a1);
-    const PairingGTGroup *gTp = dynamic_cast<const PairingGTGroup*>(aT);
-
-    return ((g1p != NULL) && (gTp != NULL));
   }
 
   Element Parameters::ApplyPairing(const Element &a, const Element &b) const 
