@@ -104,17 +104,19 @@ namespace BlogDrop {
           const QList<Element> &ys, 
           const QList<Element> &ts) const;
 
-      Element GetPairedBase(const QSharedPointer<const PublicKeySet> server_pks, 
+      Element GetPairedBase(QHash<int, Element> &cache,
+          const QSharedPointer<const PublicKeySet> server_pks, 
           int phase, int element_idx) const;
-      void InitializeLists(int phase, QSharedPointer<const PublicKey> client_pub,
+      void InitializeLists(QHash<int, Element> &cache,
+          int phase, QSharedPointer<const PublicKey> client_pub,
           QList<Element> &gs, QList<Element> &ys) const;
       void InitCiphertext(int phase, const QSharedPointer<const PrivateKey> priv);
 
+      QHash<int, Element> _cache;
       Integer _challenge_1;
       Integer _challenge_2;
       Integer _response_1;
       Integer _response_2;
-
   };
 }
 }

@@ -1,5 +1,8 @@
 
+#include <cryptopp/nbtheory.h>
 #include <gmp.h>
+
+#include "Crypto/CppIntegerData.hpp"
 
 #include "PairingGTGroup.hpp"
 #include "PairingElementData.hpp"
@@ -100,33 +103,65 @@ namespace AbstractGroup {
 
   int PairingGTGroup::BytesPerElement() const
   {
-    return BytesPerCoordinate();
+    // Leading pad, trailing pad, one byte to make
+    // elemant a root, and one to make sure element is
+    // less than field
+    return _field.GetByteArray().count() - 4;
   }
 
   Element PairingGTGroup::EncodeBytes(const QByteArray &bytes) const
   {
     /*
-     * GT is a finite field mod q^2 (NOT an elliptic curve over a finite
-     * field, but just a finite field). PBC represents this field as 
-     * complex coordinates x+yi for i=sqrt(-1) in the field. Thus we
-     * encode the byte array as (x,y) points and not simple integers.
+     * GT is the group of primitive roots order q of 
+     * finite field mod q^2 (NOT an elliptic curve over a finite
+     * field, but just a finite field). 
+     * 
+     * PBC represents this field as 
+     * complex coordinates x+yi for i=sqrt(-1) in the field. Every
+     * element in this group has the property that
+     *    x^2 + y^2 = 1 (mod q)
+     * ...in other words, these elements are primitive roots.
      */
     if(bytes.count() > BytesPerElement())
       qFatal("String is too long");
 
-    const int bytes_per = BytesPerCoordinate();
+    const int bytes_per = BytesPerElement();
     QByteArray left = bytes.left(bytes_per);
     QByteArray right = bytes.mid(bytes_per);
 
     const QByteArray pad(1, 0xff);
-    Integer x(pad+left+pad);
-    Integer y = 0;
+    unsigned char qr_pad = '\0';
+    Integer x, y;
+    const CryptoPP::Integer f = CppIntegerData::GetInteger(_field);
 
-    Q_ASSERT(x < _field);
-    Q_ASSERT(y < _field);
+    // We flip bits in qr_pad until (x,y) satisfies
+    // the equation:
+    //   x^2 + y^2 == 1 mod q
+    while(true) {
+      x = Integer(pad+left+QByteArray(1, qr_pad)+pad);
+      // we want x^2 + y^2 == 1
 
-    qDebug() << "x" << x.GetByteArray().toHex();
-    qDebug() << "y" << y.GetByteArray().toHex();
+      // t = x^2
+      Integer t = x.Pow(2, _field);
+      
+      // t = 1 - x^2
+      t = (1 + t.ModInverse(_field)) % _field;
+
+      // check if t is a QR 
+      CryptoPP::Integer i = CppIntegerData::GetInteger(t);
+      bool is_qr = (1 == CryptoPP::Jacobi(i, f));
+
+      if(is_qr) {
+        CryptoPP::Integer root = ModularSquareRoot(i, f);
+        y = Integer(new CppIntegerData(root));
+        break;
+      }
+
+      if(qr_pad == 255)
+        qFatal("Failed to encode element");
+
+      qr_pad++;
+    }
 
     Element e;
 
@@ -178,9 +213,8 @@ namespace AbstractGroup {
     }
 
     // Remove leading and trailing pads
-    xbytes = xbytes.left(xc-1).mid(1);
+    xbytes = xbytes.left(xc-2).mid(1);
 
-    qDebug() << "out" << xbytes.toHex();
     bytes = xbytes;
     return true;
   }
@@ -195,8 +229,6 @@ namespace AbstractGroup {
     QByteArray bytes(maxlen, 0);
     // bytes now holds base-10 pair [x, y]
     int ret = e.dump(bytes.data(), bytes.count());
-
-    qDebug() << "bytes" << bytes;
 
     if(ret >= maxlen) {
       qFatal("Failed to print an oversized element");
@@ -223,9 +255,6 @@ namespace AbstractGroup {
     if((ret = gmp_snprintf(hex_y.data(), hex_y.count(), "%Zx", y)) >= maxlen) 
       qFatal("Could not convert y to hex");
     hex_y = hex_y.left(ret);
-
-    qDebug() << "hx" << hex_x;
-    qDebug() << "hy" << hex_y;
 
     x_out = Integer(QByteArray::fromHex("0x"+hex_x));
     y_out = Integer(QByteArray::fromHex("0x"+hex_y));

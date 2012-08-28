@@ -48,7 +48,7 @@ namespace BlogDrop {
       const QSharedPointer<const PrivateKey> client_priv) 
   {
     for(int i=0; i<GetNElements(); i++) { 
-      Element base = GetPairedBase(_server_pks, phase, i); 
+      Element base = GetPairedBase(_cache, _server_pks, phase, i); 
       _elements.append(_params->GetMessageGroup()->Exponentiate(base, client_priv->GetInteger())); 
     }
   }
@@ -79,7 +79,7 @@ namespace BlogDrop {
     QList<Element> gs;
     QList<Element> ys;
 
-    InitializeLists(phase, 
+    InitializeLists(_cache, phase, 
         QSharedPointer<const PublicKey>(new PublicKey(client_priv)), 
         gs, 
         ys);
@@ -131,7 +131,7 @@ namespace BlogDrop {
     QList<Element> gs;
     QList<Element> ys;
 
-    InitializeLists(phase, 
+    InitializeLists(_cache, phase, 
         QSharedPointer<const PublicKey>(new PublicKey(client_priv)), 
         gs, 
         ys);
@@ -195,7 +195,8 @@ namespace BlogDrop {
     QList<Element> gs;
     QList<Element> ys;
 
-    InitializeLists(phase, client_pub, gs, ys);
+    QHash<int, Element> cache;
+    InitializeLists(cache, phase, client_pub, gs, ys);
 
     // t_auth = (y_auth)^c1 * (g_auth)^{r_auth}
     // t(1) = y1^c2 * g1^r2
@@ -241,7 +242,8 @@ namespace BlogDrop {
     return out;
   }
   
-  void PairingClientCiphertext::InitializeLists(int phase, 
+  void PairingClientCiphertext::InitializeLists(
+      QHash<int, Element> &cache, int phase, 
       QSharedPointer<const PublicKey> client_pub,
       QList<Element> &gs, 
       QList<Element> &ys) const
@@ -260,7 +262,7 @@ namespace BlogDrop {
     gs.append(g_key);
     gs.append(g_key);
     for(int i=0; i<GetNElements(); i++) { 
-      gs.append(GetPairedBase(_server_pks, phase, i));
+      gs.append(GetPairedBase(cache, _server_pks, phase, i));
     }
 
     // y_auth = author PK
@@ -306,9 +308,12 @@ namespace BlogDrop {
   }
 
   Crypto::AbstractGroup::Element PairingClientCiphertext::GetPairedBase(
+      QHash<int, Element> &cache,
       const QSharedPointer<const PublicKeySet> server_pks, 
       int phase, int element_idx) const
   {
+    if(cache.contains(element_idx)) return cache[element_idx];
+
     // e(server_pks, tau)
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     hash->Restart();
@@ -323,7 +328,7 @@ namespace BlogDrop {
         _params->GetKeyGroup()->GetGenerator(), exp);
 
     Element base = _params->ApplyPairing(server_pks->GetElement(), tau);
-
+    cache[element_idx] = base;
     return base;
   }
 

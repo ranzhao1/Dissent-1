@@ -43,7 +43,7 @@ namespace BlogDrop {
   {
     QSharedPointer<const AbstractGroup> g1 = PairingG1Group::ProductionFixed();
     QSharedPointer<const AbstractGroup> gT = PairingGTGroup::ProductionFixed();
-    return QSharedPointer<Parameters>(new Parameters(round_nonce, g1, gT, 8));
+    return QSharedPointer<Parameters>(new Parameters(round_nonce, g1, gT, 4));
   }
 
   QSharedPointer<Parameters> Parameters::Empty() 

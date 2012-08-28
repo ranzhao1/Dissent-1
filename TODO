@@ -3,8 +3,6 @@ BlogDrop (23 August 2012)
 - Implement Bryan's proof
 - Implement Bryan's scheme
 - Use QThreadPool in BlogDropRound to avoid disconnect problems
-- Fix encoding of bytes:
-    x^2 + y^2 = 1?
 
 -----------------
 
