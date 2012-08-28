@@ -344,6 +344,16 @@ namespace Crypto {
         int size = _integer.MinEncodedSize();
         QByteArray byte_array(size, 0);
         _integer.Encode(reinterpret_cast<byte *>(byte_array.data()), size);
+
+        /*
+        Q_ASSERT(byte_array.count());
+        while((byte_array.count() > 1) && byte_array[0] == '\0') {
+          byte_array = byte_array.mid(1);
+          qDebug() << byte_array.toHex();
+        }
+        Q_ASSERT(byte_array.count());
+        */
+
         SetByteArray(byte_array);
       }
 

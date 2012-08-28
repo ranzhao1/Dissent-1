@@ -161,7 +161,9 @@ namespace BlogDrop {
 
     // r_auth = v_auth
     _response_1 = v_auth;
-    _response_2 = (v - (_challenge_2 * client_priv->GetInteger()) % q);
+
+    // r_2 = v - (c2 * x2)
+    _response_2 = (v - (_challenge_2 * client_priv->GetInteger())) % q;
   }
 
   bool PairingClientCiphertext::VerifyProof(int phase,
@@ -196,8 +198,8 @@ namespace BlogDrop {
     InitializeLists(phase, client_pub, gs, ys);
 
     // t_auth = (y_auth)^c1 * (g_auth)^{r_auth}
-    // t(1) = y1^c2 * g1^r1
-    // t(i) = yi^c2 * gi^r1
+    // t(1) = y1^c2 * g1^r2
+    // t(i) = yi^c2 * gi^r2
     // ...
     QList<Element> ts;
     ts.append(_params->GetKeyGroup()->CascadeExponentiate(ys[0], _challenge_1,
@@ -213,7 +215,11 @@ namespace BlogDrop {
     Integer hash = Commit(_params, gs, ys, ts);
     Integer sum = (_challenge_1 + _challenge_2) % q;
 
-    return (sum == hash);
+    bool ret = (sum == hash);
+
+    if(!ret) qFatal("Failed");
+
+    return ret;
   }
 
   QByteArray PairingClientCiphertext::GetByteArray() const 
@@ -290,6 +296,10 @@ namespace BlogDrop {
       hash->Update(group->ElementToByteArray(gs[i]));
       hash->Update(group->ElementToByteArray(ys[i]));
       hash->Update(group->ElementToByteArray(ts[i]));
+
+      qDebug() << "g" << i << group->ElementToByteArray(gs[i]).toHex();
+      qDebug() << "y" << i << group->ElementToByteArray(ys[i]).toHex();
+      qDebug() << "t" << i << group->ElementToByteArray(ts[i]).toHex();
     }
 
     return Integer(hash->ComputeHash()) % params->GetGroupOrder();
@@ -299,10 +309,6 @@ namespace BlogDrop {
       const QSharedPointer<const PublicKeySet> server_pks, 
       int phase, int element_idx) const
   {
-    static QHash<int, Element> paired_base_cache;
-    if(paired_base_cache.contains(element_idx)) 
-      return paired_base_cache[element_idx];
-
     // e(server_pks, tau)
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     hash->Restart();
@@ -317,7 +323,6 @@ namespace BlogDrop {
         _params->GetKeyGroup()->GetGenerator(), exp);
 
     Element base = _params->ApplyPairing(server_pks->GetElement(), tau);
-    paired_base_cache[element_idx] = base;
 
     return base;
   }

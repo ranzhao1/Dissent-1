@@ -47,6 +47,7 @@ namespace AbstractGroup {
 
   Element PairingGTGroup::Exponentiate(const Element &a, const Integer &exp) const
   { 
+    Q_ASSERT(exp >= 0);
     Zr e_exp(IntegerToZr(exp));
     GT e_a(GetElement(a));
 
@@ -56,6 +57,8 @@ namespace AbstractGroup {
   Element PairingGTGroup::CascadeExponentiate(const Element &a1, const Integer &e1,
       const Element &a2, const Integer &e2) const
   {
+    Q_ASSERT(e1 >= 0);
+    Q_ASSERT(e2 >= 0);
     Zr e_exp1(IntegerToZr(e1));
     GT e_a1(GetElement(a1));
     Zr e_exp2(IntegerToZr(e2));

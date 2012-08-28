@@ -614,6 +614,11 @@ namespace Tests {
     EndToEndOnce(Parameters::Parameters::OpenECProductionFixed(), false);
   }
 
+  TEST(BlogDrop, PairingEndToEnd) 
+  {
+    EndToEndOnce(Parameters::Parameters::PairingProductionFixed(), false);
+  }
+
   void BenchmarkGroup(QSharedPointer<const Parameters> params,
       QSharedPointer<const AbstractGroup> group)
   {
