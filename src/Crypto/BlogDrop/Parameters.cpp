@@ -66,16 +66,6 @@ namespace BlogDrop {
     Q_ASSERT(!_msg_group.isNull());
     Q_ASSERT(key_group->IsProbablyValid());
     Q_ASSERT(msg_group->IsProbablyValid());
-    
-    if(UsesPairing()) {
-      QSharedPointer<const PairingG1Group> g1 = 
-        qSharedPointerCast<const PairingG1Group>(GetKeyGroup());
-      QSharedPointer<const PairingGTGroup> gT = 
-        qSharedPointerCast<const PairingGTGroup>(GetMessageGroup());
-
-      if(g1.isNull() || gT.isNull()) qFatal("Illegal cast");
-      _pairing = QSharedPointer<const PairingWrapper>(new PairingWrapper(g1, gT));
-    }
   }
   
   QByteArray Parameters::GetByteArray() const

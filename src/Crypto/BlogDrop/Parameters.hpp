@@ -5,7 +5,6 @@
 #include <QSharedPointer>
 
 #include "Crypto/AbstractGroup/AbstractGroup.hpp"
-#include "Crypto/AbstractGroup/PairingWrapper.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -20,7 +19,6 @@ namespace BlogDrop {
 
       typedef Dissent::Crypto::AbstractGroup::AbstractGroup AbstractGroup;
       typedef Dissent::Crypto::AbstractGroup::Element Element;
-      typedef Dissent::Crypto::AbstractGroup::PairingWrapper PairingWrapper;
 
       /**
        * Constructor that uses 512-bit integer group (for testing)
@@ -89,7 +87,6 @@ namespace BlogDrop {
 
       QByteArray GetRoundNonce() const { return _round_nonce; }
       virtual int GetNElements() const { return _n_elements; }
-      QSharedPointer<const PairingWrapper> GetPairing() const { return _pairing; }
 
       inline Integer GetGroupOrder() const { 
         // For proofs to work, the two groups must have the same order
@@ -117,11 +114,6 @@ namespace BlogDrop {
        * The group containing the message elements (plaintexts + ciphertexts)
        */
       QSharedPointer<const AbstractGroup> _msg_group;
-
-      /**
-       * Pairing (where applicable) of G1 x G1 --> GT
-       */
-      QSharedPointer<const PairingWrapper> _pairing;
 
       /**
        * Number of ciphertext elements in a single ciphertext

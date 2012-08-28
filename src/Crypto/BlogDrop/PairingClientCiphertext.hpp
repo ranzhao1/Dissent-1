@@ -1,6 +1,9 @@
 #ifndef DISSENT_CRYPTO_BLOGDROP_PAIRING_CLIENT_CIPHERTEXT_H_GUARD
 #define DISSENT_CRYPTO_BLOGDROP_PAIRING_CLIENT_CIPHERTEXT_H_GUARD
 
+#include "Crypto/AbstractGroup/PairingG1Group.hpp"
+#include "Crypto/AbstractGroup/PairingGTGroup.hpp"
+
 #include "ClientCiphertext.hpp"
 
 namespace Dissent {
