@@ -2,6 +2,8 @@ BlogDrop (23 August 2012)
 - Implement Bryan's scheme
 - Implement XOR test comparison scheme
 - Use QThreadPool in BlogDropRound to avoid disconnect problems
+- DecodeBytes() should return QByteArray() if
+  element is the identity element
 
 -----------------
 
