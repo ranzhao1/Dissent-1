@@ -24,6 +24,9 @@ namespace Tests {
     ASSERT_TRUE(group->IsIdentity(group->Exponentiate(g, group->GetOrder())));
     ASSERT_TRUE(group->IsElement(group->Multiply(g, g)));
 
+    ASSERT_TRUE(group->IsGenerator(group->GetGenerator()));
+    ASSERT_FALSE(group->IsGenerator(group->GetIdentity()));
+
     for(int i=0; i<100; i++) {
       Element a = group->RandomElement();
       Element l = group->Exponentiate(group->Inverse(a), Integer(2));

@@ -7,6 +7,9 @@
 #include "AbstractGroup.hpp"
 #include "OpenECElementData.hpp"
 
+#define CHECK_CALL(a) do { qWarning() << "File:" << __FILE__ << "Line:" << __LINE__ << #a; \
+  if(!a) qFatal("Error"); } while(false);
+
 namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
@@ -128,7 +131,7 @@ namespace AbstractGroup {
       inline virtual Element GetGenerator() const 
       { 
         EC_POINT *g = EC_POINT_dup(_generator, _data->group);
-        Q_ASSERT(g);
+        CHECK_CALL(g);
         return NewElement(g);
       }
       
@@ -146,8 +149,8 @@ namespace AbstractGroup {
       inline virtual Element GetIdentity() const
       {
         EC_POINT *i = EC_POINT_new(_data->group);
-        Q_ASSERT(i);
-        Q_ASSERT(EC_POINT_set_to_infinity(_data->group, i));
+        CHECK_CALL(i);
+        CHECK_CALL(EC_POINT_set_to_infinity(_data->group, i));
         return NewElement(i);
       }
 

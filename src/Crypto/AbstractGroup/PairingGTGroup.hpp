@@ -105,6 +105,8 @@ namespace AbstractGroup {
        * Return true if element is a generator
        */
       virtual inline bool IsGenerator(const Element &a) const { 
+        qDebug() << "elm" << IsElement(a);
+        qDebug() << "id" << IsIdentity(a);
         return IsElement(a) && !IsIdentity(a);
       }
 

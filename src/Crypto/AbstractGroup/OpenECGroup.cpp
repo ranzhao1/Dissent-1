@@ -19,11 +19,11 @@ namespace AbstractGroup {
       _generator(EC_POINT_new(_data->group)), 
       _field_bytes(BN_num_bytes(_p)-1)
     {
-      Q_ASSERT(_data->ctx);
-      Q_ASSERT(_data->group);
+      CHECK_CALL(_data->ctx);
+      CHECK_CALL(_data->group);
 
-      Q_ASSERT(BN_zero(_zero));
-      Q_ASSERT(BN_one(_one));
+      CHECK_CALL(BN_zero(_zero));
+      CHECK_CALL(BN_one(_one));
 
       /*
       BN_print_fp(stdout, _p);
@@ -32,20 +32,20 @@ namespace AbstractGroup {
       */
 
       // Prepare montgomery multiplication mod p
-      Q_ASSERT(BN_MONT_CTX_set(_data->mont, _p, _data->ctx));
+      CHECK_CALL(BN_MONT_CTX_set(_data->mont, _p, _data->ctx));
 
       // Initialize group
-      Q_ASSERT(EC_GROUP_set_curve_GFp(_data->group, _p, _a, _b, _data->ctx));
+      CHECK_CALL(EC_GROUP_set_curve_GFp(_data->group, _p, _a, _b, _data->ctx));
 
       // affine coordinates are the "normal" (x,y) pairs
-      Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_data->group, 
+      CHECK_CALL(EC_POINT_set_affine_coordinates_GFp(_data->group, 
             _generator, _gx, _gy, _data->ctx));
 
       // Cofactor of our curves are always 1
-      Q_ASSERT(EC_GROUP_set_generator(_data->group, _generator, _q, _one));
+      CHECK_CALL(EC_GROUP_set_generator(_data->group, _generator, _q, _one));
 
       // Precomupte factors of generator
-      Q_ASSERT(EC_GROUP_precompute_mult(_data->group, _data->ctx));
+      CHECK_CALL(EC_GROUP_precompute_mult(_data->group, _data->ctx));
     };
 
   QSharedPointer<OpenECGroup> OpenECGroup::NewGroup(const Integer &p_in, 
@@ -110,12 +110,12 @@ namespace AbstractGroup {
     BIGNUM *gx = BN_new();
     BIGNUM *gy = BN_new();
 
-    Q_ASSERT(p);
-    Q_ASSERT(q);
-    Q_ASSERT(a);
-    Q_ASSERT(b);
-    Q_ASSERT(gx);
-    Q_ASSERT(gy);
+    CHECK_CALL(p);
+    CHECK_CALL(q);
+    CHECK_CALL(a);
+    CHECK_CALL(b);
+    CHECK_CALL(gx);
+    CHECK_CALL(gy);
 
     BN_hex2bn(&p, str_p);
     BN_hex2bn(&q, str_q);
@@ -124,12 +124,12 @@ namespace AbstractGroup {
     BN_hex2bn(&gx, str_gx);
     BN_hex2bn(&gy, str_gy);
 
-    Q_ASSERT(p);
-    Q_ASSERT(q);
-    Q_ASSERT(a);
-    Q_ASSERT(b);
-    Q_ASSERT(gx);
-    Q_ASSERT(gy);
+    CHECK_CALL(p);
+    CHECK_CALL(q);
+    CHECK_CALL(a);
+    CHECK_CALL(b);
+    CHECK_CALL(gx);
+    CHECK_CALL(gy);
 
     return QSharedPointer<OpenECGroup>(new OpenECGroup(p, q, a, b, gx, gy, true));
   }
@@ -137,10 +137,10 @@ namespace AbstractGroup {
   Element OpenECGroup::Multiply(const Element &a, const Element &b) const
   {
     EC_POINT *r = EC_POINT_new(_data->group);
-    Q_ASSERT(r);
+    CHECK_CALL(r);
 
     // r = a + b
-    Q_ASSERT(EC_POINT_add(_data->group, r, GetPoint(a), GetPoint(b), _data->ctx));
+    CHECK_CALL(EC_POINT_add(_data->group, r, GetPoint(a), GetPoint(b), _data->ctx));
 
     return NewElement(r);
   }
@@ -148,7 +148,7 @@ namespace AbstractGroup {
   Element OpenECGroup::Exponentiate(const Element &a, const Integer &exp) const
   {
     EC_POINT *r = EC_POINT_new(_data->group);
-    Q_ASSERT(r);
+    CHECK_CALL(r);
 
     const EC_POINT *ps[1];
     const BIGNUM *ms[1];
@@ -159,7 +159,7 @@ namespace AbstractGroup {
     ps[0] = GetPoint(a);
     ms[0] = tmp;
 
-    Q_ASSERT(EC_POINTs_mul(_data->group, r, _zero, 1, ps, ms, _data->ctx));
+    CHECK_CALL(EC_POINTs_mul(_data->group, r, _zero, 1, ps, ms, _data->ctx));
 
     BN_clear_free(tmp);
 
@@ -170,7 +170,7 @@ namespace AbstractGroup {
       const Element &a2, const Integer &e2) const
   {
     EC_POINT *r = EC_POINT_new(_data->group);
-    Q_ASSERT(r);
+    CHECK_CALL(r);
 
     const EC_POINT *ps[2];
     const BIGNUM *ms[2];
@@ -186,7 +186,7 @@ namespace AbstractGroup {
     ms[0] = tmp1;
     ms[1] = tmp2;
 
-    Q_ASSERT(EC_POINTs_mul(_data->group, r, _zero, 2, ps, ms, _data->ctx));
+    CHECK_CALL(EC_POINTs_mul(_data->group, r, _zero, 2, ps, ms, _data->ctx));
 
     BN_clear_free(tmp1);
     BN_clear_free(tmp2);
@@ -196,9 +196,9 @@ namespace AbstractGroup {
   Element OpenECGroup::Inverse(const Element &a) const
   {
     EC_POINT *r = EC_POINT_dup(GetPoint(a), _data->group);
-    Q_ASSERT(r);
+    CHECK_CALL(r);
 
-    Q_ASSERT(EC_POINT_invert(_data->group, r, _data->ctx));
+    CHECK_CALL(EC_POINT_invert(_data->group, r, _data->ctx));
     return NewElement(r);
   }
   
@@ -209,7 +209,7 @@ namespace AbstractGroup {
       POINT_CONVERSION_UNCOMPRESSED, NULL, 0, _data->ctx);
     QByteArray out(nbytes, 0);
 
-    Q_ASSERT(EC_POINT_point2oct(_data->group, GetPoint(a),
+    CHECK_CALL(EC_POINT_point2oct(_data->group, GetPoint(a),
       POINT_CONVERSION_UNCOMPRESSED, (unsigned char*)out.data(), out.count(), _data->ctx));
     return out;
   }
@@ -217,7 +217,7 @@ namespace AbstractGroup {
   Element OpenECGroup::ElementFromByteArray(const QByteArray &bytes) const 
   { 
     EC_POINT *point = EC_POINT_new(_data->group);
-    Q_ASSERT(EC_POINT_oct2point(_data->group, point, 
+    CHECK_CALL(EC_POINT_oct2point(_data->group, point, 
           (const unsigned char*)bytes.constData(), bytes.count(), _data->ctx));
     return NewElement(point);
   }
@@ -275,19 +275,19 @@ namespace AbstractGroup {
 
     // r is an encoding of the string in a big integer
     BIGNUM *r = BN_new();
-    Q_ASSERT(BN_hex2bn(&r, (const char*)data.toHex().constData()));
+    CHECK_CALL(BN_hex2bn(&r, (const char*)data.toHex().constData()));
       
-    Q_ASSERT(BN_cmp(r, _p) < 0);
+    CHECK_CALL(BN_cmp(r, _p) < 0);
 
     EC_POINT *point = EC_POINT_new(_data->group);
 
     // Shift r left by one byte and then flip the
     // bits in the last byte until we get a valid point
-    Q_ASSERT(BN_lshift(r, r, 8));
+    CHECK_CALL(BN_lshift(r, r, 8));
     bool success = false;
     for(int i=0; i<(1<<8); i++) {
       // x = rk + i mod p
-      Q_ASSERT(BN_mod_add(r, r, _one, _p, _data->ctx));
+      CHECK_CALL(BN_mod_add(r, r, _one, _p, _data->ctx));
 
       if(EC_POINT_set_compressed_coordinates_GFp(_data->group, point, r, 1, _data->ctx)
           && EC_POINT_is_on_curve(_data->group, point, _data->ctx)) {
@@ -316,10 +316,10 @@ namespace AbstractGroup {
       return false;
 
     // shift off padding byte
-    Q_ASSERT(BN_rshift(x, x, 8));
+    CHECK_CALL(BN_rshift(x, x, 8));
    
     QByteArray data(BN_num_bytes(x), 0);
-    Q_ASSERT(BN_bn2bin(x, (unsigned char*)data.data()));
+    CHECK_CALL(BN_bn2bin(x, (unsigned char*)data.data()));
 
     if(data.count() < 2) {
       qWarning() << "Data is too short";
@@ -354,10 +354,10 @@ namespace AbstractGroup {
     QByteArray b(BN_num_bytes(_b), 0);
     QByteArray gx(BN_num_bytes(_gx), 0);
     
-    Q_ASSERT(BN_bn2bin(_p, (unsigned char*)p.data()));
-    Q_ASSERT(BN_bn2bin(_a, (unsigned char*)a.data()));
-    Q_ASSERT(BN_bn2bin(_b, (unsigned char*)b.data()));
-    Q_ASSERT(BN_bn2bin(_gx, (unsigned char*)gx.data()));
+    CHECK_CALL(BN_bn2bin(_p, (unsigned char*)p.data()));
+    CHECK_CALL(BN_bn2bin(_a, (unsigned char*)a.data()));
+    CHECK_CALL(BN_bn2bin(_b, (unsigned char*)b.data()));
+    CHECK_CALL(BN_bn2bin(_gx, (unsigned char*)gx.data()));
 
     QByteArray out;
     QDataStream stream(&out, QIODevice::WriteOnly);
@@ -371,7 +371,7 @@ namespace AbstractGroup {
   {
     BIGNUM *x = BN_new();
     BIGNUM *y = BN_new();
-    Q_ASSERT(EC_POINT_get_affine_coordinates_GFp(_data->group, GetPoint(a), x, y, _data->ctx));
+    CHECK_CALL(EC_POINT_get_affine_coordinates_GFp(_data->group, GetPoint(a), x, y, _data->ctx));
 
     char *x_char = BN_bn2hex(x);
     char *y_char = BN_bn2hex(y);
@@ -392,11 +392,11 @@ namespace AbstractGroup {
     BIGNUM *tmp1 = BN_new();
 
     // Convert a and b to montgomery rep mod p
-    Q_ASSERT(BN_to_montgomery(tmp0, a, _data->mont, _data->ctx));
-    Q_ASSERT(BN_to_montgomery(tmp1, b, _data->mont, _data->ctx));
+    CHECK_CALL(BN_to_montgomery(tmp0, a, _data->mont, _data->ctx));
+    CHECK_CALL(BN_to_montgomery(tmp1, b, _data->mont, _data->ctx));
 
     // tmp = a*b
-    Q_ASSERT(BN_mod_mul_montgomery(tmp0, tmp0, tmp1, _data->mont, _data->ctx));
+    CHECK_CALL(BN_mod_mul_montgomery(tmp0, tmp0, tmp1, _data->mont, _data->ctx));
 
     int ret = BN_from_montgomery(r, tmp0, _data->mont, _data->ctx);
 
@@ -408,16 +408,16 @@ namespace AbstractGroup {
 
   void OpenECGroup::GetInteger(BIGNUM *ret, const Integer &i) 
   {
-    Q_ASSERT(ret);
+    CHECK_CALL(ret);
     const QByteArray data = i.GetByteArray();
-    Q_ASSERT(BN_bin2bn((const unsigned char*)data.constData(), data.count(), ret));
+    CHECK_CALL(BN_bin2bn((const unsigned char*)data.constData(), data.count(), ret));
   }
   
   Integer OpenECGroup::GetCppInteger(const BIGNUM *a) 
   {
-    Q_ASSERT(a);
+    CHECK_CALL(a);
     QByteArray data(BN_num_bytes(a), 0);
-    Q_ASSERT(BN_bn2bin(a, (unsigned char*)data.data()));
+    CHECK_CALL(BN_bn2bin(a, (unsigned char*)data.data()));
 
     return Integer(data);
   }
@@ -437,7 +437,7 @@ namespace AbstractGroup {
 
     EC_POINT *point = EC_POINT_new(_data->group);
 
-    Q_ASSERT(EC_POINT_set_affine_coordinates_GFp(_data->group, 
+    CHECK_CALL(EC_POINT_set_affine_coordinates_GFp(_data->group, 
           point, x, y, _data->ctx));
 
     BN_clear_free(x);

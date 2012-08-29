@@ -95,7 +95,7 @@ namespace AbstractGroup {
 
   bool CppECGroup::IsElement(const Element &a) const 
   {
-    return _curve.VerifyPoint(GetPoint(a));
+    return IsIdentity(a) || _curve.VerifyPoint(GetPoint(a));
   }
 
   bool CppECGroup::IsIdentity(const Element &a) const 
@@ -257,7 +257,7 @@ namespace AbstractGroup {
       const CryptoPP::Integer y = CryptoPP::ModularSquareRoot(tmp, _curve.FieldSize());
 
       point = Element(new CppECElementData(CryptoPP::ECPPoint(x, y)));
-      Q_ASSERT(IsElement(point));
+      //Q_ASSERT(IsElement(point));
     }
 
     return solved;

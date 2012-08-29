@@ -52,6 +52,24 @@ namespace BlogDrop {
           int phase, 
           int element_idx);
 
+      /**
+       * Get a nonce for this phase and round
+       */
+      static Integer GetPhaseHash(QSharedPointer<const Parameters> params,
+          const QSharedPointer<const PublicKey> author_pk, 
+          int phase, 
+          int element_idx);
+
+      /**
+       * Compute a generator as a function of H(params, ...), save it in
+       * in the cache, and return it
+       */
+      static Element GetHashedGenerator(QSharedPointer<const Parameters> params,
+          QHash<int, Element> &cache,
+          const QSharedPointer<const PublicKey> author_pk, 
+          int phase, 
+          int element_idx);
+
   };
 
 }

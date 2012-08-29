@@ -145,7 +145,7 @@ namespace AbstractGroup {
       Integer t = x.Pow(2, _field);
       
       // t = 1 - x^2
-      t = (1 + t.ModInverse(_field)) % _field;
+      t = (1 - t) % _field;
 
       // check if t is a QR 
       CryptoPP::Integer i = CppIntegerData::GetInteger(t);
@@ -161,6 +161,7 @@ namespace AbstractGroup {
         qFatal("Failed to encode element");
 
       qr_pad++;
+
     }
 
     Element e;
@@ -278,7 +279,7 @@ namespace AbstractGroup {
     GetPBCElementCoordinates(a, x, y);
 
     // true if 1 == x^2 + y^2
-    return (Integer(1) == ((x.Pow(2, _field) + y.Pow(2, _field)) % _field));
+    return (Integer(1) == (((x*x) + (y*y)) % _field));
   }
 
 }
