@@ -42,11 +42,9 @@ namespace BlogDrop {
           const Element &t);
 
       /**
-       * Compute e(prod_pks, Hash(round_id, group)), save it 
-       * in the cache, and return it
+       * Compute e(prod_pks, Hash(round_id, group))
        */
       static Element GetPairedBase(QSharedPointer<const Parameters> params,
-          QHash<int, Element> &cache,
           const QSharedPointer<const PublicKeySet> prod_pks, 
           const QSharedPointer<const PublicKey> author_pk, 
           int phase, 
@@ -61,11 +59,9 @@ namespace BlogDrop {
           int element_idx);
 
       /**
-       * Compute a generator as a function of H(params, ...), save it in
-       * in the cache, and return it
+       * Compute a generator as a function of H(params, ...)
        */
       static Element GetHashedGenerator(QSharedPointer<const Parameters> params,
-          QHash<int, Element> &cache,
           const QSharedPointer<const PublicKey> author_pk, 
           int phase, 
           int element_idx);

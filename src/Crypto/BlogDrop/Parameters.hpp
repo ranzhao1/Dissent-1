@@ -23,7 +23,7 @@ namespace BlogDrop {
       typedef enum {
         ProofType_ElGamal,
         ProofType_Pairing, 
-        ProofType_HashedGenerator, 
+        ProofType_HashingGenerator, 
         ProofType_Invalid
       } ProofType;
 

@@ -41,9 +41,8 @@ namespace BlogDrop {
   void PairingServerCiphertext::SetProof(int phase, const QSharedPointer<const PrivateKey> priv)
   { 
     QList<Element> paired;
-    QHash<int, Element> cache;
     for(int i=0; i<_n_elms; i++) {
-      const Element base = BlogDropUtils::GetPairedBase(_params, cache, _client_pks, GetAuthorKey(), phase, i); 
+      const Element base = BlogDropUtils::GetPairedBase(_params, _client_pks, GetAuthorKey(), phase, i); 
       paired.append(base);
 
       const Element e = _params->GetMessageGroup()->Exponentiate(base, priv->GetInteger()); 
@@ -54,7 +53,7 @@ namespace BlogDrop {
     QList<Element> ys;
     QList<Element> ts;
 
-    InitializeLists(cache, phase, QSharedPointer<PublicKey>(new PublicKey(priv)), gs, ys);
+    InitializeLists(phase, QSharedPointer<PublicKey>(new PublicKey(priv)), gs, ys);
     
     // v in [0,q) 
     Integer v = _params->GetKeyGroup()->RandomExponent();
@@ -103,8 +102,7 @@ namespace BlogDrop {
 
     QList<Element> gs;
     QList<Element> ys;
-    QHash<int, Element> cache;
-    InitializeLists(cache, phase, pub, gs, ys);
+    InitializeLists(phase, pub, gs, ys);
 
     QList<Element> ts;
 
@@ -142,7 +140,7 @@ namespace BlogDrop {
   }
 
   void PairingServerCiphertext::InitializeLists(
-      QHash<int, Element> &cache, int phase, 
+      int phase,
       QSharedPointer<const PublicKey> server_pub,
       QList<Element> &gs, 
       QList<Element> &ys) const
@@ -152,7 +150,7 @@ namespace BlogDrop {
     // ...
     gs.append(_params->GetKeyGroup()->GetGenerator());
     for(int i=0; i<_params->GetNElements(); i++) { 
-      gs.append(BlogDropUtils::GetPairedBase(_params, cache, _client_pks, GetAuthorKey(), phase, i));
+      gs.append(BlogDropUtils::GetPairedBase(_params, _client_pks, GetAuthorKey(), phase, i));
     }
 
     // y(0) = server PK

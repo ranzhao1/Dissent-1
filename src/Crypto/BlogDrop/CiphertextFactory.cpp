@@ -2,6 +2,7 @@
 #include "CiphertextFactory.hpp"
 #include "ElGamalClientCiphertext.hpp"
 #include "ElGamalServerCiphertext.hpp"
+#include "HashingGenClientCiphertext.hpp"
 #include "PairingClientCiphertext.hpp"
 #include "PairingServerCiphertext.hpp"
 
@@ -15,12 +16,24 @@ namespace BlogDrop {
       const QSharedPointer<const PublicKey> author_pub)
   {
     QSharedPointer<ClientCiphertext> c;
-    if(params->UsesPairing()) {
-      c = QSharedPointer<ClientCiphertext>(new PairingClientCiphertext(
-            params, server_pks, author_pub));
-    } else {
-      c = QSharedPointer<ClientCiphertext>(new ElGamalClientCiphertext(
-            params, server_pks, author_pub));
+    switch(params->GetProofType()) {
+      case Parameters::ProofType_ElGamal:
+        c = QSharedPointer<ClientCiphertext>(new ElGamalClientCiphertext(
+              params, server_pks, author_pub));
+        break;
+
+      case Parameters::ProofType_Pairing:
+        c = QSharedPointer<ClientCiphertext>(new PairingClientCiphertext(
+              params, server_pks, author_pub));
+        break;
+
+      case Parameters::ProofType_HashingGenerator:
+        c = QSharedPointer<ClientCiphertext>(new HashingGenClientCiphertext(
+              params, server_pks, author_pub));
+        break;
+
+      default:
+        qFatal("Invalid proof type");
     }
     
     return c;
@@ -33,12 +46,24 @@ namespace BlogDrop {
       const QByteArray &serialized)
   {
     QSharedPointer<ClientCiphertext> c;
-    if(params->UsesPairing()) {
-      c = QSharedPointer<ClientCiphertext>(new PairingClientCiphertext(
-            params, server_pks, author_pub, serialized));
-    } else {
-      c = QSharedPointer<ClientCiphertext>(new ElGamalClientCiphertext(
-            params, server_pks, author_pub, serialized));
+    switch(params->GetProofType()) {
+      case Parameters::ProofType_ElGamal:
+        c = QSharedPointer<ClientCiphertext>(new ElGamalClientCiphertext(
+              params, server_pks, author_pub, serialized));
+        break;
+
+      case Parameters::ProofType_Pairing:
+        c = QSharedPointer<ClientCiphertext>(new PairingClientCiphertext(
+              params, server_pks, author_pub, serialized));
+        break;
+
+      case Parameters::ProofType_HashingGenerator:
+        c = QSharedPointer<ClientCiphertext>(new HashingGenClientCiphertext(
+              params, server_pks, author_pub, serialized));
+        break;
+
+      default:
+        qFatal("Invalid proof type");
     }
     
     return c;

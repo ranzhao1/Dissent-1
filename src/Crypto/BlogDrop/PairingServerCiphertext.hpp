@@ -66,8 +66,7 @@ namespace BlogDrop {
 
     private:
 
-      void InitializeLists(QHash<int, Element> &cache,
-          int phase, QSharedPointer<const PublicKey> client_pub,
+      void InitializeLists(int phase, QSharedPointer<const PublicKey> client_pub,
           QList<Element> &gs, QList<Element> &ys) const;
 
       QSharedPointer<const PublicKeySet> _client_pks;

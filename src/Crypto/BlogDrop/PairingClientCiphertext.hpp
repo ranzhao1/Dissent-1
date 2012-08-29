@@ -4,7 +4,7 @@
 #include "Crypto/AbstractGroup/PairingG1Group.hpp"
 #include "Crypto/AbstractGroup/PairingGTGroup.hpp"
 
-#include "ClientCiphertext.hpp"
+#include "ChangingGenClientCiphertext.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -28,7 +28,7 @@ namespace BlogDrop {
    * A is the client's public key, and Y is 
    * the author public key.
    */
-  class PairingClientCiphertext : public ClientCiphertext {
+  class PairingClientCiphertext : public ChangingGenClientCiphertext {
 
     public:
 
@@ -63,60 +63,11 @@ namespace BlogDrop {
        */
       virtual ~PairingClientCiphertext() {}
 
-      /**
-       * Initialize elements proving correctness of ciphertext
-       * @param phase the message transmission phase/round index
-       * @param client_priv client private key used to generate proof
-       * @param author_priv author private key used to generate proof
-       * @param m author's plaintext message
-       */
-      virtual void SetAuthorProof(int phase, 
-          const QSharedPointer<const PrivateKey> client_priv,
-          const QSharedPointer<const PrivateKey> author_priv, 
-          const Plaintext &m);
-
-      /**
-       * Initialize elements proving correctness of ciphertext
-       * @param phase the message transmission phase/round index
-       * @param client_priv client private key used to generate proof
-       */
-      virtual void SetProof(int phase, const QSharedPointer<const PrivateKey> client_priv);
-
-      /**
-       * Check ciphertext proof
-       * @returns true if proof is okay
-       */
-      virtual bool VerifyProof(int phase, const QSharedPointer<const PublicKey> client_pub) const;
-
-      /**
-       * Get a byte array for this ciphertext
-       */
-      virtual QByteArray GetByteArray() const;
-
-      inline Integer GetChallenge1() const { return _challenge_1; }
-      inline Integer GetChallenge2() const { return _challenge_2; }
-      inline Integer GetResponse1() const { return _response_1; }
-      inline Integer GetResponse2() const { return _response_2; }
-
-    private:
-      Integer Commit(const QSharedPointer<const Parameters> &params,
-          const QList<Element> &gs, 
-          const QList<Element> &ys, 
-          const QList<Element> &ts) const;
-
-      Element GetPairedBase(QHash<int, Element> &cache,
-          const QSharedPointer<const PublicKeySet> server_pks, 
+    protected:
+      virtual Element ComputeGenerator(const QSharedPointer<const PublicKeySet> server_pks, 
+          const QSharedPointer<const PublicKey> author_pk, 
           int phase, int element_idx) const;
-      void InitializeLists(QHash<int, Element> &cache,
-          int phase, QSharedPointer<const PublicKey> client_pub,
-          QList<Element> &gs, QList<Element> &ys) const;
-      void InitCiphertext(int phase, const QSharedPointer<const PrivateKey> priv);
 
-      QHash<int, Element> _cache;
-      Integer _challenge_1;
-      Integer _challenge_2;
-      Integer _response_1;
-      Integer _response_2;
   };
 }
 }

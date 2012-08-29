@@ -11,8 +11,7 @@ namespace Tests {
 
     QSet<QByteArray> set;
     for(int i=0; i<100; i++) {
-      QHash<int, Element> cache;
-      Element e = BlogDropUtils::GetHashedGenerator(params, cache,
+      Element e = BlogDropUtils::GetHashedGenerator(params, 
           author_pub, 0, i);
       EXPECT_TRUE(params->GetMessageGroup()->IsElement(e));
       EXPECT_TRUE(params->GetMessageGroup()->IsGenerator(e));

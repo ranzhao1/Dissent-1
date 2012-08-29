@@ -19,14 +19,14 @@ namespace BlogDrop {
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::TestingFixed();
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_ElGamal, QByteArray(), fixed, fixed, 2));
+        new Parameters(ProofType_HashingGenerator, QByteArray(), fixed, fixed, 2));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerProductionFixed(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::Production2048Fixed();
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 1));
+        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 1));
   }
 
   QSharedPointer<Parameters> Parameters::CppECProductionFixed(QByteArray round_nonce) 

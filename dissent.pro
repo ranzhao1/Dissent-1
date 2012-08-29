@@ -138,10 +138,12 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/BlogDrop/BlogDropClient.hpp \
            src/Crypto/BlogDrop/BlogDropServer.hpp \
            src/Crypto/BlogDrop/BlogDropUtils.hpp \
+           src/Crypto/BlogDrop/ChangingGenClientCiphertext.hpp \
            src/Crypto/BlogDrop/CiphertextFactory.hpp \
            src/Crypto/BlogDrop/ClientCiphertext.hpp \
            src/Crypto/BlogDrop/ElGamalClientCiphertext.hpp \
            src/Crypto/BlogDrop/ElGamalServerCiphertext.hpp \
+           src/Crypto/BlogDrop/HashingGenClientCiphertext.hpp \
            src/Crypto/BlogDrop/PairingClientCiphertext.hpp \
            src/Crypto/BlogDrop/PairingServerCiphertext.hpp \
            src/Crypto/BlogDrop/Parameters.hpp \
@@ -327,10 +329,12 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/BlogDrop/BlogDropClient.cpp \
            src/Crypto/BlogDrop/BlogDropServer.cpp \
            src/Crypto/BlogDrop/BlogDropUtils.cpp \
+           src/Crypto/BlogDrop/ChangingGenClientCiphertext.cpp \
            src/Crypto/BlogDrop/CiphertextFactory.cpp \
            src/Crypto/BlogDrop/ClientCiphertext.cpp \
            src/Crypto/BlogDrop/ElGamalClientCiphertext.cpp \
            src/Crypto/BlogDrop/ElGamalServerCiphertext.cpp \
+           src/Crypto/BlogDrop/HashingGenClientCiphertext.cpp \
            src/Crypto/BlogDrop/PairingClientCiphertext.cpp \
            src/Crypto/BlogDrop/PairingServerCiphertext.cpp \
            src/Crypto/BlogDrop/Parameters.cpp \

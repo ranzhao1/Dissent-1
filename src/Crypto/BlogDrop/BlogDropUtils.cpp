@@ -67,14 +67,12 @@ namespace BlogDrop {
   }
 
   AbstractGroup::Element BlogDropUtils::GetPairedBase(QSharedPointer<const Parameters> params,
-      QHash<int, Element> &cache, 
       const QSharedPointer<const PublicKeySet> prod_pks, 
       const QSharedPointer<const PublicKey> author_pk, 
       int phase, 
       int element_idx) 
   {
     Q_ASSERT(params->UsesPairing());
-    if(cache.contains(element_idx)) return cache[element_idx];
 
     // e(server_pks, tau)
     const Integer exp = GetPhaseHash(params, author_pk, phase, element_idx);
@@ -82,19 +80,15 @@ namespace BlogDrop {
         params->GetKeyGroup()->GetGenerator(), exp);
 
     Element base = params->ApplyPairing(prod_pks->GetElement(), tau);
-    cache[element_idx] = base;
     return base;
   }
 
   AbstractGroup::Element BlogDropUtils::GetHashedGenerator(
       QSharedPointer<const Parameters> params,
-      QHash<int, Element> &cache, 
       const QSharedPointer<const PublicKey> author_pk, 
       int phase, 
       int element_idx) 
   {
-    if(cache.contains(element_idx)) return cache[element_idx];
-
     // g^hash
     const int bytes = params->GetMessageGroup()->BytesPerElement() - 1;
     Integer nonce = GetPhaseHash(params, author_pk, phase, element_idx);
@@ -117,7 +111,6 @@ namespace BlogDrop {
 
     if(i > 250) qFatal("Failed to find generator");
 
-    cache[element_idx] = gen;
     return gen;
   }
 }
