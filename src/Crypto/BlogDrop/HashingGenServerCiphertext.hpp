@@ -1,5 +1,5 @@
-#ifndef DISSENT_CRYPTO_BLOGDROP_PAIRING_SERVER_CIPHERTEXT_H_GUARD
-#define DISSENT_CRYPTO_BLOGDROP_PAIRING_SERVER_CIPHERTEXT_H_GUARD
+#ifndef DISSENT_CRYPTO_BLOGDROP_HASHING_GEN_SERVER_CIPHERTEXT_H_GUARD
+#define DISSENT_CRYPTO_BLOGDROP_HASHING_GEN_SERVER_CIPHERTEXT_H_GUARD
 
 #include "ChangingGenServerCiphertext.hpp"
 
@@ -8,9 +8,11 @@ namespace Crypto {
 namespace BlogDrop {
 
   /**
-   * Object holding Pairing-style BlogDrop server ciphertext
+   * Object holding BlogDrop server ciphertext in which
+   * exponents stay the same but generator changes with
+   * every element (see notes in HashingGenClientCiphertext)
    */
-  class PairingServerCiphertext : public ChangingGenServerCiphertext {
+  class HashingGenServerCiphertext : public ChangingGenServerCiphertext {
 
     public:
 
@@ -20,7 +22,7 @@ namespace BlogDrop {
        * @param author_pub Author public key
        * @param client_pks Client public keys for ciphertexts
        */
-      PairingServerCiphertext(const QSharedPointer<const Parameters> params, 
+      HashingGenServerCiphertext(const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKey> author_pub,
           const QSharedPointer<const PublicKeySet> client_pks);
 
@@ -31,7 +33,7 @@ namespace BlogDrop {
        * @param client_pks Client public keys
        * @param serialized serialized byte array
        */
-      PairingServerCiphertext(const QSharedPointer<const Parameters> params, 
+      HashingGenServerCiphertext(const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKey> author_pub,
           const QSharedPointer<const PublicKeySet> client_pks,
           const QByteArray &serialized);
@@ -39,7 +41,7 @@ namespace BlogDrop {
       /**
        * Destructor
        */
-      virtual ~PairingServerCiphertext() {}
+      virtual ~HashingGenServerCiphertext() {}
 
     protected:
 

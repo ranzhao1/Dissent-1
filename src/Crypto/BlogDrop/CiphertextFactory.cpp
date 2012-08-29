@@ -3,6 +3,7 @@
 #include "ElGamalClientCiphertext.hpp"
 #include "ElGamalServerCiphertext.hpp"
 #include "HashingGenClientCiphertext.hpp"
+#include "HashingGenServerCiphertext.hpp"
 #include "PairingClientCiphertext.hpp"
 #include "PairingServerCiphertext.hpp"
 
@@ -76,9 +77,10 @@ namespace BlogDrop {
       const QList<QSharedPointer<const ClientCiphertext> > &client_ctexts)
   {
     QSharedPointer<ServerCiphertext> s;
-    if(params->UsesPairing()) {
-      s = QSharedPointer<ServerCiphertext>(new PairingServerCiphertext(params, author_pub, client_pks));
-    } else {
+    Parameters::ProofType t = params->GetProofType();
+
+    if(t == Parameters::ProofType_ElGamal) {
+
       // keys[client][element] = key
       QList<QList<QSharedPointer<const PublicKey> > > keys;
       const ElGamalClientCiphertext *eg;
@@ -89,8 +91,21 @@ namespace BlogDrop {
       }
 
       // _client_pks[element] = PublicKeySet for element
-      QList<QSharedPointer<const PublicKeySet> > client_pks = PublicKeySet::CreateClientKeySets(params, keys);
-      s = QSharedPointer<ServerCiphertext>(new ElGamalServerCiphertext(params, author_pub, client_pks));
+      QList<QSharedPointer<const PublicKeySet> > client_pks = 
+        PublicKeySet::CreateClientKeySets(params, keys);
+      s = QSharedPointer<ServerCiphertext>(
+          new ElGamalServerCiphertext(params, author_pub, client_pks));
+
+    } else if(t == Parameters::ProofType_Pairing) {
+      s = QSharedPointer<ServerCiphertext>(
+          new PairingServerCiphertext(params, author_pub, client_pks));
+
+    } else if(t == Parameters::ProofType_HashingGenerator) {
+      s = QSharedPointer<ServerCiphertext>(
+          new HashingGenServerCiphertext(params, author_pub, client_pks));
+
+    } else {
+      qFatal("Invalid proof type");
     }
 
     return s;
@@ -104,20 +119,35 @@ namespace BlogDrop {
       const QByteArray &serialized)
   {
     QSharedPointer<ServerCiphertext> s;
-    if(params->UsesPairing()) {
-      s = QSharedPointer<ServerCiphertext>(new PairingServerCiphertext(params, author_pub, client_pks, serialized));
-    } else { 
+    Parameters::ProofType t = params->GetProofType();
+
+    if(t == Parameters::ProofType_ElGamal) {
+
       // keys[client][element] = key
       QList<QList<QSharedPointer<const PublicKey> > > keys;
       const ElGamalClientCiphertext *eg;
       for(int client_idx=0; client_idx<client_ctexts.count(); client_idx++) {
         eg = dynamic_cast<const ElGamalClientCiphertext*>(client_ctexts[client_idx].data());
+
         keys.append(eg->GetOneTimeKeys());
       }
 
       // _client_pks[element] = PublicKeySet for element
-      QList<QSharedPointer<const PublicKeySet> > client_pks = PublicKeySet::CreateClientKeySets(params, keys);
-      s = QSharedPointer<ServerCiphertext>(new ElGamalServerCiphertext(params, author_pub, client_pks, serialized));
+      QList<QSharedPointer<const PublicKeySet> > client_pks = 
+        PublicKeySet::CreateClientKeySets(params, keys);
+      s = QSharedPointer<ServerCiphertext>(
+          new ElGamalServerCiphertext(params, author_pub, client_pks, serialized));
+
+    } else if(t == Parameters::ProofType_Pairing) {
+      s = QSharedPointer<ServerCiphertext>(
+          new PairingServerCiphertext(params, author_pub, client_pks, serialized));
+
+    } else if(t == Parameters::ProofType_HashingGenerator) {
+      s = QSharedPointer<ServerCiphertext>(
+          new HashingGenServerCiphertext(params, author_pub, client_pks, serialized));
+
+    } else {
+      qFatal("Invalid proof type");
     }
     
     return s;

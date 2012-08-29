@@ -57,6 +57,7 @@ namespace BlogDrop {
 
       virtual inline QList<Element> GetElements() const { return _elements; }
       virtual inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; }
+      virtual inline QSharedPointer<const Parameters> GetParameters() const { return _params; }
 
     protected:
 
