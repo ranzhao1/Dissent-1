@@ -112,6 +112,61 @@ namespace AbstractGroup {
   {
     return false;
   }
+
+  bool PairingG1Group::IsElement(const Element &a) const
+  {
+    if(IsIdentity(a)) return true;
+
+    // True when y^2 == x^3 + x
+    Integer x, y;
+    GetPBCElementCoordinates(a, x, y);
+
+    return (y.Pow(2, _field) == ((x.Pow(3, _field) + x) % _field));
+  }
+
+  void PairingG1Group::GetPBCElementCoordinates(const Element &a, 
+      Integer &x_out, Integer &y_out) const
+  {
+    // Maxlen = 32 kb
+    const int maxlen = 1024*32;
+    G1 e(GetElement(a));
+
+    QByteArray bytes(maxlen, 0);
+    // bytes now holds base-10 pair [x, y]
+    int ret = e.dump(bytes.data(), bytes.count());
+
+    if(ret >= maxlen) {
+      qFatal("Failed to print an oversized element");
+    }
+
+    mpz_t x;
+    mpz_t y;
+
+    mpz_init(x);
+    mpz_init(y);
+
+    // Read base-10 digits into integers x, y
+    if(gmp_sscanf(bytes.data(), "[%Zd, %Zd]", x, y) != 2) 
+      qFatal("Could not read integers");
+
+    QByteArray hex_x(maxlen, 0);
+    QByteArray hex_y(maxlen, 0);
+
+    // write the integers out in hex
+    if((ret = gmp_snprintf(hex_x.data(), hex_x.count(), "%Zx", x)) >= maxlen) 
+      qFatal("Could not convert x to hex");
+    hex_x = hex_x.left(ret);
+
+    if((ret = gmp_snprintf(hex_y.data(), hex_y.count(), "%Zx", y)) >= maxlen) 
+      qFatal("Could not convert y to hex");
+    hex_y = hex_y.left(ret);
+
+    x_out = Integer(QByteArray::fromHex("0x"+hex_x));
+    y_out = Integer(QByteArray::fromHex("0x"+hex_y));
+
+    mpz_clear(x);
+    mpz_clear(y);
+  }
 }
 }
 }

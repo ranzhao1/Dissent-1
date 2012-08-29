@@ -68,10 +68,7 @@ namespace AbstractGroup {
        * Return true if a is an element of the group 
        * @param a element to test
        */
-      virtual bool IsElement(const Element &) const { 
-        // PBC does not support this operation
-        return true; 
-      }
+      virtual bool IsElement(const Element &) const = 0;
 
       /**
        * Return true if a == 1 (identity)

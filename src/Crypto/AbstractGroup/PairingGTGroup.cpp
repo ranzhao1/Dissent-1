@@ -272,6 +272,15 @@ namespace AbstractGroup {
     return Element(new PairingElementData<GT>(gt));
   }
 
+  bool PairingGTGroup::IsElement(const Element &a) const
+  {
+    Integer x, y;
+    GetPBCElementCoordinates(a, x, y);
+
+    // true if 1 == x^2 + y^2
+    return (Integer(1) == ((x.Pow(2, _field) + y.Pow(2, _field)) % _field));
+  }
+
 }
 }
 }

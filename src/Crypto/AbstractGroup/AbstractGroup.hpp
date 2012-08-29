@@ -157,6 +157,11 @@ namespace AbstractGroup {
        */
       virtual QByteArray GetByteArray() const = 0;
 
+      /**
+       * Return true if element is a generator
+       */
+      virtual bool IsGenerator(const Element &a) const = 0;
+
     private:
 
   };

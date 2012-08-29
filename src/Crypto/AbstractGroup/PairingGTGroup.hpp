@@ -101,6 +101,18 @@ namespace AbstractGroup {
 
       virtual Element ApplyPairing(const Element &a, const Element &b) const;
 
+      /**
+       * Return true if element is a generator
+       */
+      virtual inline bool IsGenerator(const Element &a) const { 
+        return IsElement(a) && !IsIdentity(a);
+      }
+
+      /**
+       * Return true if is element of group
+       */
+      virtual bool IsElement(const Element &a) const;
+
     private:
 
       // Private Constructor

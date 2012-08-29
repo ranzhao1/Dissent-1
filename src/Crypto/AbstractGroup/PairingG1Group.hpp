@@ -10,6 +10,13 @@ namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
 
+  /**
+   * PairingG1Group is the group of elliptic curve points
+   * on the curve:
+   *    y^2 = x^3 + x  (mod p)
+   * for p = 3 mod 4.
+   * This is a Stanford PBC type-A curve.
+   */
   class PairingG1Group : public PairingGroup {
 
     public:
@@ -98,6 +105,18 @@ namespace AbstractGroup {
        */
       virtual bool DecodeBytes(const Element &a, QByteArray &out) const;
 
+      /**
+       * Return true if is element of group -- unsupported
+       */
+      virtual bool IsElement(const Element &) const;
+
+      /**
+       * Return true if is element of group -- unsupported
+       */
+      virtual inline bool IsGenerator(const Element &a) const { 
+        return IsElement(a) && !IsIdentity(a); 
+      }
+
     private:
 
       // Private Constructor
@@ -107,6 +126,7 @@ namespace AbstractGroup {
       {
         return G1(PairingElementData<G1>::GetElement(a.GetData())); 
       }
+      void GetPBCElementCoordinates(const Element &a, Integer &x, Integer &y) const;
  
   };
 

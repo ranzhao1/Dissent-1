@@ -21,7 +21,7 @@ namespace AbstractGroup {
     Q_ASSERT(_q>0);
     Q_ASSERT(_g>0);
 
-    if(_g.Pow((_p-1)/2, _g) == 1)
+    if(_g.Pow(2, _p) == 1)
       qFatal("g does not generate G*_p");
   }
 
@@ -211,6 +211,14 @@ namespace AbstractGroup {
 
     return out;
   }
+
+  bool IntegerGroup::IsGenerator(const Element &a) const 
+  {
+    return IsElement(a) 
+      && ((Exponentiate(a, GetOrder()) == GetIdentity()))
+      && (!(Exponentiate(a, Integer(2)) == GetIdentity()));
+  }
+
 
 }
 }

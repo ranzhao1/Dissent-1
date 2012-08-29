@@ -172,6 +172,17 @@ namespace AbstractGroup {
        */
       inline Integer GetFieldSize() const { return FromCryptoInt(_curve.FieldSize()); }
 
+      /**
+       * Return true if element is a generator
+       */
+      virtual inline bool IsGenerator(const Element &a) const { 
+        return IsElement(a) && !IsIdentity(a); 
+      }
+
+    protected:
+
+      inline virtual Integer GetSmallSubgroupOrder() { return Integer(2); }
+
     private:
 
       CryptoPP::ECPPoint GetPoint(const Element &e) const;

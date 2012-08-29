@@ -210,6 +210,13 @@ namespace AbstractGroup {
        */
       Element ElementFromCoordinates(const Integer &x, const Integer &y) const;
 
+      /**
+       * Return true if element is a generator
+       */
+      virtual inline bool IsGenerator(const Element &a) const { 
+        return IsElement(a) && !IsIdentity(a);
+      }
+
     private:
 
       inline Element NewElement(EC_POINT *e) const 

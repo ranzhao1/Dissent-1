@@ -189,6 +189,11 @@ namespace AbstractGroup {
        */
       virtual QByteArray GetByteArray() const;
 
+      /**
+       * Return true if element is a generator
+       */
+      virtual bool IsGenerator(const Element &a) const;
+
     private:
 
       IntegerGroup(const char *p_bytes, const char *q_bytes);
