@@ -4,6 +4,18 @@
 namespace Dissent {
 namespace Benchmarks {
 
+  typedef struct {
+    // proof type
+    // group type
+    // nelms
+    // plaintext bytes per elm
+    // ciphertext len
+    int len;
+    // time verify 1000
+    double time;
+
+  } verify1000_stats;
+
   void ComputeSecrets(QSharedPointer<const Parameters> params, 
       const QList<QSharedPointer<const PrivateKey> > &client_sks_in,
       const QList<QSharedPointer<const PrivateKey> > &server_sks_in,
@@ -48,7 +60,7 @@ namespace Benchmarks {
 
   // Verify 1000 proofs
   // Print ciphertext size
-  void Verify1000Times(QSharedPointer<const Parameters> params)
+  void Verify1000Times(QSharedPointer<const Parameters> params, verify1000_stats *s)
   {
     const int nservers = 10;
     const int nclients = 1000;
@@ -115,19 +127,36 @@ namespace Benchmarks {
     const qint64 end = QDateTime::currentMSecsSinceEpoch();
 
     double diff = end-start;
-    qDebug() 
-      << params->ToString() 
-      << "| c_bytes: " << c.count() 
-      << QString("| time: %1").arg(diff/1000.0);
+    s->time = diff/1000.0;
+    s->len = c.count();
   }
 
   // Given parameters, change message lengths
   void Verify1000TimesDiffLen(QSharedPointer<Parameters> params)
   {
-    for(int nelms=1; nelms<8; nelms++) {  
+    verify1000_stats s;
+    
+    for(int nelms=1; Plaintext::CanFit(params)<1024*8; nelms++) {  
       params->SetNElements(nelms);
-      Verify1000Times(params);
+      Verify1000Times(params, &s);
+
+      qDebug() 
+        << Parameters::ProofTypeToString(params->GetProofType()) << ","
+        << params->GetKeyGroup()->GetSecurityParameter() << ","
+        << params->GetKeyGroup()->ToString() << "," 
+        << params->GetNElements() << ","
+        << Plaintext::CanFit(params) << ","
+        << s.len << ","
+        << s.time << ",";
     }
+
+    // proof type
+    // nbits
+    // group type
+    // nelms
+    // plaintext bytes 
+    // ciphertext len
+    // time verify 1000
   }
 
   // Cycle through proof types
@@ -166,6 +195,7 @@ namespace Benchmarks {
 
   // Cycle through integer types
   TEST(Micro, Length) {
+    qDebug() << "proof type, nbits, group type, nelms, plaintext bytes, ciphertext len, time verify 1000";
     Verify1000TimesDiffLenLibrary(false);
     Verify1000TimesDiffLenLibrary(true);
 

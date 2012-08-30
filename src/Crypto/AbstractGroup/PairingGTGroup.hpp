@@ -120,8 +120,7 @@ namespace AbstractGroup {
        */
       virtual inline QString ToString() const 
       {
-        return QString("PairingGTGroup: pbits=%1").arg(
-            _field.GetByteArray().count() * 8);
+        return QString("PairingGTGroup");
       }
 
     private:

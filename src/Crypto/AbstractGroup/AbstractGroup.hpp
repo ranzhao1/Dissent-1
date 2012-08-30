@@ -169,6 +169,11 @@ namespace AbstractGroup {
        */
       virtual QString ToString() const = 0;
 
+      /**
+       * Generally, the number of bits in the modulus
+       */ 
+      virtual int GetSecurityParameter() const = 0;
+
     private:
 
   };

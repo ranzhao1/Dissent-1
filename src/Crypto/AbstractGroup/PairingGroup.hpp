@@ -158,6 +158,13 @@ namespace AbstractGroup {
         return _param_str;
       }
 
+      /**
+       * Generally, the number of bits in the modulus
+       */ 
+      inline int GetSecurityParameter() const {
+        return (_field.GetByteArray().count() * 8);
+      }
+
     protected:
       // Protected constructor
       PairingGroup();

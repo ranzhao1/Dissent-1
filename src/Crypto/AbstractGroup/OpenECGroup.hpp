@@ -222,9 +222,15 @@ namespace AbstractGroup {
        */
       virtual inline QString ToString() const 
       {
-        return QString("OpenECGroup: pbits=%1").arg(_field_bytes*8);
+        return QString("OpenECGroup");
       }
 
+      /**
+       * Generally, the number of bits in the modulus
+       */ 
+      inline int GetSecurityParameter() const {
+        return (BN_num_bytes(_p) * 8);
+      }
 
     private:
 

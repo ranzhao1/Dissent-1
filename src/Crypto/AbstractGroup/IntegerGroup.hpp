@@ -199,9 +199,14 @@ namespace AbstractGroup {
        */
       virtual inline QString ToString() const 
       {
-        return QString("IntegerGroup: pbits=%1,qbits=%2").arg(
-            _p.GetByteArray().count() * 8,
-            _q.GetByteArray().count() * 8);
+        return QString("IntegerGroup");
+      }
+
+      /**
+       * Generally, the number of bits in the modulus
+       */ 
+      inline int GetSecurityParameter() const {
+        return (_p.GetByteArray().count() * 8);
       }
 
     private:

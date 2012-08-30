@@ -184,9 +184,15 @@ namespace AbstractGroup {
        */
       virtual inline QString ToString() const 
       {
-        return QString("CppECGroup: pbits=%1").arg(_field_bytes*8);
+        return QString("CppECGroup");
       }
 
+      /**
+       * Generally, the number of bits in the modulus
+       */ 
+      inline int GetSecurityParameter() const {
+        return (_field_bytes * 8);
+      }
 
     protected:
 
