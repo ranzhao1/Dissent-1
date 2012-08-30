@@ -97,8 +97,8 @@ namespace Tests {
     QSharedPointer<ElGamalClientCiphertext> egc;
     if((egc = qSharedPointerDynamicCast<ElGamalClientCiphertext>(c)) && !egc.isNull()) {
       const Integer q = params->GetGroupOrder();
-      ASSERT_TRUE(egc->GetChallenge1() > 0 || egc->GetChallenge1() < q);
-      ASSERT_TRUE(egc->GetChallenge2() > 0 || egc->GetChallenge2() < q);
+      ASSERT_TRUE(egc->GetChallenge1() > 0 && egc->GetChallenge1() < q);
+      ASSERT_TRUE(egc->GetChallenge2() > 0 && egc->GetChallenge2() < q);
 
       ASSERT_EQ(params->GetNElements()+1, egc->GetResponses().count());
       foreach(const Integer &i, egc->GetResponses()) {
@@ -191,8 +191,8 @@ namespace Tests {
     QSharedPointer<ElGamalClientCiphertext> egc;
     if((egc = qSharedPointerDynamicCast<ElGamalClientCiphertext>(c)) && !egc.isNull()) {
       const Integer q = params->GetGroupOrder();
-      ASSERT_TRUE(egc->GetChallenge1() > 0 || egc->GetChallenge1() < q);
-      ASSERT_TRUE(egc->GetChallenge2() > 0 || egc->GetChallenge2() < q);
+      ASSERT_TRUE(egc->GetChallenge1() > 0 && egc->GetChallenge1() < q);
+      ASSERT_TRUE(egc->GetChallenge2() > 0 && egc->GetChallenge2() < q);
 
       ASSERT_EQ(params->GetNElements()+1, egc->GetResponses().count());
       foreach(const Integer &i, egc->GetResponses()) {

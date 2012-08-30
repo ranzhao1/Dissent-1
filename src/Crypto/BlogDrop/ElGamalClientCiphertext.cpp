@@ -314,6 +314,10 @@ namespace BlogDrop {
       hash->Update(group->ElementToByteArray(ys[i]));
       hash->Update(group->ElementToByteArray(ts[i]));
     }
+    Integer a = Integer(hash->ComputeHash());
+    Q_ASSERT(a.GetByteArray().count());
+    Integer b = a % params->GetGroupOrder();
+    Q_ASSERT(b.GetByteArray().count());
 
     return Integer(hash->ComputeHash()) % params->GetGroupOrder();
   }

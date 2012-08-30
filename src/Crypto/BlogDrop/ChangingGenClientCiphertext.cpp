@@ -35,9 +35,13 @@ namespace BlogDrop {
 
     int list_idx = 0;
     _challenge_1 = Integer(list[list_idx++]);
+    Q_ASSERT(_challenge_1 > 0);
     _challenge_2 = Integer(list[list_idx++]); 
+    Q_ASSERT(_challenge_2 > 0);
     _response_1 = Integer(list[list_idx++]); 
+    Q_ASSERT(_response_1 > 0);
     _response_2 = Integer(list[list_idx++]); 
+    Q_ASSERT(_response_2 > 0);
 
     for(int j=0; j<GetNElements(); j++) { 
       _elements.append(_params->GetMessageGroup()->ElementFromByteArray(list[list_idx++]));

@@ -230,6 +230,13 @@ namespace Tests {
     for(int i=0; i<10; i++) {
       Integer p = Integer::GetRandomInteger(1024, true);
       Integer a = Integer::GetRandomInteger(0, p);
+
+      Integer na = a * Integer(-1);
+      ASSERT_EQ(na, a - (2*a));
+
+      ASSERT_EQ((a-p)%p, a);
+      ASSERT_EQ((a-(40*p))%p, a);
+
       Integer inv = a.ModInverse(p);
       Integer out = (a*inv)%p;
 
