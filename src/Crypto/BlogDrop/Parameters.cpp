@@ -15,32 +15,60 @@ namespace Dissent {
 namespace Crypto {
 namespace BlogDrop {
 
-  QSharedPointer<Parameters> Parameters::IntegerTestingFixed() 
+  QSharedPointer<Parameters> Parameters::IntegerElGamalTestingFixed() 
+  {
+    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::TestingFixed();
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_ElGamal, QByteArray(), fixed, fixed, 2));
+  }
+
+  QSharedPointer<Parameters> Parameters::IntegerElGamalProductionFixed(QByteArray round_nonce) 
+  {
+    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::Production2048Fixed();
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 1));
+  }
+
+  QSharedPointer<Parameters> Parameters::IntegerHashingTestingFixed() 
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::TestingFixed();
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_HashingGenerator, QByteArray(), fixed, fixed, 2));
   }
 
-  QSharedPointer<Parameters> Parameters::IntegerProductionFixed(QByteArray round_nonce) 
+  QSharedPointer<Parameters> Parameters::IntegerHashingProductionFixed(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::Production2048Fixed();
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 1));
   }
 
-  QSharedPointer<Parameters> Parameters::CppECProductionFixed(QByteArray round_nonce) 
+  QSharedPointer<Parameters> Parameters::CppECElGamalProductionFixed(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = CppECGroup::ProductionFixed();
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
   }
 
-  QSharedPointer<Parameters> Parameters::OpenECProductionFixed(QByteArray round_nonce) 
+  QSharedPointer<Parameters> Parameters::CppECHashingProductionFixed(QByteArray round_nonce) 
+  {
+    QSharedPointer<const AbstractGroup> fixed = CppECGroup::ProductionFixed();
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
+  }
+
+  QSharedPointer<Parameters> Parameters::OpenECElGamalProductionFixed(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = OpenECGroup::ProductionFixed();
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
+  }
+
+  QSharedPointer<Parameters> Parameters::OpenECHashingProductionFixed(QByteArray round_nonce) 
+  {
+    QSharedPointer<const AbstractGroup> fixed = OpenECGroup::ProductionFixed();
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
   }
 
   QSharedPointer<Parameters> Parameters::PairingProductionFixed(QByteArray round_nonce) 

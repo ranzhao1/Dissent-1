@@ -21,6 +21,11 @@ namespace BlogDrop {
       PrivateKey(const QSharedPointer<const Parameters> params);
 
       /**
+       * Constructor: Initialize a private key from an integer
+       */
+      PrivateKey(const QSharedPointer<const Parameters> params, const Integer key);
+
+      /**
        * Destructor
        */
       virtual ~PrivateKey() {}

@@ -59,8 +59,8 @@ namespace AbstractGroup {
     int ret;
 
     if((ret = gmp_sscanf(bytes, "%Zx", z)) != 1) {
-      qDebug() << "Bad string of len" << b.count() << ":" << bytes;
-      qDebug() << "Read" << ret;
+      //qDebug() << "Bad string of len" << b.count() << ":" << bytes;
+      //qDebug() << "Read" << ret;
       qFatal("Could not convert integer");
     }
 

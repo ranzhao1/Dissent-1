@@ -14,11 +14,13 @@ namespace AbstractGroup {
       _g(ToCryptoInt(gx), ToCryptoInt(gy)),
       _field_bytes(p.GetByteArray().count())
     {
+      /*
       qDebug() << " p" << p.GetByteArray().toHex(); 
       qDebug() << " a" << a.GetByteArray().toHex(); 
       qDebug() << " b" << b.GetByteArray().toHex(); 
       qDebug() << "gx" << gx.GetByteArray().toHex(); 
       qDebug() << "gy" << gy.GetByteArray().toHex(); 
+      */
 
       Q_ASSERT(ToCryptoInt(p) == _curve.FieldSize());
     };
@@ -152,7 +154,7 @@ namespace AbstractGroup {
     // r is an encoding of the string in a big integer
     CryptoPP::Integer r(("0x"+data.toHex()).constData());
 
-    qDebug() << "r" << Integer(new CppIntegerData(r)).GetByteArray().toHex();
+    //qDebug() << "r" << Integer(new CppIntegerData(r)).GetByteArray().toHex();
     
     Q_ASSERT(r < _curve.FieldSize());
 
@@ -205,9 +207,6 @@ namespace AbstractGroup {
 
   bool CppECGroup::IsProbablyValid() const
   {
-    qDebug() << IsElement(GetGenerator());
-    qDebug() << IsIdentity(Exponentiate(GetGenerator(), GetOrder()));
-
     return IsElement(GetGenerator()) && 
       IsIdentity(Exponentiate(GetGenerator(), GetOrder())) &&
       CryptoPP::IsPrime(_curve.FieldSize()) &&

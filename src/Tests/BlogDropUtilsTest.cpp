@@ -22,15 +22,15 @@ namespace Tests {
   }
 
   TEST(BlogDropUtils, HashedGeneratorInteger) {
-    TestHashed(Parameters::Parameters::IntegerTestingFixed());
+    TestHashed(Parameters::Parameters::IntegerHashingTestingFixed());
   }
 
   TEST(BlogDropUtils, HashedGeneratorCppEC) {
-    TestHashed(Parameters::Parameters::CppECProductionFixed());
+    TestHashed(Parameters::Parameters::CppECHashingProductionFixed());
   }
 
   TEST(BlogDropUtils, HashedGeneratorOpenEC) {
-    TestHashed(Parameters::Parameters::OpenECProductionFixed());
+    TestHashed(Parameters::Parameters::OpenECHashingProductionFixed());
   }
 
   TEST(BlogDropUtils, HashedGeneratorPairing) {

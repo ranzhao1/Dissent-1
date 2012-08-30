@@ -11,6 +11,14 @@ namespace BlogDrop {
   {
   }
 
+  PrivateKey::PrivateKey(const QSharedPointer<const Parameters> params,
+      const Integer key) :
+    _params(params),
+    _key(key)
+  {
+  }
+
+
 }
 }
 }

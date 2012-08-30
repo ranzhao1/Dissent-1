@@ -193,8 +193,6 @@ namespace AbstractGroup {
     if(_g == 0 || _g == 1 || _g == Integer(-1).Modulo(_p))
       return false;
 
-    qDebug() << _g.Pow(_q, _p).GetByteArray();
-
     // g^q = 1
     if(_g.Pow(_q, _p) != 1)
       return false;

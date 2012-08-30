@@ -95,13 +95,13 @@ namespace BlogDrop {
     Plaintext m(_params);
     for(int client_idx=0; client_idx<_client_ciphertexts.count(); client_idx++)
     {
-      qDebug() << "client" << client_idx;
+      //qDebug() << "client" << client_idx;
       m.Reveal(_client_ciphertexts[client_idx]->GetElements());
     }
 
     for(int server_idx=0; server_idx<_server_ciphertexts.count(); server_idx++)
     {
-      qDebug() << "server" << server_idx;
+      //qDebug() << "server" << server_idx;
       m.Reveal(_server_ciphertexts[server_idx]->GetElements());
     }
 

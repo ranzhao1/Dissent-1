@@ -294,8 +294,6 @@ namespace AbstractGroup {
         success = true;
         break;
       } 
-
-      qDebug() << "Trying k=" << i;
     }
 
     BN_clear_free(r);

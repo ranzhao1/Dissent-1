@@ -56,6 +56,7 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/BasicGossipTest.cpp \
            src/Tests/BlameUtilsTest.cpp \
            src/Tests/BlogDropTest.cpp \
+           src/Tests/BlogDropProof.cpp \
            src/Tests/BlogDropUtilsTest.cpp \
            src/Tests/BlogDropRoundTest.cpp \
            src/Tests/BulkRoundTest.cpp \

@@ -30,26 +30,51 @@ namespace BlogDrop {
       /**
        * Constructor that uses 512-bit integer group (for testing)
        */
-      static QSharedPointer<Parameters> IntegerTestingFixed();
+      static QSharedPointer<Parameters> IntegerElGamalTestingFixed();
 
       /**
        * Constructor that uses 1024-bit fixed integer group 
        */
-      static QSharedPointer<Parameters> IntegerProductionFixed(QByteArray round_nonce = QByteArray());
+      static QSharedPointer<Parameters> IntegerElGamalProductionFixed(
+          QByteArray round_nonce = QByteArray());
+
+      /**
+       * Constructor that uses 512-bit integer group (for testing)
+       */
+      static QSharedPointer<Parameters> IntegerHashingTestingFixed();
+
+      /**
+       * Constructor that uses 1024-bit fixed integer group 
+       */
+      static QSharedPointer<Parameters> IntegerHashingProductionFixed(QByteArray round_nonce = QByteArray());
 
       /**
        * Constructor that uses 256-bit fixed EC group 
        * (Supposedly 256-bit ECs are equivalent to 3072-bit 
        * RSA/DH groups) implemented with Crypto++
        */
-      static QSharedPointer<Parameters> CppECProductionFixed(QByteArray round_nonce = QByteArray());
+      static QSharedPointer<Parameters> CppECElGamalProductionFixed(QByteArray round_nonce = QByteArray());
+
+      /**
+       * Constructor that uses 256-bit fixed EC group 
+       * (Supposedly 256-bit ECs are equivalent to 3072-bit 
+       * RSA/DH groups) implemented with Crypto++
+       */
+      static QSharedPointer<Parameters> CppECHashingProductionFixed(QByteArray round_nonce = QByteArray());
 
       /**
        * Constructor that uses 256-bit fixed EC group 
        * (Supposedly 256-bit ECs are equivalent to 3072-bit 
        * RSA/DH groups) implemented with OpenSSL
        */
-      static QSharedPointer<Parameters> OpenECProductionFixed(QByteArray round_nonce = QByteArray());
+      static QSharedPointer<Parameters> OpenECElGamalProductionFixed(QByteArray round_nonce = QByteArray());
+      
+      /**
+       * Constructor that uses 256-bit fixed EC group 
+       * (Supposedly 256-bit ECs are equivalent to 3072-bit 
+       * RSA/DH groups) implemented with OpenSSL
+       */
+      static QSharedPointer<Parameters> OpenECHashingProductionFixed(QByteArray round_nonce = QByteArray());
 
        /**
        * Constructor that uses a type-A pairing group from

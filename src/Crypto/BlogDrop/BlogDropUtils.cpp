@@ -92,19 +92,19 @@ namespace BlogDrop {
     // g^hash
     const int bytes = params->GetMessageGroup()->BytesPerElement() - 1;
     Integer nonce = GetPhaseHash(params, author_pk, phase, element_idx);
-    qDebug() << "orig" << nonce.GetByteArray().toHex();
+    //qDebug() << "orig" << nonce.GetByteArray().toHex();
 
-    qDebug() << "nbytes" << (bytes);
+    //qDebug() << "nbytes" << (bytes);
     nonce = nonce % (Integer(2).Pow(bytes*8, params->GetMessageGroup()->GetOrder()));
-    qDebug() << nonce.GetByteArray().toHex();
+    //qDebug() << nonce.GetByteArray().toHex();
 
     const QByteArray nonce_str = nonce.GetByteArray();
 
     Element gen;
     int i;
     for(i=0; i<255; i++) {
-      qDebug() << "hash" << i;
-      qDebug() << (nonce_str + QByteArray(1, i)).toHex();
+      //qDebug() << "hash" << i;
+      //qDebug() << (nonce_str + QByteArray(1, i)).toHex();
       gen = params->GetMessageGroup()->EncodeBytes(nonce_str + QByteArray(1, i)); 
       if(params->GetMessageGroup()->IsGenerator(gen)) break;
     }
