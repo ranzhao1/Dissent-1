@@ -44,8 +44,20 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDropProof, IntegerElGamalServer) {
+  TEST(BlogDropProof, CppIntegerElGamalServer) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::CryptoPP);
     TestElGamalServerCiphertext(Parameters::Parameters::IntegerElGamalTestingFixed());
+    cf.SetLibrary(cname);
+  }
+
+  TEST(BlogDrop, OpenIntegerElGamalServer) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    TestElGamalServerCiphertext(Parameters::Parameters::IntegerElGamalTestingFixed());
+    cf.SetLibrary(cname);
   }
 
   TEST(BlogDropProof, CppECElGamalServer) {
@@ -99,6 +111,8 @@ namespace Tests {
       set.insert(egc->GetChallenge2().GetByteArray());
       foreach(const Integer &i, egc->GetResponses()) {
         set.insert(i.GetByteArray());
+        EXPECT_TRUE(i.GetByteArray().count());
+        qDebug() << i.GetByteArray().toHex();
       }
 
       ASSERT_EQ(params->GetNElements()+3, set.count());
@@ -107,10 +121,24 @@ namespace Tests {
     ASSERT_TRUE(c->VerifyProof(0, client_pub));
   }
 
-  TEST(BlogDrop, IntegerClientProof) {
+  TEST(BlogDrop, CppIntegerClientProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::CryptoPP);
     for(int i=0; i<10; i++) {
       TestClientOnce(Parameters::Parameters::IntegerElGamalTestingFixed());
     }
+    cf.SetLibrary(cname);
+  }
+
+  TEST(BlogDrop, OpenIntegerClientProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    for(int i=0; i<10; i++) {
+      TestClientOnce(Parameters::Parameters::IntegerElGamalTestingFixed());
+    }
+    cf.SetLibrary(cname);
   }
 
   TEST(BlogDrop, CppECClientProof) {
@@ -185,10 +213,24 @@ namespace Tests {
     ASSERT_TRUE(c->VerifyProof(0, client_pub));
   }
 
-  TEST(BlogDrop, IntegerElGamalAuthorProof) {
+  TEST(BlogDrop, CppIntegerElGamalAuthorProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::CryptoPP);
     for(int i=0; i<10; i++) {
       TestAuthorOnce(Parameters::Parameters::IntegerElGamalTestingFixed());
     }
+    cf.SetLibrary(cname);
+  }
+
+  TEST(BlogDrop, OpenIntegerElGamalAuthorProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    for(int i=0; i<10; i++) {
+      TestAuthorOnce(Parameters::Parameters::IntegerElGamalTestingFixed());
+    }
+    cf.SetLibrary(cname);
   }
 
   TEST(BlogDrop, CppECElGamalAuthorProof) {
@@ -320,10 +362,24 @@ namespace Tests {
   }
   
 
-  TEST(BlogDrop, IntegerElGamalEndToEnd) 
+  TEST(BlogDrop, CppIntegerElGamalEndToEnd) 
   {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::CryptoPP);
     ElGamalEndToEndOnce(Parameters::Parameters::IntegerElGamalProductionFixed(), false);
+    cf.SetLibrary(cname);
   }
+
+  TEST(BlogDrop, OpenIntegerElgamalEndToEnd) 
+  { 
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    ElGamalEndToEndOnce(Parameters::Parameters::IntegerElGamalProductionFixed(), false);
+    cf.SetLibrary(cname);
+  }
+
 
   TEST(BlogDrop, CppECElGamalEndToEnd) 
   {
@@ -505,9 +561,22 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDrop, IntegerHashingEndToEnd) 
+  TEST(BlogDrop, CppIntegerHashingEndToEnd) 
   {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::CryptoPP);
     HashingEndToEndOnce(Parameters::Parameters::IntegerHashingProductionFixed(), false);
+    cf.SetLibrary(cname);
+  }
+
+  TEST(BlogDrop, OpenIntegerHashingEndToEnd) 
+  {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(CryptoFactory::OpenSSL);
+    HashingEndToEndOnce(Parameters::Parameters::IntegerHashingProductionFixed(), false);
+    cf.SetLibrary(cname);
   }
 
   TEST(BlogDrop, CppECHashingEndToEnd) 

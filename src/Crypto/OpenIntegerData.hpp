@@ -9,6 +9,14 @@
 #include "IntegerData.hpp"
 #include "Integer.hpp"
 
+#ifndef CHECK_CALL
+#define CHECK_CALL(a) do { \
+  if(!(a)) { qWarning() << "File:" << __FILE__ << "Line:" << __LINE__ << (#a); \
+    qFatal("Error"); \
+  } \
+  } while(false);
+#endif
+
 namespace Dissent {
 namespace Crypto {
   /**
@@ -26,8 +34,8 @@ namespace Crypto {
        */
       explicit OpenIntegerData(int value = 0)
       {
-        Q_ASSERT(_bignum = BN_new());
-        Q_ASSERT(BN_set_word(_bignum, value));
+        CHECK_CALL(_bignum = BN_new());
+        CHECK_CALL(BN_set_word(_bignum, value));
       }
 
       /**
@@ -36,8 +44,8 @@ namespace Crypto {
        */
       explicit OpenIntegerData(const QByteArray &byte_array) 
       {
-        Q_ASSERT(_bignum = BN_new());
-        Q_ASSERT(BN_bin2bn((const unsigned char*)byte_array.constData(), 
+        CHECK_CALL(_bignum = BN_new());
+        CHECK_CALL(BN_bin2bn((const unsigned char*)byte_array.constData(), 
               byte_array.count(), _bignum));
       }
 
@@ -48,8 +56,8 @@ namespace Crypto {
       explicit OpenIntegerData(const QString &string)
       {
         QByteArray byte_array = FromBase64(string);
-        Q_ASSERT(_bignum = BN_new());
-        Q_ASSERT(BN_bin2bn((const unsigned char*)byte_array.constData(), 
+        CHECK_CALL(_bignum = BN_new());
+        CHECK_CALL(BN_bin2bn((const unsigned char*)byte_array.constData(), 
               byte_array.count(), _bignum));
       }
 
@@ -68,16 +76,16 @@ namespace Crypto {
       static OpenIntegerData *GetRandomInteger(int bit_count, bool prime)
       {
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
 
         if(!SharedCtx) {
-          Q_ASSERT(SharedCtx = BN_CTX_new());
+          CHECK_CALL(SharedCtx = BN_CTX_new());
         }
 
         if(prime) {
-          Q_ASSERT(BN_generate_prime(bn, bit_count, false, NULL, NULL, NULL, NULL));
+          CHECK_CALL(BN_generate_prime(bn, bit_count, false, NULL, NULL, NULL, NULL));
         } else {
-          Q_ASSERT(BN_rand(bn, bit_count, false, false));
+          CHECK_CALL(BN_rand(bn, bit_count, false, false));
         }
         return new OpenIntegerData(bn);
       }
@@ -92,25 +100,25 @@ namespace Crypto {
           const IntegerData *max, bool prime)
       {
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
 
         BIGNUM *diff;
-        Q_ASSERT(diff = BN_new());
-        Q_ASSERT(BN_sub(diff, GetBignum(max), GetBignum(min)));
+        CHECK_CALL(diff = BN_new());
+        CHECK_CALL(BN_sub(diff, GetBignum(max), GetBignum(min)));
 
         if(!SharedCtx) {
-          Q_ASSERT(SharedCtx = BN_CTX_new());
+          CHECK_CALL(SharedCtx = BN_CTX_new());
         }
 
         if(prime) {
           while(true) {
-            Q_ASSERT(BN_rand_range(bn, diff));
-            Q_ASSERT(BN_add(bn, bn, GetBignum(min)));
+            CHECK_CALL(BN_rand_range(bn, diff));
+            CHECK_CALL(BN_add(bn, bn, GetBignum(min)));
             if(BN_is_prime(bn, 80, NULL, SharedCtx, NULL)) break;
           }
         } else {
-          Q_ASSERT(BN_rand_range(bn, diff));
-          Q_ASSERT(BN_add(bn, bn, GetBignum(min)));
+          CHECK_CALL(BN_rand_range(bn, diff));
+          CHECK_CALL(BN_add(bn, bn, GetBignum(min)));
         }
 
         BN_clear_free(diff);
@@ -133,9 +141,9 @@ namespace Crypto {
       virtual IntegerData *Add(const IntegerData *other) const
       {
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
 
-        Q_ASSERT(BN_add(bn, _bignum, GetBignum(other)));
+        CHECK_CALL(BN_add(bn, _bignum, GetBignum(other)));
         return new OpenIntegerData(bn);
       }
 
@@ -146,9 +154,9 @@ namespace Crypto {
       virtual IntegerData *Subtract(const IntegerData *other) const
       {
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
 
-        Q_ASSERT(BN_sub(bn, _bignum, GetBignum(other)));
+        CHECK_CALL(BN_sub(bn, _bignum, GetBignum(other)));
         return new OpenIntegerData(bn);
       }
 
@@ -159,13 +167,13 @@ namespace Crypto {
       virtual IntegerData *Multiply(const IntegerData *multiplicand) const
       {
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
 
         if(!SharedCtx) {
-          Q_ASSERT(SharedCtx = BN_CTX_new());
+          CHECK_CALL(SharedCtx = BN_CTX_new());
         }
 
-        Q_ASSERT(BN_mul(bn, _bignum, GetBignum(multiplicand), SharedCtx));
+        CHECK_CALL(BN_mul(bn, _bignum, GetBignum(multiplicand), SharedCtx));
         return new OpenIntegerData(bn);
       }
 
@@ -176,13 +184,13 @@ namespace Crypto {
       virtual IntegerData *Divide(const IntegerData *divisor) const
       {
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
 
         if(!SharedCtx) {
-          Q_ASSERT(SharedCtx = BN_CTX_new());
+          CHECK_CALL(SharedCtx = BN_CTX_new());
         }
 
-        Q_ASSERT(BN_div(bn, NULL, _bignum, GetBignum(divisor), SharedCtx));
+        CHECK_CALL(BN_div(bn, NULL, _bignum, GetBignum(divisor), SharedCtx));
         return new OpenIntegerData(bn);
       }
 
@@ -193,14 +201,20 @@ namespace Crypto {
       virtual IntegerData *Pow(const IntegerData *pow,
           const IntegerData *mod) const
       {
+        Q_ASSERT(!BN_is_negative(_bignum));
+        Q_ASSERT(!BN_is_negative(GetBignum(pow)));
+        Q_ASSERT(!BN_is_negative(GetBignum(mod)));
+
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
 
         if(!SharedCtx) {
-          Q_ASSERT(SharedCtx = BN_CTX_new());
+          CHECK_CALL(SharedCtx = BN_CTX_new());
         }
 
-        Q_ASSERT(BN_mod_exp(bn, _bignum, GetBignum(pow), GetBignum(mod), SharedCtx));
+        if(BN_is_negative(GetBignum(pow))) qFatal("Cannot handle negative exponents");
+        CHECK_CALL(BN_mod_exp(bn, _bignum, GetBignum(pow), GetBignum(mod), SharedCtx));
+
         return new OpenIntegerData(bn);
       }
 
@@ -216,19 +230,25 @@ namespace Crypto {
       virtual IntegerData *PowCascade(const IntegerData *x1, const IntegerData *e1,
           const IntegerData *x2, const IntegerData *e2) const 
       {
+        Q_ASSERT(!BN_is_negative(_bignum));
+        Q_ASSERT(!BN_is_negative(GetBignum(x1)));
+        Q_ASSERT(!BN_is_negative(GetBignum(e1)));
+        Q_ASSERT(!BN_is_negative(GetBignum(x2)));
+        Q_ASSERT(!BN_is_negative(GetBignum(e2)));
+
         BIGNUM *bn;
         BIGNUM *bn2;
-        Q_ASSERT(bn = BN_new());
-        Q_ASSERT(bn2 = BN_new());
+        CHECK_CALL(bn = BN_new());
+        CHECK_CALL(bn2 = BN_new());
 
         if(!SharedCtx) {
-          Q_ASSERT(SharedCtx = BN_CTX_new());
+          CHECK_CALL(SharedCtx = BN_CTX_new());
         }
 
-        Q_ASSERT(BN_mod_exp(bn, GetBignum(x1), GetBignum(e1), _bignum, SharedCtx));
-        Q_ASSERT(BN_mod_exp(bn2, GetBignum(x2), GetBignum(e2), _bignum, SharedCtx));
+        CHECK_CALL(BN_mod_exp(bn, GetBignum(x1), GetBignum(e1), _bignum, SharedCtx));
+        CHECK_CALL(BN_mod_exp(bn2, GetBignum(x2), GetBignum(e2), _bignum, SharedCtx));
+        CHECK_CALL(BN_mod_mul(bn, bn, bn2, _bignum, SharedCtx));
         BN_clear_free(bn2);
-        Q_ASSERT(BN_mod_mul(bn, bn, bn2, _bignum, SharedCtx));
         return new OpenIntegerData(bn);
       }
 
@@ -240,14 +260,16 @@ namespace Crypto {
       virtual IntegerData *MultiplyMod(const IntegerData *other,
           const IntegerData *mod) const
       {
+        Q_ASSERT(!BN_is_negative(GetBignum(mod)));
+
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
 
         if(!SharedCtx) {
-          Q_ASSERT(SharedCtx = BN_CTX_new());
+          CHECK_CALL(SharedCtx = BN_CTX_new());
         }
 
-        Q_ASSERT(BN_mod_mul(bn, _bignum, GetBignum(other), GetBignum(mod), SharedCtx));
+        CHECK_CALL(BN_mod_mul(bn, _bignum, GetBignum(other), GetBignum(mod), SharedCtx));
         return new OpenIntegerData(bn);
       }
 
@@ -258,13 +280,16 @@ namespace Crypto {
       virtual IntegerData *ModInverse(const IntegerData *mod) const
       {
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
+
+        Q_ASSERT(!BN_is_negative(GetBignum(mod)));
+        Q_ASSERT(!BN_is_negative(_bignum));
 
         if(!SharedCtx) {
-          Q_ASSERT(SharedCtx = BN_CTX_new());
+          CHECK_CALL(SharedCtx = BN_CTX_new());
         }
 
-        Q_ASSERT(BN_mod_inverse(bn, _bignum, GetBignum(mod), SharedCtx));
+        CHECK_CALL(BN_mod_inverse(bn, _bignum, GetBignum(mod), SharedCtx));
         return new OpenIntegerData(bn);
       }
 
@@ -274,14 +299,16 @@ namespace Crypto {
        */
       virtual IntegerData *Modulo(const IntegerData *modulus) const 
       {
+        Q_ASSERT(!BN_is_negative(GetBignum(modulus)));
+
         BIGNUM *bn;
-        Q_ASSERT(bn = BN_new());
+        CHECK_CALL(bn = BN_new());
 
         if(!SharedCtx) {
-          Q_ASSERT(SharedCtx = BN_CTX_new());
+          CHECK_CALL(SharedCtx = BN_CTX_new());
         }
 
-        Q_ASSERT(BN_mod(bn, _bignum, GetBignum(modulus), SharedCtx));
+        CHECK_CALL(BN_nnmod(bn, bn, GetBignum(modulus), SharedCtx));
         return new OpenIntegerData(bn);
       }
 
@@ -291,7 +318,7 @@ namespace Crypto {
        */
       virtual void Set(const IntegerData *other)
       {
-        Q_ASSERT(BN_copy(_bignum, GetBignum(other)));
+        CHECK_CALL(BN_copy(_bignum, GetBignum(other)));
       }
 
       /**
@@ -300,7 +327,7 @@ namespace Crypto {
        */
       virtual void operator+=(const IntegerData *other)
       {
-        Q_ASSERT(BN_add(_bignum, _bignum, GetBignum(other)));
+        CHECK_CALL(BN_add(_bignum, _bignum, GetBignum(other)));
       }
 
       /**
@@ -309,7 +336,7 @@ namespace Crypto {
        */
       virtual void operator-=(const IntegerData *other)
       {
-        Q_ASSERT(BN_sub(_bignum, _bignum, GetBignum(other)));
+        CHECK_CALL(BN_sub(_bignum, _bignum, GetBignum(other)));
       }
 
       /**
@@ -418,7 +445,7 @@ namespace Crypto {
       virtual void GenerateCanonicalRep()
       {
         QByteArray byte_array(BN_num_bytes(_bignum), 0);
-        Q_ASSERT(BN_bn2bin(_bignum, (unsigned char*)byte_array.data()));
+        CHECK_CALL(BN_bn2bin(_bignum, (unsigned char*)byte_array.data()));
         SetCanonicalRep(byte_array);
       }
 

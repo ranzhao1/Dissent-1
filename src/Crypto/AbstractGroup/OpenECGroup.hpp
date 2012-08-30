@@ -7,8 +7,10 @@
 #include "AbstractGroup.hpp"
 #include "OpenECElementData.hpp"
 
-#define CHECK_CALL(a) do { if(!a) {qWarning() << "File:" << __FILE__ << "Line:" << __LINE__ << #a; \
+#ifndef CHECK_CALL
+#define CHECK_CALL(a) do { if(!(a)) {qWarning() << "File:" << __FILE__ << "Line:" << __LINE__ << #a; \
   qFatal("Error"); } } while(false);
+#endif 
 
 namespace Dissent {
 namespace Crypto {
