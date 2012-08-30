@@ -297,7 +297,7 @@ namespace Tests {
     qDebug() << "CREATE_SERVER";
     QList<BlogDropServer> servers;
     for(int i=0; i<nservers; i++) {
-      servers.append(BlogDropServer(params, server_pk_set, author_pk, server_sks[i]));
+      servers.append(BlogDropServer(params, server_sks[i], server_pk_set, author_pk));
     }
 
     qDebug() << "RANDOM_PLAINTEXT";
@@ -438,66 +438,34 @@ namespace Tests {
       client_pks.append(pub);
     }
 
-    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
-
-    QList<QList<Integer> > secrets;
-
     // for each server/client
-    for(int i=0; i<nclients; i++) { 
-      QList<Integer> client_secrets;
-      for(int j=0; j<nservers; j++) { 
-        // do DH exchange
-        Element shared = params->GetKeyGroup()->Exponentiate(
-            server_pks[j]->GetElement(), client_sks[i]->GetInteger());
-
-        // hash result
-        QByteArray out = hash->ComputeHash(
-            params->GetKeyGroup()->ElementToByteArray(shared));
-
-        // sum of results (mod q) is the master secret
-        Integer secret = Integer(out) % params->GetKeyGroup()->GetOrder();
-        client_secrets.append(secret);
-      }
-      secrets.append(client_secrets); 
-    }
-
     QList<QSharedPointer<const PrivateKey> > master_client_priv;
     QList<QSharedPointer<const PublicKey> > master_client_pub;
     QList<QSharedPointer<const PrivateKey> > master_server_priv;
     QList<QSharedPointer<const PublicKey> > master_server_pub;
 
-    const Integer q = params->GetKeyGroup()->GetOrder();
     for(int i=0; i<nclients; i++) { 
-      Integer mclient = 0;
-      for(int j=0; j<nservers; j++) { 
-        mclient = (mclient + secrets[i][j]) % q;
-      }
-
-      QSharedPointer<const PrivateKey> priv(new PrivateKey(params, mclient));
+      QSharedPointer<const PrivateKey> priv = BlogDropUtils::GetMasterSharedSecret(params, client_sks[i], server_pks);
       QSharedPointer<const PublicKey> pub(new PublicKey(priv));
 
       master_client_pub.append(pub);
       master_client_priv.append(priv);
     }
 
-    for(int j=0; j<nservers; j++) { 
-      Integer mserver = 0;
-      for(int i=0; i<nclients; i++) { 
-        mserver = (mserver + secrets[i][j]) % q;
-      }
-
-      QSharedPointer<const PrivateKey> priv(new PrivateKey(params, mserver));
+    for(int i=0; i<nservers; i++) { 
+      QSharedPointer<const PrivateKey> priv = BlogDropUtils::GetMasterSharedSecret(params, server_sks[i], client_pks);
       QSharedPointer<const PublicKey> pub(new PublicKey(priv));
 
       master_server_pub.append(pub);
       master_server_priv.append(priv);
     }
+
     QSharedPointer<const PublicKeySet> master_server_set(new PublicKeySet(params, master_server_pub));
 
     qDebug() << "CREATE_SERVER";
     QList<BlogDropServer> servers;
     for(int i=0; i<nservers; i++) {
-      servers.append(BlogDropServer(params, master_server_set, author_pk, master_server_priv[i]));
+      servers.append(BlogDropServer(params, master_server_priv[i], master_server_set, author_pk));
     }
 
     qDebug() << "RANDOM_PLAINTEXT";

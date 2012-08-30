@@ -7,14 +7,14 @@ namespace Crypto {
 namespace BlogDrop {
 
   BlogDropServer::BlogDropServer(const QSharedPointer<const Parameters> params, 
+      const QSharedPointer<const PrivateKey> server_priv,
       const QSharedPointer<const PublicKeySet> server_pk_set,
-      const QSharedPointer<const PublicKey> author_pub,
-      const QSharedPointer<const PrivateKey> server_priv) :
+      const QSharedPointer<const PublicKey> author_pub) :
     _phase(0),
     _params(params),
+    _server_priv(server_priv),
     _server_pk_set(server_pk_set),
-    _author_pub(author_pub),
-    _server_priv(server_priv)
+    _author_pub(author_pub)
   {
   }
 

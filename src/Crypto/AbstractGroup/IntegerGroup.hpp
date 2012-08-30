@@ -194,6 +194,16 @@ namespace AbstractGroup {
        */
       virtual bool IsGenerator(const Element &a) const;
 
+      /**
+       * Return a printable representation of the group
+       */
+      virtual inline QString ToString() const 
+      {
+        return QString("IntegerGroup: pbits=%1,qbits=%2").arg(
+            _p.GetByteArray().count() * 8,
+            _q.GetByteArray().count() * 8);
+      }
+
     private:
 
       IntegerGroup(const char *p_bytes, const char *q_bytes);

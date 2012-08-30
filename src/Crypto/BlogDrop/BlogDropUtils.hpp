@@ -66,6 +66,19 @@ namespace BlogDrop {
           int phase, 
           int element_idx);
 
+      /**
+       * This method is used in the "Hashed generator" proof construction.
+       * For our secret a, and for public keys g^x, g^y, g^z, we compute
+       * the DH shared secret with each of these keys:
+       *   g^ax, g^ay, g^az
+       * We then hash each of these secrets, and add them mod q
+       *   out = H(g^ax) + H(g^ay) + H(g^az)  (mod q)
+       */
+      static QSharedPointer<PrivateKey> GetMasterSharedSecret(
+          const QSharedPointer<const Parameters> &params,
+          const QSharedPointer<const PrivateKey> &priv, 
+          const QList<QSharedPointer<const PublicKey> > &pubs);
+
   };
 
 }

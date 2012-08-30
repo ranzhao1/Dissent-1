@@ -7,6 +7,27 @@
 
 namespace Dissent {
 namespace Tests {
+  static QSharedPointer<CppDsaPrivateKey> GetBaseKey()
+  {
+    static QSharedPointer<CppDsaPrivateKey> key(
+        new CppDsaPrivateKey());
+    return key;
+  }
+
+  static QSharedPointer<AsymmetricKey> GetKey()
+  {
+    if(CryptoFactory::GetInstance().GetLibraryName() == CryptoFactory::CryptoPPDsa) {
+      return QSharedPointer<AsymmetricKey>(
+          new CppDsaPrivateKey(
+            GetBaseKey()->GetModulus(),
+            GetBaseKey()->GetSubgroup(),
+            GetBaseKey()->GetGenerator()));
+    } else {
+      return QSharedPointer<AsymmetricKey>(CryptoFactory::GetInstance().
+        GetLibrary()->CreatePrivateKey());
+    }
+  }
+
   class TestNode : public QObject {
     Q_OBJECT
 
@@ -17,10 +38,8 @@ namespace Tests {
         sm(rpc),
         net(new DefaultNetwork(cm, rpc)),
         ident(cm->GetId(),
-            QSharedPointer<AsymmetricKey>(CryptoFactory::GetInstance().
-              GetLibrary()->CreatePrivateKey()),
-            QSharedPointer<AsymmetricKey>(CryptoFactory::GetInstance().
-              GetLibrary()->CreatePrivateKey()),
+            GetKey(),
+            GetKey(),
             QSharedPointer<DiffieHellman>(CryptoFactory::GetInstance().
               GetLibrary()->CreateDiffieHellman()), server)
       {
@@ -41,6 +60,8 @@ namespace Tests {
       BufferSink sink;
       PrivateIdentity ident;
       QSharedPointer<Session> session;
+      QSharedPointer<Round> first_round;
+      QSharedPointer<GroupHolder> gh;
       static int calledback;
       static int success;
       static int failure;
@@ -48,6 +69,9 @@ namespace Tests {
     public slots:
       void HandleRoundFinished(QSharedPointer<Round> round)
       {
+        if(!first_round) {
+          first_round = round;
+        }
         round->Successful() ? success++ : failure++;
         calledback++;
       }
@@ -73,13 +97,18 @@ namespace Tests {
           node->session.clear();
         }
 
-        QSharedPointer<GroupHolder> gh(new GroupHolder(group));
+        if(!node->gh) {
+          node->gh = QSharedPointer<GroupHolder>(new GroupHolder(group));
+        }
+
         if(group.GetSubgroupPolicy() == Group::ManagedSubgroup) {
-          node->net = QSharedPointer<Network>(new CSNetwork(node->cm, node->rpc, gh));
+          if(!node->net.dynamicCast<CSNetwork>()) {
+            node->net = QSharedPointer<Network>(new CSNetwork(node->cm, node->rpc, node->gh));
+          }
         }
 
         QSharedPointer<IAuthenticate> authe(new NullAuthenticate(node->ident));
-        QSharedPointer<Session> session(new Session(gh, authe,
+        QSharedPointer<Session> session(new Session(node->gh, authe,
               session_id, node->net, _create_round));
         session->SetSharedPointer(session);
 

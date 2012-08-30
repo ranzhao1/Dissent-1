@@ -27,9 +27,9 @@ namespace BlogDrop {
        * @param server_priv server private key
        */
       explicit BlogDropServer(const QSharedPointer<const Parameters> params,  
+          const QSharedPointer<const PrivateKey> server_priv,
           const QSharedPointer<const PublicKeySet> server_pk_set,
-          const QSharedPointer<const PublicKey> author_pub,
-          const QSharedPointer<const PrivateKey> server_priv);
+          const QSharedPointer<const PublicKey> author_pub);
 
       /**
        * Destructor
@@ -94,9 +94,9 @@ namespace BlogDrop {
       int _phase;
 
       QSharedPointer<const Parameters> _params;
+      QSharedPointer<const PrivateKey> _server_priv;
       QSharedPointer<const PublicKeySet> _server_pk_set;
       QSharedPointer<const PublicKey> _author_pub;
-      QSharedPointer<const PrivateKey> _server_priv;
 
       /* list[client] = ciphertext */
       QList<QSharedPointer<const ClientCiphertext> > _client_ciphertexts;

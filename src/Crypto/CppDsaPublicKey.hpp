@@ -107,7 +107,7 @@ namespace Crypto {
       /**
        * DSA does not explicitly allow encryption
        */
-      virtual bool SupportsEncryption() { return false; }
+      virtual bool SupportsEncryption() const { return false; }
 
       /**
        * DSA does not work with keys below 1024
@@ -133,6 +133,45 @@ namespace Crypto {
        * Returns the y = g^x mod p of the DSA public key
        */
       Integer GetPublicElement() const;
+
+      /**
+       * Checks to ensure the encrypted pair are group elements
+       * @param encrypted a DSA encrypted element
+       */
+      inline bool InGroup(const QByteArray &encrypted) const
+      {
+        QDataStream stream(encrypted);
+        Integer shared, enc;
+        stream >> shared >> enc;
+        return InGroup(shared) && InGroup(enc);
+      }
+
+      /**
+       * Checks that the specified integer is a group element
+       * @param test the integer to test
+       */
+      inline bool InGroup(Integer test) const
+      {
+        return test < GetModulus() && test.Pow(GetSubgroup(), GetModulus()) == 1;
+      }
+
+
+      /**
+       * Encodes the given data array into an integer, if possible,
+       * and returns the integers
+       * @param data the data to convert
+       * @param encoded the encoded data
+       */
+      bool Encode(const QByteArray &data, Integer &encoded) const;
+
+      /**
+       * Decodes the given integer into a data array
+       * @param value the integer to decode
+       * @param decoded the resulting data
+       */
+      bool Decode(const Integer &value, QByteArray &decoded) const;
+
+      virtual KeyTypes GetKeyType() const { return DSA; }
 
     protected:
       inline virtual const Parameters &GetGroupParameters() const

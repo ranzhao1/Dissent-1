@@ -601,8 +601,8 @@ namespace Anonymity {
     if(IsServer()) {
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
         QSharedPointer<BlogDropServer> s(new BlogDropServer(_state->params,
-          _state->server_pk_set, _state->slot_pks[slot_idx], 
-          _server_state->server_priv)); 
+          _server_state->server_priv,
+          _state->server_pk_set, _state->slot_pks[slot_idx]));
         _server_state->blogdrop_servers.append(s);
       }
     }

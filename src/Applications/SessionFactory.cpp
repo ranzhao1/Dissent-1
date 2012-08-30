@@ -9,7 +9,6 @@
 #include "Anonymity/Sessions/Session.hpp"
 #include "Anonymity/Sessions/SessionLeader.hpp"
 #include "Anonymity/ShuffleRound.hpp"
-#include "Anonymity/Tolerant/TolerantBulkRound.hpp"
 #include "Connections/ConnectionManager.hpp"
 #include "Connections/DefaultNetwork.hpp"
 #include "Connections/Id.hpp"
@@ -26,7 +25,6 @@ using Dissent::Anonymity::CSBulkRound;
 using Dissent::Anonymity::NeffKeyShuffle;
 using Dissent::Anonymity::NullRound;
 using Dissent::Anonymity::RepeatingBulkRound;
-using Dissent::Anonymity::Tolerant::TolerantBulkRound;
 using Dissent::Anonymity::Sessions::Session;
 using Dissent::Anonymity::Sessions::SessionLeader;
 using Dissent::Anonymity::ShuffleRound;
@@ -69,9 +67,6 @@ namespace Applications {
         break;
       case CSBULK:
         cr = &TCreateBulkRound<CSBulkRound, NeffKeyShuffle>;
-        break;
-      case TOLERANT_BULK:
-        cr = &TCreateRound<TolerantBulkRound>;
         break;
       case BLOGDROP:
         cr = &TCreateRound<BlogDropRound>;

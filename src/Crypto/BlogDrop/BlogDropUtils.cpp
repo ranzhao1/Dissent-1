@@ -1,4 +1,6 @@
 
+#include <QSharedPointer>
+
 #include "Crypto/AbstractGroup/AbstractGroup.hpp"
 #include "Crypto/AbstractGroup/Element.hpp"
 
@@ -113,6 +115,29 @@ namespace BlogDrop {
 
     return gen;
   }
+
+  QSharedPointer<PrivateKey> BlogDropUtils::GetMasterSharedSecret(const QSharedPointer<const Parameters> &params,
+      const QSharedPointer<const PrivateKey> &priv, 
+      const QList<QSharedPointer<const PublicKey> > &pubs) 
+  { 
+    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
+    const Integer q = params->GetKeyGroup()->GetOrder();
+    Integer out = 0;
+
+    for(int i=0; i<pubs.count(); i++) {
+      AbstractGroup::Element shared = params->GetKeyGroup()->Exponentiate(pubs[i]->GetElement(), 
+          priv->GetInteger());
+
+      // hash result
+      QByteArray digest = hash->ComputeHash(params->GetKeyGroup()->ElementToByteArray(shared));
+
+      // sum of results (mod q) is the master secret
+      out = (out + Integer(digest)) % q;
+    }
+
+    return QSharedPointer<PrivateKey>(new PrivateKey(params, out));
+  }
+
 }
 }
 }

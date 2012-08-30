@@ -71,12 +71,21 @@ namespace Crypto {
     Validate();
   }
 
-  CppDsaPrivateKey *CppDsaPrivateKey::GenerateKey(const QByteArray &data)
+  CppDsaPrivateKey *CppDsaPrivateKey::GenerateKey(const QByteArray &data,
+      int modulus, int subgroup)
   {
+    modulus = std::max(modulus, GetMinimumKeySize());
+    subgroup = (subgroup == -1) ? GetSubgroupOrderSize(modulus) : subgroup;
+    if(modulus <= subgroup) {
+      qFatal("Subgroup should be < Modulus");
+    }
+
     CppRandom rng(data);
     KeyBase::PrivateKey key;
-    key.GenerateRandomWithKeySize(*rng.GetHandle(),
-        std::max(GetMinimumKeySize(), DefaultKeySize));
+    key.GenerateRandom(*rng.GetHandle(),
+        MakeParameters
+          (Name::ModulusSize(), modulus)
+          (Name::SubgroupOrderSize(), subgroup));
     return new CppDsaPrivateKey(new KeyBase::PrivateKey(key));
   }
 
@@ -122,7 +131,12 @@ namespace Crypto {
         shared.Pow(GetPrivateExponent(), GetModulus()).
           ModInverse(GetModulus()))
       % GetModulus();
-    return result.GetByteArray();
+
+    QByteArray output;
+    if(Decode(result, output)) {
+      return output;
+    }
+    return QByteArray();
   }
 
   QByteArray CppDsaPrivateKey::SeriesDecrypt(const QByteArray &data) const
@@ -152,13 +166,17 @@ namespace Crypto {
     return out;
   }
 
-  QByteArray CppDsaPrivateKey::SeriesDecryptFinish(const QByteArray &data)
+  QByteArray CppDsaPrivateKey::SeriesDecryptFinish(const QByteArray &data) const
   {
     Integer shared, encrypted;
     QDataStream stream(data);
     stream >> shared >> encrypted;
 
-    return encrypted.GetByteArray();
+    QByteArray output;
+    if(Decode(encrypted, output)) {
+      return output;
+    }
+    return QByteArray();
   }
 }
 }

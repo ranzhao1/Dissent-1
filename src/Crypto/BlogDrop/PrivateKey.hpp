@@ -28,7 +28,7 @@ namespace BlogDrop {
       /**
        * Destructor
        */
-      virtual ~PrivateKey() {}
+      virtual ~PrivateKey();
 
       /**
        * Return integer exponent

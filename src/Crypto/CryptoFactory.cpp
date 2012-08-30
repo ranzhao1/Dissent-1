@@ -48,6 +48,7 @@ namespace Crypto {
     }
 
     _previous = AsymmetricKey::DefaultKeySize;
+    _library_name = type;
 
     switch(type) {
       case CryptoPP:
@@ -65,6 +66,7 @@ namespace Crypto {
       default:
         qCritical() << "Invalid Library type:" << type;
         _library.reset(new CppLibrary());
+        _library_name = CryptoPP;
     }
 
     AsymmetricKey::DefaultKeySize = std::max(_library->MinimumKeySize(),

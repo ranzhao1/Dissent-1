@@ -310,9 +310,11 @@ namespace BlogDrop {
       hash->Update(group->ElementToByteArray(ys[i]));
       hash->Update(group->ElementToByteArray(ts[i]));
 
+      /*
       qDebug() << "g" << i << group->ElementToByteArray(gs[i]).toHex();
       qDebug() << "y" << i << group->ElementToByteArray(ys[i]).toHex();
       qDebug() << "t" << i << group->ElementToByteArray(ts[i]).toHex();
+      */
     }
 
     return Integer(hash->ComputeHash()) % params->GetGroupOrder();

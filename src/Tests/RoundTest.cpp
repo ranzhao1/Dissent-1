@@ -347,9 +347,16 @@ namespace Tests {
     group = BuildGroup(nodes, group);
     int leader = group.GetIndex(group.GetLeader());
     int disconnector = Random::GetInstance().GetInt(0, count);
-    while(leader == disconnector) {
-      disconnector = Random::GetInstance().GetInt(0, count);
+    if(sg_policy == Group::ManagedSubgroup) {
+      while(nodes[disconnector]->ident.GetSuperPeer() || leader == disconnector) {
+        disconnector = Random::GetInstance().GetInt(0, count);
+      }
+    } else {
+      while(leader == disconnector) {
+        disconnector = Random::GetInstance().GetInt(0, count);
+      }
     }
+
     int sender = Random::GetInstance().GetInt(0, count);
     while(sender == disconnector) {
       sender = Random::GetInstance().GetInt(0, count);
@@ -420,16 +427,16 @@ namespace Tests {
     CreateSessions(nodes, group, Id(), callback);
 
     group = BuildGroup(nodes, group);
+    int leader = group.GetIndex(group.GetLeader());
     int disconnector = Random::GetInstance().GetInt(0, count);
-    if(!transient && sg_policy == Group::ManagedSubgroup) {
-      while(nodes[disconnector]->ident.GetSuperPeer()) {
+    if(sg_policy == Group::ManagedSubgroup) {
+      while(nodes[disconnector]->ident.GetSuperPeer() || leader == disconnector) {
         disconnector = Random::GetInstance().GetInt(0, count);
       }
-    }
-
-    int leader = group.GetIndex(group.GetLeader());
-    while(leader == disconnector) {
-      disconnector = Random::GetInstance().GetInt(0, count);
+    } else {
+      while(leader == disconnector) {
+        disconnector = Random::GetInstance().GetInt(0, count);
+      }
     }
 
     int sender = Random::GetInstance().GetInt(0, count);
@@ -574,14 +581,17 @@ namespace Tests {
     group = BuildGroup(nodes, group);
     Group subgroup = group.GetSubgroup();
     int leader = group.GetIndex(group.GetLeader());
-    int sg_count = subgroup.Count();
-
-    int badguy = Random::GetInstance().GetInt(0, sg_count);
-    int group_badguy = group.GetIndex(subgroup.GetId(badguy));
-    while(group_badguy == leader) {
-      badguy = Random::GetInstance().GetInt(0, sg_count);
-      group_badguy = group.GetIndex(subgroup.GetId(badguy));
+    int badguy = Random::GetInstance().GetInt(0, count);
+    if(sg_policy == Group::ManagedSubgroup) {
+      while(nodes[badguy]->ident.GetSuperPeer() || leader == badguy) {
+        badguy = Random::GetInstance().GetInt(0, count);
+      }
+    } else {
+      while(leader == badguy) {
+        badguy = Random::GetInstance().GetInt(0, count);
+      }
     }
+
     Id badid = group.GetId(badguy);
 
     int sender = Random::GetInstance().GetInt(0, count);
@@ -614,18 +624,17 @@ namespace Tests {
     count -= 1;
     RunUntil(sc, count);
 
-    if(!cb(nodes[badguy]->session->GetCurrentRound().data())) {
+    if(!cb(nodes[badguy]->first_round.data())) {
       std::cout << "RoundTest_BadGuy was never triggered, "
         "consider rerunning." << std::endl;
     } else {
       for(int idx = 0; idx < nodes.size(); idx++) {
         TestNode *node = nodes[idx];
-
-        QSharedPointer<Round> round = rc.rounds[idx];
-        EXPECT_EQ(1, round->GetBadMembers().size());
-        if(round->GetBadMembers().size() == 1) {
-          EXPECT_EQ(badguy, round->GetBadMembers()[0]);
+        QSharedPointer<Round> pr = node->first_round;
+        if(node->ident.GetSuperPeer()) {
+          EXPECT_EQ(pr->GetBadMembers().count(), 1);
         }
+        EXPECT_FALSE(pr->Successful());
 
         if(idx == badguy) {
           continue;
@@ -777,13 +786,13 @@ namespace Tests {
       next = Timer::GetInstance().VirtualRun();
     }
 
-    if(!cb(nodes[badguy]->session->GetCurrentRound().data())) {
-      std::cout << "RoundTest_BadGuy was never triggered, "
+    if(!cb(nodes[badguy]->first_round.data())) {
+      std::cout << "RoundTest_BadGuyNoAction was never triggered, "
         "consider rerunning." << std::endl;
     } else {
       for(int idx = 0; idx < nodes.size(); idx++) {
         TestNode *node = nodes[idx];
-        QSharedPointer<Round> pr = node->session->GetCurrentRound();
+        QSharedPointer<Round> pr = node->first_round;
         EXPECT_EQ(pr->GetBadMembers().count(), 0);
         EXPECT_FALSE(pr->Successful());
       }

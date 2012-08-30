@@ -1,6 +1,6 @@
 #include "DissentTest.hpp"
 #include "RoundTest.hpp"
-#include "BulkRoundHelpers.hpp"
+#include "BadCSBulkRound.hpp"
 #include "ShuffleRoundHelpers.hpp"
 
 namespace Dissent {
@@ -29,11 +29,14 @@ namespace Tests {
         Group::ManagedSubgroup);
   }
 
+  /*
+   * Test needs more work to be viable...
   TEST(CSBulkRound, PeerTransientIssueMiddle)
   {
     RoundTest_PeerDisconnectMiddle(SessionCreator(TCreateRound<CSBulkRound>),
-        Group::ManagedSubgroup);
+        Group::ManagedSubgroup, true);
   }
+  */
 
   TEST(CSBulkRound, BasicRoundManagedNeffKey)
   {
@@ -45,6 +48,14 @@ namespace Tests {
   {
     RoundTest_MultiRound(SessionCreator(TCreateBulkRound<CSBulkRound, NeffKeyShuffle>),
         Group::ManagedSubgroup);
+  }
+
+  TEST(CSBulkRound, BadClient)
+  {
+    typedef CSBulkRoundBadClient badbulk;
+    RoundTest_BadGuy(SessionCreator(TCreateBulkRound<CSBulkRound, NeffKeyShuffle>),
+      SessionCreator(TCreateBulkRound<badbulk, NeffKeyShuffle>),
+      Group::ManagedSubgroup, TBadGuyCB<badbulk>);
   }
 }
 }

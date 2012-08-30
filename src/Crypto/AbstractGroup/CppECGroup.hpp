@@ -179,6 +179,15 @@ namespace AbstractGroup {
         return IsElement(a) && !IsIdentity(a); 
       }
 
+      /**
+       * Return a printable representation of the group
+       */
+      virtual inline QString ToString() const 
+      {
+        return QString("CppECGroup: pbits=%1").arg(_field_bytes*8);
+      }
+
+
     protected:
 
       inline virtual Integer GetSmallSubgroupOrder() { return Integer(2); }

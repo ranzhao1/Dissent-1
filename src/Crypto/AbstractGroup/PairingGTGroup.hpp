@@ -115,6 +115,15 @@ namespace AbstractGroup {
        */
       virtual bool IsElement(const Element &a) const;
 
+      /**
+       * Return a printable representation of the group
+       */
+      virtual inline QString ToString() const 
+      {
+        return QString("PairingGTGroup: pbits=%1").arg(
+            _field.GetByteArray().count() * 8);
+      }
+
     private:
 
       // Private Constructor

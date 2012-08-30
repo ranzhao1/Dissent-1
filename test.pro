@@ -34,6 +34,7 @@ HEADERS += ext/googletest/include/gtest/gtest-death-test.h \
            ext/googletest/include/gtest/internal/gtest-tuple.h \
            ext/googletest/include/gtest/internal/gtest-type-util.h \
            src/Tests/AbstractGroupHelpers.hpp \
+           src/Tests/BadCSBulkRound.hpp \
            src/Tests/BulkRoundHelpers.hpp \
            src/Tests/DissentTest.hpp \
            src/Tests/Mock.hpp \
@@ -46,7 +47,6 @@ HEADERS += ext/googletest/include/gtest/gtest-death-test.h \
            src/Tests/ShuffleRoundHelpers.hpp \
            src/Tests/TestNode.hpp \
            src/Tests/TestWebClient.hpp \
-           src/Tests/TolerantBulkRoundHelpers.hpp \
            src/Tests/WebServicesTest.hpp
 
 SOURCES += ext/googletest/src/gtest-all.cc \
@@ -54,7 +54,6 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/AuthenticateTest.cpp \
            src/Tests/Base64.cpp \
            src/Tests/BasicGossipTest.cpp \
-           src/Tests/BlameUtilsTest.cpp \
            src/Tests/BlogDropTest.cpp \
            src/Tests/BlogDropProof.cpp \
            src/Tests/BlogDropUtilsTest.cpp \
@@ -79,6 +78,7 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/MainTest.cpp \
            src/Tests/MessageRandomizerTest.cpp \
            src/Tests/NeffKeyShuffleTest.cpp \
+           src/Tests/NeffShuffleRoundTest.cpp \
            src/Tests/NullRoundTest.cpp \
            src/Tests/OnionTest.cpp \
            src/Tests/OpenECGroupTest.cpp \
@@ -98,7 +98,6 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/TestNode.cpp \
            src/Tests/TestWebClient.cpp \
            src/Tests/TimeTest.cpp \
-           src/Tests/TolerantBulkRoundTest.cpp \
            src/Tests/TripleTest.cpp \
            src/Tests/WebServerTest.cpp \
            src/Tests/WebServicesTest.cpp

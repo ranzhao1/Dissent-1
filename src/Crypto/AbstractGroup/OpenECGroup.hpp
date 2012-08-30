@@ -196,11 +196,6 @@ namespace AbstractGroup {
       virtual QByteArray GetByteArray() const;
 
       /**
-       * Get size of the EC field (i.e., the modulus p)
-       */
-      inline Integer GetFieldSize() const;
-
-      /**
        * Get (x,y) coordinates of an element point
        * @param a Element from which to get points
        * @param x return x value
@@ -221,6 +216,15 @@ namespace AbstractGroup {
       virtual inline bool IsGenerator(const Element &a) const { 
         return IsElement(a) && !IsIdentity(a);
       }
+
+      /**
+       * Return a printable representation of the group
+       */
+      virtual inline QString ToString() const 
+      {
+        return QString("OpenECGroup: pbits=%1").arg(_field_bytes*8);
+      }
+
 
     private:
 

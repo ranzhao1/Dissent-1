@@ -1,4 +1,6 @@
 
+#include "Crypto/AbstractGroup/Element.hpp"
+#include "Crypto/CryptoFactory.hpp"
 #include "PrivateKey.hpp"
 
 namespace Dissent {
@@ -18,6 +20,7 @@ namespace BlogDrop {
   {
   }
 
+  PrivateKey::~PrivateKey() {}
 
 }
 }

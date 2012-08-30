@@ -124,6 +124,47 @@ namespace BlogDrop {
 
     return gTp->ApplyPairing(a, b);
   }
+
+  QString Parameters::ProofTypeToString(ProofType pt)
+  {
+    QString out; 
+    switch(pt) {
+      case ProofType_ElGamal:
+        out = "ElGamal";
+        break;
+
+      case ProofType_HashingGenerator:
+        out = "HashingGenerator";
+        break;
+
+      case ProofType_Pairing:
+        out = "Pairing";
+        break;
+
+      case ProofType_Invalid:
+        out = "Invalid";
+        break;
+
+      default: 
+        out = "Unknown";
+    }
+
+    return out;
+  }
+
+  QString Parameters::ToString() const
+  {
+    return QString("Parameters<keygroup: %1, "
+        "msggroup: %2, "
+        "prooftype: %3, "
+        "nelms: %4, "
+        "nonce: \"%5\">").arg(
+          _key_group->ToString()).arg(
+          _msg_group->ToString()).arg(
+          ProofTypeToString(GetProofType())).arg(
+          _n_elements).arg( 
+          QString(_round_nonce.toHex()));
+  }
 }
 }
 }

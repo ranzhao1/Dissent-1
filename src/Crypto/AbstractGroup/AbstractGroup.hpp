@@ -1,6 +1,8 @@
 #ifndef DISSENT_CRYPTO_ABSTRACT_GROUP_ABSTRACT_GROUP_H_GUARD
 #define DISSENT_CRYPTO_ABSTRACT_GROUP_ABSTRACT_GROUP_H_GUARD
 
+#include <QString>
+
 #include "Crypto/Integer.hpp"
 #include "Element.hpp"
 
@@ -161,6 +163,11 @@ namespace AbstractGroup {
        * Return true if element is a generator
        */
       virtual bool IsGenerator(const Element &a) const = 0;
+
+      /**
+       * Return a printable representation of the group
+       */
+      virtual QString ToString() const = 0;
 
     private:
 
