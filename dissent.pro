@@ -13,18 +13,19 @@ QMAKE_CXXFLAGS += -Werror
 QMAKE_CFLAGS += -Werror 
 
 # Comment out to disable use
-# of pairing-based crypto library
+# of pairing-based crypto library 
+# TODO: Put in ifdefs to remove
+# PBC code
 USE_PBC = "true"
 
 !isEmpty(USE_PBC) {
   DEFINES += "USE_PBC"
-#LIBS += "/usr/local/lib/libpbc.a"
-  LIBS += -lpbc -lcrypto
+  LIBS += -lpbc -lcrypto -lgmp
   message( Using PBC library )
 }
 
 # Input
-LIBS += -lcryptopp -lpbc -lgmp
+LIBS += -lcryptopp 
 HEADERS += ext/joyent-http-parser/http_parser.h \
            ext/qt-json/json.h \
            ext/PBCWrapper-0.8.0/G1.h \
