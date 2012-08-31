@@ -178,7 +178,7 @@ namespace Anonymity {
 
           virtual ~State() {}
 
-          /* My blogdrop keys */
+          /* My blogdrop preliminary keys */
           const QSharedPointer<const Parameters> params;
           const QSharedPointer<const PrivateKey> client_priv;
           const QSharedPointer<const PublicKey> client_pub;

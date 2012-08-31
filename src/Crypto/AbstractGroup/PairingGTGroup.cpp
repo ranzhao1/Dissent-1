@@ -77,18 +77,49 @@ namespace AbstractGroup {
   
   QByteArray PairingGTGroup::ElementToByteArray(const Element &a) const
   {
-    std::string s = GetElement(a).toString();
-    Q_ASSERT(s.length() > 1);
-    return QByteArray(s.c_str(), s.length());
+    Integer x, y;
+    GetPBCElementCoordinates(a, x, y);
+
+    //std::string s = GetElement(a).toString();
+    //Q_ASSERT(s.length() > 1);
+
+    Q_ASSERT(Integer(1) == (((x*x)+(y*y))%_field));
+
+    QByteArray bit;
+    if(y <= (_field/2)) bit = "0";
+    else bit = "1";
+
+    qDebug() << "x1" << x.GetByteArray().toHex();
+    qDebug() << "y1" << y.GetByteArray().toHex();
+    return bit + x.GetByteArray();
   }
   
   Element PairingGTGroup::ElementFromByteArray(const QByteArray &bytes) const 
   { 
-    Q_ASSERT(bytes.count());
-    const unsigned char *data = (const unsigned char*)(bytes.constData());
-    GT a(_pairing, data, bytes.count(), 16, true);
-    Q_ASSERT(a.isElementPresent());
-    return Element(new PairingElementData<GT>(a));
+    Q_ASSERT(bytes.count() > 1);
+
+    QByteArray bit = bytes.left(1);
+
+    Integer x(bytes.mid(1));
+    Integer y;
+
+    if(!SolveForY(x, y)) qFatal("Illegal element");
+    Q_ASSERT(Integer(1) == (((x*x)+(y*y))%_field));
+
+    if(bit == "0") {
+      // y <= _field/2
+      if(!(y <= _field/2)) y = ((y * Integer(-1)) % _field);
+    } else {
+      // y > _field/2
+      if(y <= _field/2) y = ((y * Integer(-1)) % _field);
+    }
+
+    qDebug() << "x" << x.GetByteArray().toHex();
+    qDebug() << "y" << y.GetByteArray().toHex();
+
+
+
+    return IntegersToElement(x, y);
   }
 
   bool PairingGTGroup::IsIdentity(const Element &a) const 
@@ -132,28 +163,14 @@ namespace AbstractGroup {
     const QByteArray pad(1, 0xff);
     unsigned char qr_pad = '\0';
     Integer x, y;
-    const CryptoPP::Integer f = CppIntegerData::GetInteger(_field);
 
     // We flip bits in qr_pad until (x,y) satisfies
     // the equation:
     //   x^2 + y^2 == 1 mod q
     while(true) {
       x = Integer(pad+left+QByteArray(1, qr_pad)+pad);
-      // we want x^2 + y^2 == 1
 
-      // t = x^2
-      Integer t = x.Pow(2, _field);
-      
-      // t = 1 - x^2
-      t = (1 - t) % _field;
-
-      // check if t is a QR 
-      CryptoPP::Integer i = CppIntegerData::GetInteger(t);
-      bool is_qr = (1 == CryptoPP::Jacobi(i, f));
-
-      if(is_qr) {
-        CryptoPP::Integer root = ModularSquareRoot(i, f);
-        y = Integer(new CppIntegerData(root));
+      if(SolveForY(x, y)) {
         break;
       }
 
@@ -161,36 +178,9 @@ namespace AbstractGroup {
         qFatal("Failed to encode element");
 
       qr_pad++;
-
     }
 
-    Element e;
-
-    mpz_t gx, gy;
-    mpz_init(gx);
-    mpz_init(gy);
-
-    // read into gmp integers
-    if(gmp_sscanf(x.GetByteArray().toHex().constData(), "%Zx", gx) != 1)
-      qFatal("Could not read x");
-    if(gmp_sscanf(y.GetByteArray().toHex().constData(), "%Zx", gy) != 1)
-      qFatal("Could not read y");
-
-    // convert into string "[x, y]" in base 10
-    int ret;
-    const int maxlen = 1024*64;
-    QByteArray buf(maxlen, 0);
-    if((ret = gmp_snprintf(buf.data(), maxlen, "[%Zd, %Zd]", gx, gy)) >= maxlen)
-      qFatal("Buf not long enough");
-
-    // convert into GT element
-    GT gt(_pairing, (const unsigned char*)buf.constData(), ret, 10, false);
-
-    e = Element(new PairingElementData<GT>(gt));
-
-    mpz_clear(gx);
-    mpz_clear(gy);
-    return e;
+    return IntegersToElement(x, y);
   }
  
   bool PairingGTGroup::DecodeBytes(const Element &a, QByteArray &bytes) const
@@ -280,6 +270,62 @@ namespace AbstractGroup {
 
     // true if 1 == x^2 + y^2
     return (Integer(1) == (((x*x) + (y*y)) % _field));
+  }
+
+  bool PairingGTGroup::SolveForY(const Integer &x, Integer &y) const
+  {
+    const CryptoPP::Integer f = CppIntegerData::GetInteger(_field);
+
+    // we want x^2 + y^2 == 1
+
+    // t = x^2
+    Integer t = x.Pow(2, _field);
+    
+    // t = 1 - x^2
+    t = (1 - t) % _field;
+
+    // check if t is a QR 
+    CryptoPP::Integer i = CppIntegerData::GetInteger(t);
+    bool is_qr = (1 == CryptoPP::Jacobi(i, f));
+
+    if(is_qr) {
+      CryptoPP::Integer root = ModularSquareRoot(i, f);
+      y = Integer(new CppIntegerData(root));
+    } 
+
+    return is_qr;
+  }
+
+  Element PairingGTGroup::IntegersToElement(const Integer &x, Integer &y) const
+  {
+    Element e;
+
+    mpz_t gx, gy;
+    mpz_init(gx);
+    mpz_init(gy);
+
+    // read into gmp integers
+    if(gmp_sscanf(x.GetByteArray().toHex().constData(), "%Zx", gx) != 1)
+      qFatal("Could not read x");
+    if(gmp_sscanf(y.GetByteArray().toHex().constData(), "%Zx", gy) != 1)
+      qFatal("Could not read y");
+
+    // convert into string "[x, y]" in base 10
+    int ret;
+    const int maxlen = 1024*64;
+    QByteArray buf(maxlen, 0);
+    if((ret = gmp_snprintf(buf.data(), maxlen, "[%Zd, %Zd]", gx, gy)) >= maxlen)
+      qFatal("Buf not long enough");
+
+    // convert into GT element
+    GT gt(_pairing, (const unsigned char*)buf.constData(), ret, 10, false);
+
+    e = Element(new PairingElementData<GT>(gt));
+
+    mpz_clear(gx);
+    mpz_clear(gy);
+
+    return e;
   }
 
 }

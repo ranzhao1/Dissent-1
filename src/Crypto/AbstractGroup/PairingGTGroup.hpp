@@ -134,6 +134,8 @@ namespace AbstractGroup {
       }
 
       void GetPBCElementCoordinates(const Element &a, Integer &x, Integer &y) const;
+      bool SolveForY(const Integer &x, Integer &y) const;
+      Element IntegersToElement(const Integer &x, Integer &y) const;
   };
 
 }

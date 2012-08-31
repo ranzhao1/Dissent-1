@@ -1,6 +1,7 @@
 BlogDrop (23 August 2012)
 - Implement XOR test comparison scheme
-- Use QThreadPool in BlogDropRound to avoid disconnect problems
+- Implement accountability in BlogDropRound
+  for Bryan's hashing generator version
 
 -----------------
 

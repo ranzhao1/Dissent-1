@@ -4,9 +4,18 @@
 namespace Dissent {
 namespace Benchmarks {
 
+  const char header[] =  ", n_gen, n_verify, n_client, n_server, "
+                          "proof type, nbits, group type, nelms, "
+                          "plaintext bytes, ciphertext len, time gen n, "
+                          "time verify n";
   typedef struct {
+    int n_clients;
+    int n_servers;
     int n_gen;
     int n_verify;
+    // if true, vary number of ciphertext
+    // elements, else leave it at the 
+    bool vary_n_elms;
   } verifyN_params;
 
   typedef struct {
@@ -20,7 +29,6 @@ namespace Benchmarks {
     double time_gen;
     // time verify N 
     double time_verify;
-
   } verifyN_stats;
 
   void ComputeSecrets(QSharedPointer<const Parameters> params, 
@@ -70,8 +78,8 @@ namespace Benchmarks {
   void VerifyNTimes(QSharedPointer<Parameters> params, 
       verifyN_params *p, verifyN_stats *s)
   {
-    const int nservers = 10;
-    const int nclients = 1000;
+    const int nservers = p->n_clients;
+    const int nclients = p->n_servers;
     const int author_idx = 1;
 
     // Generate an author PK
@@ -112,11 +120,13 @@ namespace Benchmarks {
         master_client_pks, master_server_pks);
 
     QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, server_pks));
-    
+   
     ///// Loop here
     int nelms = 1;
     while(Plaintext::CanFit(params)<1024*4) {  
-      params->SetNElements(nelms);
+      if(p->vary_n_elms) {
+        params->SetNElements(nelms);
+      }
 
       // Get a random plaintext
       Library *lib = CryptoFactory::GetInstance().GetLibrary();
@@ -154,6 +164,8 @@ namespace Benchmarks {
       qDebug() << ","
         << p->n_gen << "," 
         << p->n_verify << "," 
+        << p->n_clients << "," 
+        << p->n_servers << "," 
         << Parameters::ProofTypeToString(params->GetProofType()) << ","
         << params->GetKeyGroup()->GetSecurityParameter() << ","
         << params->GetKeyGroup()->ToString() << "," 
@@ -162,6 +174,10 @@ namespace Benchmarks {
         << s->cipher_len << ","
         << s->time_gen << ","
         << s->time_verify << ",";
+
+      // If we're not varying the number of elements,
+      // stop here
+      if(!p->vary_n_elms) break;
 
       if(nelms < 8) nelms += 1;
       else if(nelms < 16) nelms += 2;
@@ -222,19 +238,41 @@ namespace Benchmarks {
   }
 
   // Cycle through integer types
-  TEST(Micro, VerifyN) {
+  TEST(Micro, VerifyNLength) {
 
     verifyN_params p;
+    p.n_servers = 10;
+    p.n_clients = 1000;
     p.n_gen = 10;
     p.n_verify = 10;
+    p.vary_n_elms = true;
 
-    qDebug() << ", n_gen, n_verify, proof type, nbits, group type, nelms, plaintext bytes, ciphertext len, time gen n, time verify n";
+    qDebug() << header;
     VerifyNTimesDiffLenLibrary(&p, false);
+  }
 
-    // Don't use OpenSSL integers
-    // VerifyNTimesDiffLenLibrary(&p, true);
+  TEST(Micro, VerifyNServers) {
 
-    QSharedPointer<const AbstractGroup::AbstractGroup> integer = IntegerGroup::Production2048Fixed();
+    verifyN_params p;
+    p.n_servers = 10;
+    p.n_clients = 1000;
+    p.n_gen = 10;
+    p.n_verify = 10;
+    p.vary_n_elms = false;
+
+    qDebug() << header;
+
+    for(int i=2; i<128;) {
+      p.n_servers = i;
+      VerifyNTimesDiffLenLibrary(&p, false);
+
+      if(i < 8) i += 1;
+      else if(i < 16) i += 2;
+      else if(i < 32) i += 4;
+      else if(i < 64) i += 8;
+      else if(i < 128) i += 16;
+      else i += 128;
+    }
   }
 }
 }
