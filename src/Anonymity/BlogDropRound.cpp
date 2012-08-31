@@ -1,3 +1,5 @@
+#include <QtConcurrentRun>
+
 #include "Crypto/Hash.hpp"
 #include "Crypto/BlogDrop/ClientCiphertext.hpp"
 #include "Crypto/BlogDrop/ServerCiphertext.hpp"
@@ -241,7 +243,7 @@ namespace Anonymity {
 
     Q_ASSERT(_server_state);
 
-    if(!_server_state->allowed_clients.contains(from)) {
+    if((from != GetLocalId()) && !_server_state->allowed_clients.contains(from)) {
       throw QRunTimeError("Not allowed to submit a public key");
     } else if(_server_state->client_pub_packets.contains(from)) {
       throw QRunTimeError("Already have public key");
@@ -257,7 +259,8 @@ namespace Anonymity {
       from.ToString() << "Have" << _server_state->client_pub_packets.count()
       << "expecting" << _server_state->allowed_clients.count();
 
-    if(_server_state->allowed_clients.count() ==
+    // Allowed clients + 1 (server submits key to self)
+    if((_server_state->allowed_clients.count() + 1) ==
         _server_state->client_pub_packets.count())
     {
       _state_machine.StateComplete();
@@ -299,20 +302,26 @@ namespace Anonymity {
       const Id &client_id = keys[idx];
 
       QPair<QByteArray, QByteArray> pair = client_pub_packets[client_id];
-      if(!GetGroup().GetKey(client_id)->Verify(pair.first, pair.second))
-        throw QRunTimeError("Got public key with invalid signature");
+      if(!GetGroup().GetKey(client_id)->Verify(pair.first, pair.second)) {
+        Stop("Got public key with invalid signature");
+        return;
+      }
 
       Id round_id;
       QByteArray key_bytes;
       QDataStream stream(pair.first);
       stream >> round_id >> key_bytes;
 
-      if(round_id != GetRoundId())
-        throw QRunTimeError("Got public key with invalid round ID");
+      if(round_id != GetRoundId()) {
+        Stop("Got public key with invalid round ID");
+        return;
+      }
 
       _state->client_pks[client_id] = QSharedPointer<const PublicKey>(new PublicKey(_state->params, key_bytes));
-      if(!_state->client_pks[client_id]->IsValid()) 
-        throw QRunTimeError("Got invalid client public key");
+      if(!_state->client_pks[client_id]->IsValid()) {
+        Stop("Got invalid client public key");
+        return;
+      }
     }
 
     qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
@@ -617,10 +626,14 @@ namespace Anonymity {
 
   void BlogDropRound::SubmitClientCiphertext()
   {
+    QFuture<QByteArray> future = QtConcurrent::run(this, &BlogDropRound::GenerateClientCiphertext);
+    QByteArray mycipher = future.result();
+    //QByteArray mycipher = GenerateClientCiphertext();
+
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << CLIENT_CIPHERTEXT << GetRoundId() << _state_machine.GetPhase()
-      << GenerateClientCiphertext();
+      << mycipher;
 
     VerifiableSend(_state->my_server, payload);
   }
@@ -691,8 +704,12 @@ namespace Anonymity {
 
   void BlogDropRound::SubmitClientList()
   {
+    QFuture<QByteArray> future = QtConcurrent::run(this, &BlogDropRound::GenerateClientCiphertext);
+    QByteArray mycipher = future.result();
+    //QByteArray mycipher = GenerateClientCiphertext();
+
     // Add my own ciphertext to the set
-    _server_state->client_ciphertexts[GetLocalId()] = GenerateClientCiphertext();
+    _server_state->client_ciphertexts[GetLocalId()] = mycipher;
 
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
@@ -715,6 +732,8 @@ namespace Anonymity {
         throw QRunTimeError("Ciphertext vector has invalid length");
       }
 
+      Q_ASSERT(_state->client_pks.contains(id));
+
       // For each slot
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
         _server_state->blogdrop_servers[slot_idx]->AddClientCiphertext(ctexts[slot_idx],
@@ -733,7 +752,9 @@ namespace Anonymity {
 
   void BlogDropRound::SubmitServerCiphertext()
   {
-    GenerateServerCiphertext();
+    QFuture<void> future = QtConcurrent::run(this, &BlogDropRound::GenerateServerCiphertext);
+    future.waitForFinished();
+    //GenerateServerCiphertext();
 
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
@@ -743,7 +764,7 @@ namespace Anonymity {
     VerifiableBroadcastToServers(payload);
   }
 
-  void BlogDropRound::SubmitValidation()
+  QByteArray BlogDropRound::GenerateServerValidation()
   {
     for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {
       QList<QByteArray> server_list;
@@ -778,7 +799,15 @@ namespace Anonymity {
     QDataStream pstream(&(_state->cleartext), QIODevice::WriteOnly);
     pstream << plaintexts;
 
-    QByteArray signature = GetPrivateIdentity().GetSigningKey()->Sign(_state->cleartext);
+    return GetPrivateIdentity().GetSigningKey()->Sign(_state->cleartext);
+  }
+
+  void BlogDropRound::SubmitValidation()
+  {
+    QFuture<QByteArray> future = QtConcurrent::run(this, 
+        &BlogDropRound::GenerateServerValidation);
+    QByteArray signature = future.result();
+    //QByteArray signature = GenerateServerValidation();
 
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);

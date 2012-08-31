@@ -25,11 +25,11 @@ namespace BlogDrop {
     _server_ciphertexts.clear();
     _client_pks.clear();
 
-    _phase ++;
+    _phase++;
   }
 
-  bool BlogDropServer::AddClientCiphertext(const QByteArray &in, 
-      const QSharedPointer<const PublicKey> &pub) 
+  bool BlogDropServer::AddClientCiphertext(QByteArray in, 
+      QSharedPointer<const PublicKey> pub) 
   {
     QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(_params, 
             _server_pk_set, _author_pub, in);
@@ -69,6 +69,7 @@ namespace BlogDrop {
 
   QByteArray BlogDropServer::CloseBin() 
   {
+    Q_ASSERT(_client_pubs.count());
     _client_pks = QSharedPointer<const PublicKeySet>(new PublicKeySet(_params, _client_pubs));
 
     QSharedPointer<ServerCiphertext> s = CiphertextFactory::CreateServerCiphertext(

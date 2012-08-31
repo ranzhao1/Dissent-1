@@ -47,8 +47,7 @@ namespace BlogDrop {
        * @param serialized ciphertext to add
        * @param pub client public key
        */
-      bool AddClientCiphertext(const QByteArray &in, 
-          const QSharedPointer<const PublicKey> &pub);
+      bool AddClientCiphertext(QByteArray in, QSharedPointer<const PublicKey> pub);
 
       /**
        * Add a list of client ciphertexts. Silently discards invalid
@@ -58,7 +57,7 @@ namespace BlogDrop {
        * @param pubs in the list of client public keys
        */
       bool AddClientCiphertexts(const QList<QByteArray> &in, 
-        const QList<QSharedPointer<const PublicKey> > &pubs);
+          const QList<QSharedPointer<const PublicKey> > &pubs);
 
       /**
        * Reveal server ciphertext corresponding to added client

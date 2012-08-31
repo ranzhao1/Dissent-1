@@ -169,8 +169,8 @@ namespace Anonymity {
        */
       class State {
         public:
-          State(QByteArray round_nonce) : 
-            params(Parameters::IntegerElGamalProductionFixed(round_nonce)),
+          State(QByteArray /*round_nonce*/) : 
+            params(Parameters::IntegerElGamalTestingFixed()),
             client_priv(new PrivateKey(params)),
             client_pub(new PublicKey(client_priv)),
             anonymous_priv(new PrivateKey(params)),
@@ -356,6 +356,7 @@ namespace Anonymity {
       void SubmitServerCiphertext();
       void GenerateServerCiphertext();
       QByteArray GenerateClientCiphertext();
+      QByteArray GenerateServerValidation();
       void SubmitValidation();
       void PushCleartext();
 
