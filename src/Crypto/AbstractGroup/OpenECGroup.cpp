@@ -206,11 +206,11 @@ namespace AbstractGroup {
   {
     // Get number of bytes requires to hold point
     const unsigned int nbytes = EC_POINT_point2oct(_data->group, GetPoint(a),
-      POINT_CONVERSION_UNCOMPRESSED, NULL, 0, _data->ctx);
+      POINT_CONVERSION_COMPRESSED, NULL, 0, _data->ctx);
     QByteArray out(nbytes, 0);
 
     CHECK_CALL(EC_POINT_point2oct(_data->group, GetPoint(a),
-      POINT_CONVERSION_UNCOMPRESSED, (unsigned char*)out.data(), out.count(), _data->ctx));
+      POINT_CONVERSION_COMPRESSED, (unsigned char*)out.data(), out.count(), _data->ctx));
     return out;
   }
   

@@ -80,9 +80,9 @@ namespace AbstractGroup {
   
   QByteArray CppECGroup::ElementToByteArray(const Element &a) const
   {
-    const unsigned int nbytes = _curve.EncodedPointSize(false);
+    const unsigned int nbytes = _curve.EncodedPointSize(true);
     QByteArray out(nbytes, 0);
-    _curve.EncodePoint((unsigned char*)(out.data()), GetPoint(a), false);
+    _curve.EncodePoint((unsigned char*)(out.data()), GetPoint(a), true);
     return out;
   }
   

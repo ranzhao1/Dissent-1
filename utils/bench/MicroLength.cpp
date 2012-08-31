@@ -136,11 +136,11 @@ namespace Benchmarks {
   {
     verify1000_stats s;
     
-    for(int nelms=1; Plaintext::CanFit(params)<1024*8; nelms++) {  
+    for(int nelms=1; Plaintext::CanFit(params)<1024*1; nelms++) {  
       params->SetNElements(nelms);
       Verify1000Times(params, &s);
 
-      qDebug() 
+      qDebug() << ","
         << Parameters::ProofTypeToString(params->GetProofType()) << ","
         << params->GetKeyGroup()->GetSecurityParameter() << ","
         << params->GetKeyGroup()->ToString() << "," 
