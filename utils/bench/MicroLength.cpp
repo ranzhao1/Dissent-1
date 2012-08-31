@@ -5,16 +5,23 @@ namespace Dissent {
 namespace Benchmarks {
 
   typedef struct {
+    int n_gen;
+    int n_verify;
+  } verifyN_params;
+
+  typedef struct {
     // proof type
     // group type
     // nelms
     // plaintext bytes per elm
     // ciphertext len
-    int len;
-    // time verify 1000
-    double time;
+    int cipher_len;
+    // time generate M
+    double time_gen;
+    // time verify N 
+    double time_verify;
 
-  } verify1000_stats;
+  } verifyN_stats;
 
   void ComputeSecrets(QSharedPointer<const Parameters> params, 
       const QList<QSharedPointer<const PrivateKey> > &client_sks_in,
@@ -58,9 +65,10 @@ namespace Benchmarks {
     }
   }
 
-  // Verify 1000 proofs
+  // Verify N proofs
   // Print ciphertext size
-  void Verify1000Times(QSharedPointer<const Parameters> params, verify1000_stats *s)
+  void VerifyNTimes(QSharedPointer<Parameters> params, 
+      verifyN_params *p, verifyN_stats *s)
   {
     const int nservers = 10;
     const int nclients = 1000;
@@ -104,51 +112,74 @@ namespace Benchmarks {
         master_client_pks, master_server_pks);
 
     QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, server_pks));
-
-    // Get a random plaintext
-    Library *lib = CryptoFactory::GetInstance().GetLibrary();
-    QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
-
-    BlogDropAuthor auth(params, master_client_sks[author_idx], server_pk_set, author_priv);
-
-    QByteArray msg(auth.MaxPlaintextLength(), 0);
-    rand->GenerateBlock(msg);
-
-    BlogDropServer server(params, master_server_sks[0], server_pk_set, author_pk);
-
-    // Generate client ciphertext and give it to all servers
-    QByteArray c = BlogDropClient(params, master_client_sks[0], server_pk_set, 
-        author_pk).GenerateCoverCiphertext();
-
-    const qint64 start = QDateTime::currentMSecsSinceEpoch();
-    for(int i=0; i<1000; i++) {
-      server.AddClientCiphertext(c, master_client_pks[0]);  
-    }
-    const qint64 end = QDateTime::currentMSecsSinceEpoch();
-
-    double diff = end-start;
-    s->time = diff/1000.0;
-    s->len = c.count();
-  }
-
-  // Given parameters, change message lengths
-  void Verify1000TimesDiffLen(QSharedPointer<Parameters> params)
-  {
-    verify1000_stats s;
     
-    for(int nelms=1; Plaintext::CanFit(params)<1024*1; nelms++) {  
+    ///// Loop here
+    int nelms = 1;
+    while(Plaintext::CanFit(params)<1024*4) {  
       params->SetNElements(nelms);
-      Verify1000Times(params, &s);
+
+      // Get a random plaintext
+      Library *lib = CryptoFactory::GetInstance().GetLibrary();
+      QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
+
+      BlogDropAuthor auth(params, master_client_sks[author_idx], server_pk_set, author_priv);
+
+      QByteArray msg(auth.MaxPlaintextLength(), 0);
+      rand->GenerateBlock(msg);
+
+      BlogDropServer server(params, master_server_sks[0], server_pk_set, author_pk);
+
+      // Generate client ciphertext and give it to all servers
+      QByteArray c;
+      
+      qint64 start, end; 
+      
+      start = QDateTime::currentMSecsSinceEpoch();
+      for(int i=0; i<p->n_gen; i++) {
+        c = BlogDropClient(params, master_client_sks[0], server_pk_set, 
+            author_pk).GenerateCoverCiphertext();
+      }
+      end = QDateTime::currentMSecsSinceEpoch();
+      s->time_gen = (end-start)/1000.0;
+
+      start = QDateTime::currentMSecsSinceEpoch();
+      for(int i=0; i<p->n_verify; i++) {
+        server.AddClientCiphertext(c, master_client_pks[0]);  
+      }
+      end = QDateTime::currentMSecsSinceEpoch();
+
+      s->time_verify = (end-start)/1000.0;
+      s->cipher_len = c.count();
 
       qDebug() << ","
+        << p->n_gen << "," 
+        << p->n_verify << "," 
         << Parameters::ProofTypeToString(params->GetProofType()) << ","
         << params->GetKeyGroup()->GetSecurityParameter() << ","
         << params->GetKeyGroup()->ToString() << "," 
         << params->GetNElements() << ","
         << Plaintext::CanFit(params) << ","
-        << s.len << ","
-        << s.time << ",";
+        << s->cipher_len << ","
+        << s->time_gen << ","
+        << s->time_verify << ",";
+
+      if(nelms < 8) nelms += 1;
+      else if(nelms < 16) nelms += 2;
+      else if(nelms < 32) nelms += 4;
+      else if(nelms < 64) nelms += 8;
+      else if(nelms < 128) nelms += 16;
+      else if(nelms < 256) nelms += 32;
+      else if(nelms < 512) nelms += 64;
+      else nelms += 128;
     }
+  }
+
+  // Given parameters, change message lengths
+  void VerifyNTimesDiffLen(QSharedPointer<Parameters> params, verifyN_params *p)
+  {
+    verifyN_stats s;
+   
+    VerifyNTimes(params, p, &s);
 
     // proof type
     // nbits
@@ -156,48 +187,52 @@ namespace Benchmarks {
     // nelms
     // plaintext bytes 
     // ciphertext len
-    // time verify 1000
+    // time verify N
   }
 
   // Cycle through proof types
-  void Verify1000TimesDiffLenLibrary(bool use_openssl)
+  void VerifyNTimesDiffLenLibrary(verifyN_params *p, bool use_openssl)
   {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(use_openssl ? CryptoFactory::OpenSSL : CryptoFactory::CryptoPP);
 
     // paring
-    Verify1000TimesDiffLen(Parameters::PairingProductionFixed());
+    VerifyNTimesDiffLen(Parameters::PairingProductionFixed(), p);
 
     // hashing
       // integer
-    Verify1000TimesDiffLen(Parameters::IntegerHashingProductionFixed());
+    VerifyNTimesDiffLen(Parameters::IntegerHashingProductionFixed(), p);
     
       // open ec
-    Verify1000TimesDiffLen(Parameters::OpenECHashingProductionFixed());
-
+    VerifyNTimesDiffLen(Parameters::OpenECHashingProductionFixed(), p);
       // cpp ec
-    Verify1000TimesDiffLen(Parameters::CppECHashingProductionFixed());
+    VerifyNTimesDiffLen(Parameters::CppECHashingProductionFixed(), p);
 
     // elgamal
       // integer
-    Verify1000TimesDiffLen(Parameters::IntegerElGamalProductionFixed());
+    VerifyNTimesDiffLen(Parameters::IntegerElGamalProductionFixed(), p);
 
       // open ec
-    Verify1000TimesDiffLen(Parameters::OpenECElGamalProductionFixed());
+    VerifyNTimesDiffLen(Parameters::OpenECElGamalProductionFixed(), p);
 
       // cpp ec
-    Verify1000TimesDiffLen(Parameters::CppECElGamalProductionFixed());
-
-
+    VerifyNTimesDiffLen(Parameters::CppECElGamalProductionFixed(), p);
     cf.SetLibrary(cname);
   }
 
   // Cycle through integer types
-  TEST(Micro, Length) {
-    qDebug() << "proof type, nbits, group type, nelms, plaintext bytes, ciphertext len, time verify 1000";
-    Verify1000TimesDiffLenLibrary(false);
-    Verify1000TimesDiffLenLibrary(true);
+  TEST(Micro, VerifyN) {
+
+    verifyN_params p;
+    p.n_gen = 10;
+    p.n_verify = 10;
+
+    qDebug() << ", n_gen, n_verify, proof type, nbits, group type, nelms, plaintext bytes, ciphertext len, time gen n, time verify n";
+    VerifyNTimesDiffLenLibrary(&p, false);
+
+    // Don't use OpenSSL integers
+    // VerifyNTimesDiffLenLibrary(&p, true);
 
     QSharedPointer<const AbstractGroup::AbstractGroup> integer = IntegerGroup::Production2048Fixed();
   }
