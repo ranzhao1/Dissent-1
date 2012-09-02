@@ -1,6 +1,7 @@
 #include <QtConcurrentRun>
 
 #include "Crypto/Hash.hpp"
+#include "Crypto/BlogDrop/BlogDropUtils.hpp"
 #include "Crypto/BlogDrop/ClientCiphertext.hpp"
 #include "Crypto/BlogDrop/ServerCiphertext.hpp"
 #include "Identity/PublicIdentity.hpp"
@@ -14,6 +15,7 @@
 
 namespace Dissent {
   using Crypto::BlogDrop::ClientCiphertext;
+  using Crypto::BlogDrop::BlogDropUtils;
   using Crypto::BlogDrop::Plaintext;
   using Crypto::BlogDrop::ServerCiphertext;
   using Crypto::CryptoFactory;
@@ -41,7 +43,6 @@ namespace Anonymity {
     _state_machine.AddState(PROCESS_DATA_SHUFFLE, -1, 0,
         &BlogDropRound::ProcessDataShuffle);
     _state_machine.AddTransition(SHUFFLING, PROCESS_DATA_SHUFFLE);
-    _state_machine.AddTransition(WAIT_FOR_SERVER_PUBLIC_KEYS, PREPARE_FOR_BULK);
 
     _state_machine.AddTransition(OFFLINE, SHUFFLING);
     _state_machine.SetState(OFFLINE);
@@ -83,6 +84,14 @@ namespace Anonymity {
         SERVER_PUBLIC_KEY, &BlogDropRound::HandleServerPublicKey, 
         &BlogDropRound::SubmitServerPublicKey);
 
+    _state_machine.AddState(SERVER_WAIT_FOR_CLIENT_MASTER_PUBLIC_KEYS,
+        CLIENT_MASTER_PUBLIC_KEY, &BlogDropRound::HandleClientMasterPublicKey,
+        &BlogDropRound::SubmitClientPublicKey);
+
+    _state_machine.AddState(WAIT_FOR_SERVER_MASTER_PUBLIC_KEYS,
+        SERVER_MASTER_PUBLIC_KEY, &BlogDropRound::HandleServerMasterPublicKey, 
+        &BlogDropRound::SubmitServerMasterPublicKey);
+
     _state_machine.AddState(SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
         CLIENT_CIPHERTEXT, &BlogDropRound::HandleClientCiphertext,
         &BlogDropRound::SetOnlineClients);
@@ -106,6 +115,19 @@ namespace Anonymity {
         SERVER_WAIT_FOR_CLIENT_PUBLIC_KEYS);
     _state_machine.AddTransition(SERVER_WAIT_FOR_CLIENT_PUBLIC_KEYS, 
         WAIT_FOR_SERVER_PUBLIC_KEYS);
+
+    if(UsesHashingGenerator()) {
+      _state_machine.AddTransition(WAIT_FOR_SERVER_PUBLIC_KEYS,
+          SERVER_WAIT_FOR_CLIENT_MASTER_PUBLIC_KEYS);
+      _state_machine.AddTransition(SERVER_WAIT_FOR_CLIENT_MASTER_PUBLIC_KEYS,
+          WAIT_FOR_SERVER_MASTER_PUBLIC_KEYS);
+      _state_machine.AddTransition(WAIT_FOR_SERVER_MASTER_PUBLIC_KEYS,
+          PREPARE_FOR_BULK);
+    } else {
+      _state_machine.AddTransition(WAIT_FOR_SERVER_PUBLIC_KEYS, 
+          PREPARE_FOR_BULK);
+    }
+
     _state_machine.AddTransition(PREPARE_FOR_BULK,
         SERVER_WAIT_FOR_CLIENT_CIPHERTEXT);
     _state_machine.AddTransition(SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
@@ -145,6 +167,17 @@ namespace Anonymity {
 
     _state_machine.AddTransition(PROCESS_DATA_SHUFFLE, 
         WAIT_FOR_SERVER_PUBLIC_KEYS);
+
+    if(UsesHashingGenerator()) {
+      _state_machine.AddTransition(WAIT_FOR_SERVER_PUBLIC_KEYS,
+          WAIT_FOR_SERVER_MASTER_PUBLIC_KEYS);
+      _state_machine.AddTransition(WAIT_FOR_SERVER_MASTER_PUBLIC_KEYS, 
+          PREPARE_FOR_BULK);
+    } else {
+      _state_machine.AddTransition(WAIT_FOR_SERVER_PUBLIC_KEYS, 
+          PREPARE_FOR_BULK);
+    }
+
     _state_machine.AddTransition(PREPARE_FOR_BULK,
         CLIENT_WAIT_FOR_CLEARTEXT);
     _state_machine.AddTransition(CLIENT_WAIT_FOR_CLEARTEXT,
@@ -267,6 +300,39 @@ namespace Anonymity {
     } 
   }
 
+  void BlogDropRound::HandleClientMasterPublicKey(const Id &from, QDataStream &stream)
+  {
+    if(!IsServer()) {
+      throw QRunTimeError("Not a server");
+    }
+
+    Q_ASSERT(_server_state);
+
+    if((from != GetLocalId()) && !_server_state->allowed_clients.contains(from)) {
+      throw QRunTimeError("Not allowed to submit a public key");
+    } else if(_server_state->client_master_pub_packets.contains(from)) {
+      throw QRunTimeError("Already have public key");
+    }
+
+    QPair<QByteArray, QByteArray> pair;
+    stream >> pair;
+
+    _server_state->client_master_pub_packets[from] = pair;
+
+    qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
+      ": received client master public key from" << GetGroup().GetIndex(from) <<
+      from.ToString() << "Have" << _server_state->client_master_pub_packets.count()
+      << "expecting" << _server_state->allowed_clients.count();
+
+    // Allowed clients + 1 (server submits key to self)
+    if((_server_state->allowed_clients.count() + 1) ==
+        _server_state->client_master_pub_packets.count())
+    {
+      _state_machine.StateComplete();
+    } 
+  }
+
+
   void BlogDropRound::HandleServerPublicKey(const Id &from, QDataStream &stream)
   {
     if(!GetGroup().GetSubgroup().Contains(from)) {
@@ -330,6 +396,81 @@ namespace Anonymity {
       << "expecting" << GetGroup().GetSubgroup().Count();
 
     if(_state->server_pks.count() == GetGroup().GetSubgroup().Count())
+    {
+      _state_machine.StateComplete();
+    } 
+  }
+
+  void BlogDropRound::HandleServerMasterPublicKey(const Id &from, QDataStream &stream)
+  {
+    if(!GetGroup().GetSubgroup().Contains(from)) {
+      throw QRunTimeError("Got public key from non-server");
+    }
+
+    const int server_idx = GetGroup().GetSubgroup().GetIndex(from);
+
+    if(_state->master_server_pks.contains(server_idx)) {
+      throw QRunTimeError("Already have server public key");
+    }
+
+    QByteArray public_key;
+    QList<QByteArray> commits;
+    QHash<Id, QPair<QByteArray, QByteArray> > client_master_pub_packets;
+    stream >> public_key >> commits >> client_master_pub_packets;
+
+    QList<QSharedPointer<const PublicKey> > server_keys;
+    for(int i=0; i<commits.count(); i++) {
+      server_keys.append(QSharedPointer<const PublicKey>(new PublicKey(_state->params, commits[i])));
+    }
+
+    /* matrix[server_idx][client_idx] = commit */
+    _state->commit_matrix_servers[server_idx] = server_keys;
+
+    if(commits.count() != GetGroup().Count()) {
+      Stop("Got invalid server commits");
+      return;
+    }
+
+    const QList<Id> keys = client_master_pub_packets.keys();
+    for(int idx=0; idx<keys.count(); idx++) {
+      const Id &client_id = keys[idx];
+
+      QPair<QByteArray, QByteArray> pair = client_master_pub_packets[client_id];
+      if(!GetGroup().GetKey(client_id)->Verify(pair.first, pair.second)) {
+        Stop("Got public key with invalid signature");
+        return;
+      }
+
+      Id round_id;
+      QList<QByteArray> client_commits;
+      QDataStream stream(pair.first);
+      stream >> round_id >> client_commits;
+
+      if(round_id != GetRoundId()) {
+        Stop("Got public key with invalid round ID");
+        return;
+      }
+
+      if(client_commits.count() != GetGroup().GetSubgroup().Count()) {
+        Stop("Got invalid client commits");
+        return;
+      }
+
+      QList<QSharedPointer<const PublicKey> > keys;
+      for(int i=0; i<client_commits.count(); i++) {
+        keys.append(QSharedPointer<const PublicKey>(
+              new PublicKey(_state->params, client_commits[i])));
+      }
+
+      _state->commit_matrix_clients[GetGroup().GetIndex(client_id)] = keys;
+    }
+
+    qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
+      ": received server master public key from" << GetGroup().GetIndex(from) <<
+      from.ToString() << "Have" << _state->commit_matrix_servers.count()
+      << "expecting" << GetGroup().GetSubgroup().Count();
+
+    if(_state->commit_matrix_servers.count() == GetGroup().GetSubgroup().Count())
     {
       _state_machine.StateComplete();
     } 
@@ -512,7 +653,7 @@ namespace Anonymity {
 
   QPair<QByteArray, bool> BlogDropRound::GetShuffleData(int)
   {
-    _state->shuffle_data = _state->anonymous_pub->GetByteArray();
+    _state->shuffle_data = _state->anonymous_pk->GetByteArray();
 
     return QPair<QByteArray, bool>(_state->shuffle_data, false);
   }
@@ -568,7 +709,7 @@ namespace Anonymity {
     // to my server
     QByteArray packet;
     QDataStream pstream(&packet, QIODevice::WriteOnly);
-    pstream << GetRoundId() << _state->client_pub->GetByteArray();
+    pstream << GetRoundId() << _state->client_pk->GetByteArray();
     QByteArray signature = GetPrivateIdentity().GetSigningKey()->Sign(packet);
 
     QByteArray payload;
@@ -584,8 +725,8 @@ namespace Anonymity {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << SERVER_PUBLIC_KEY << GetRoundId() << _state_machine.GetPhase() 
-      << _server_state->server_pub->GetByteArray()
-      << _server_state->server_pub->ProveKnowledge(_server_state->server_priv)
+      << _server_state->server_pk->GetByteArray()
+      << _server_state->server_pk->ProveKnowledge(_server_state->server_sk)
       << _server_state->client_pub_packets;
 
     // Once we send the client PKs we can throw them away
@@ -594,24 +735,122 @@ namespace Anonymity {
     VerifiableBroadcast(payload);
   }
 
+  void BlogDropRound::SubmitClientMasterPublicKey()
+  {
+    QList<QSharedPointer<const PublicKey> > server_pks;
+    for(int i=0; i<GetGroup().GetSubgroup().Count(); i++) {
+      server_pks.append(_state->server_pks[i]);
+    }
+
+    QList<QSharedPointer<const PublicKey> > commits;
+    BlogDropUtils::GetMasterSharedSecrets(_state->params,
+        _state->client_sk,
+        server_pks,
+        _state->master_client_sk,
+        _state->master_client_pk,
+        commits);
+
+    QList<QByteArray> byte_commits;
+    for(int i=0; i<_server_state->commits.count(); i++) {
+      byte_commits.append(
+          _state->params->GetKeyGroup()->ElementToByteArray(commits[i]->GetElement()));
+    }
+
+    // Sign the master public key with my long-term key and send it 
+    // to my server
+    QByteArray packet;
+    QDataStream pstream(&packet, QIODevice::WriteOnly);
+    pstream 
+      << GetRoundId() 
+      << byte_commits;
+
+    QByteArray signature = GetPrivateIdentity().GetSigningKey()->Sign(packet);
+
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream << CLIENT_MASTER_PUBLIC_KEY << GetRoundId() << _state_machine.GetPhase() 
+      << QPair<QByteArray, QByteArray>(packet, signature);
+
+    VerifiableSend(IsServer() ? GetLocalId() : _state->my_server, payload);
+  }
+
+  void BlogDropRound::SubmitServerMasterPublicKey()
+  {
+    QList<QSharedPointer<const PublicKey> > client_pks;
+    for(int i=0; i<GetGroup().GetSubgroup().Count(); i++) {
+      client_pks.append(_state->client_pks[GetGroup().GetId(i)]);
+    }
+
+    QList<QSharedPointer<const PublicKey> > commits;
+    BlogDropUtils::GetMasterSharedSecrets(_state->params,
+        _server_state->server_sk,
+        client_pks,
+        _server_state->server_master_sk,
+        _server_state->server_master_pk,
+        commits);
+
+    QList<QByteArray> byte_commits;
+    for(int i=0; i<_server_state->commits.count(); i++) {
+      byte_commits.append(
+          _state->params->GetKeyGroup()->ElementToByteArray(
+            _server_state->commits[i]->GetElement()));
+    }
+
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream << SERVER_MASTER_PUBLIC_KEY << GetRoundId() << _state_machine.GetPhase() 
+      << _server_state->server_master_pk->GetByteArray()
+      << byte_commits
+      << _server_state->client_master_pub_packets;
+
+    // Once we send the client PKs we can throw them away
+    _server_state->client_master_pub_packets.clear();
+
+    VerifiableBroadcast(payload);
+  }
+
+
   void BlogDropRound::PrepareForBulk()
   {
-    _state->server_pk_set = QSharedPointer<const PublicKeySet>(
-        new PublicKeySet(_state->params, _state->server_pks.values()));
+    for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {
+      for(int client_idx=0; client_idx<GetGroup().Count(); client_idx++) {
+        if(_state->commit_matrix_servers[server_idx][client_idx] != 
+            _state->commit_matrix_clients[client_idx][server_idx]) {
+          Stop("Client and server disagree on commit");
+          return;
+        }
+      }
+    }
+
+    for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {
+      PublicKeySet set(_state->params, _state->commit_matrix_servers[server_idx]);
+      _state->master_server_pks[server_idx] = QSharedPointer<const PublicKey>(
+            new PublicKey(_state->params, set.GetElement())); 
+    }
+
+    for(int client_idx=0; client_idx<GetGroup().Count(); client_idx++) {
+      PublicKeySet set(_state->params, _state->commit_matrix_clients[client_idx]);
+      _state->master_client_pks[GetGroup().GetId(client_idx)] = QSharedPointer<const PublicKey>(
+            new PublicKey(_state->params, set.GetElement())); 
+    }
+
+    _state->master_server_pk_set = QSharedPointer<const PublicKeySet>(
+        new PublicKeySet(_state->params, _state->master_server_pks.values()));
+
     _state->blogdrop_author = QSharedPointer<BlogDropAuthor>(
-        new BlogDropAuthor(_state->params, _state->client_priv, _state->server_pk_set, _state->anonymous_priv));
+        new BlogDropAuthor(_state->params, _state->client_sk, _state->master_server_pk_set, _state->anonymous_sk));
 
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      QSharedPointer<BlogDropClient> c(new BlogDropClient(_state->params, _state->client_priv,
-        _state->server_pk_set, _state->slot_pks[slot_idx])); 
+      QSharedPointer<BlogDropClient> c(new BlogDropClient(_state->params, _state->client_sk,
+        _state->master_server_pk_set, _state->slot_pks[slot_idx])); 
       _state->blogdrop_clients.append(c);
     }
 
     if(IsServer()) {
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
         QSharedPointer<BlogDropServer> s(new BlogDropServer(_state->params,
-          _server_state->server_priv,
-          _state->server_pk_set, _state->slot_pks[slot_idx]));
+          _server_state->server_sk,
+          _state->master_server_pk_set, _state->slot_pks[slot_idx]));
         _server_state->blogdrop_servers.append(s);
       }
     }

@@ -54,9 +54,11 @@ namespace Benchmarks {
       }
 
       for(int i=0; i<server_sks_in.count(); i++) { 
-        QSharedPointer<const PrivateKey> priv = BlogDropUtils::GetMasterSharedSecret(params, 
-            server_sks_in[i], client_pks_in);
-        QSharedPointer<const PublicKey> pub(new PublicKey(priv));
+        QSharedPointer<const PrivateKey> priv;
+        QSharedPointer<const PublicKey> pub;
+        QList<QSharedPointer<const PublicKey> > commits;
+        BlogDropUtils::GetMasterSharedSecrets(params, 
+            server_sks_in[i], client_pks_in, priv, pub, commits);
 
         server_pks_out.append(pub);
         server_sks_out.append(priv);

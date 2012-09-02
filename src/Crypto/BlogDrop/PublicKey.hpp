@@ -82,7 +82,7 @@ namespace BlogDrop {
        * corresponding to this public key.
        * @params secret the secret key
        */
-      inline QByteArray ProveKnowledge(const QSharedPointer<const PrivateKey> &secret) {
+      inline QByteArray ProveKnowledge(const QSharedPointer<const PrivateKey> &secret) const {
         return ProveKnowledge(*secret);
       }
       QByteArray ProveKnowledge(const PrivateKey &secret) const;

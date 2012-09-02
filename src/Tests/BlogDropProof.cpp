@@ -445,16 +445,22 @@ namespace Tests {
     QList<QSharedPointer<const PublicKey> > master_server_pub;
 
     for(int i=0; i<nclients; i++) { 
-      QSharedPointer<const PrivateKey> priv = BlogDropUtils::GetMasterSharedSecret(params, client_sks[i], server_pks);
-      QSharedPointer<const PublicKey> pub(new PublicKey(priv));
+      QSharedPointer<const PrivateKey> priv;
+      QSharedPointer<const PublicKey> pub;
+      QList<QSharedPointer<const PublicKey> > commits;
+      
+      BlogDropUtils::GetMasterSharedSecrets(params, client_sks[i], server_pks, priv, pub, commits);
 
       master_client_pub.append(pub);
       master_client_priv.append(priv);
     }
 
     for(int i=0; i<nservers; i++) { 
-      QSharedPointer<const PrivateKey> priv = BlogDropUtils::GetMasterSharedSecret(params, server_sks[i], client_pks);
-      QSharedPointer<const PublicKey> pub(new PublicKey(priv));
+      QSharedPointer<const PrivateKey> priv;
+      QSharedPointer<const PublicKey> pub;
+      QList<QSharedPointer<const PublicKey> > commits;
+      
+      BlogDropUtils::GetMasterSharedSecrets(params, server_sks[i], client_pks, priv, pub, commits);
 
       master_server_pub.append(pub);
       master_server_priv.append(priv);

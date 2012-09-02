@@ -116,12 +116,16 @@ namespace BlogDrop {
     return gen;
   }
 
-  QSharedPointer<PrivateKey> BlogDropUtils::GetMasterSharedSecret(const QSharedPointer<const Parameters> &params,
+  void BlogDropUtils::GetMasterSharedSecrets(const QSharedPointer<const Parameters> &params,
       const QSharedPointer<const PrivateKey> &priv, 
-      const QList<QSharedPointer<const PublicKey> > &pubs) 
+      const QList<QSharedPointer<const PublicKey> > &pubs,
+      QSharedPointer<const PrivateKey> &master_priv,
+      QSharedPointer<const PublicKey> &master_pub,
+      QList<QSharedPointer<const PublicKey> > &commits) 
   { 
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     const Integer q = params->GetKeyGroup()->GetOrder();
+    const Element g = params->GetKeyGroup()->GetGenerator();
     Integer out = 0;
 
     for(int i=0; i<pubs.count(); i++) {
@@ -131,11 +135,15 @@ namespace BlogDrop {
       // hash result
       QByteArray digest = hash->ComputeHash(params->GetKeyGroup()->ElementToByteArray(shared));
 
+      commits.append(QSharedPointer<const PublicKey>(
+            new PublicKey(params, params->GetKeyGroup()->Exponentiate(g, Integer(digest)))));
+
       // sum of results (mod q) is the master secret
       out = (out + Integer(digest)) % q;
     }
 
-    return QSharedPointer<PrivateKey>(new PrivateKey(params, out));
+    master_priv = QSharedPointer<const PrivateKey>(new PrivateKey(params, out));
+    master_pub = QSharedPointer<const PublicKey>(new PublicKey(master_priv));
   }
 
 }

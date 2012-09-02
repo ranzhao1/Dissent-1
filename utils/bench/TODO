@@ -6,7 +6,7 @@
 --> Compare with XOR
 --> Show asymptotic performance (huge N, etc)
 
-== Macrobenchmarks == (over % nodes sending)
+== Macrobenchmarks == (over N, over % nodes sending)
 * (chat-room) tweet-sized messages
 * 1MB PDF, infrequent
 

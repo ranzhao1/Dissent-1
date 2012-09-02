@@ -40,6 +40,8 @@ namespace Anonymity {
       enum MessageType {
         CLIENT_PUBLIC_KEY = 0,
         SERVER_PUBLIC_KEY,
+        CLIENT_MASTER_PUBLIC_KEY,
+        SERVER_MASTER_PUBLIC_KEY,
         CLIENT_CIPHERTEXT,
         SERVER_CLIENT_LIST,
         SERVER_CIPHERTEXT,
@@ -53,6 +55,8 @@ namespace Anonymity {
         PROCESS_DATA_SHUFFLE,
         SERVER_WAIT_FOR_CLIENT_PUBLIC_KEYS,
         WAIT_FOR_SERVER_PUBLIC_KEYS,
+        SERVER_WAIT_FOR_CLIENT_MASTER_PUBLIC_KEYS,
+        WAIT_FOR_SERVER_MASTER_PUBLIC_KEYS,
         PREPARE_FOR_BULK,
         CLIENT_WAIT_FOR_CLEARTEXT,
         SERVER_WAIT_FOR_CLIENT_CIPHERTEXT,
@@ -128,6 +132,12 @@ namespace Anonymity {
 
       virtual void HandleDisconnect(const Id &id);
 
+      inline bool UsesHashingGenerator() const
+      { 
+        return (_state->params->GetProofType() == Parameters::ProofType_HashingGenerator);
+      }
+
+
     protected:
       typedef Utils::Random Random;
 
@@ -171,28 +181,39 @@ namespace Anonymity {
         public:
           State(QByteArray /*round_nonce*/) : 
             params(Parameters::IntegerElGamalTestingFixed()),
-            client_priv(new PrivateKey(params)),
-            client_pub(new PublicKey(client_priv)),
-            anonymous_priv(new PrivateKey(params)),
-            anonymous_pub(new PublicKey(anonymous_priv)) {}
+            client_sk(new PrivateKey(params)),
+            client_pk(new PublicKey(client_sk)),
+            anonymous_sk(new PrivateKey(params)),
+            anonymous_pk(new PublicKey(anonymous_sk)) {}
 
           virtual ~State() {}
 
-          /* My blogdrop preliminary keys */
           const QSharedPointer<const Parameters> params;
-          const QSharedPointer<const PrivateKey> client_priv;
-          const QSharedPointer<const PublicKey> client_pub;
-          const QSharedPointer<const PrivateKey> anonymous_priv;
-          const QSharedPointer<const PublicKey> anonymous_pub;
 
-          /* Set of all server PKs */
+          /* My blogdrop preliminary keys */
+          const QSharedPointer<const PrivateKey> client_sk;
+          const QSharedPointer<const PublicKey> client_pk;
+
+          /* Preliminary blogdrop keys */
           QHash<int, QSharedPointer<const PublicKey> > server_pks;
-          QSharedPointer<const PublicKeySet> server_pk_set;
-
-          /* Set of all client PKs */
           QHash<Id, QSharedPointer<const PublicKey> > client_pks;
 
+          /* Master blogdrop keys */
+          QSharedPointer<const PrivateKey> master_client_sk;
+          QSharedPointer<const PublicKey> master_client_pk;
+    
+          /* matrix[server_idx][client_idx] = commit */
+          QHash<int, QList<QSharedPointer<const PublicKey> > > commit_matrix_servers;
+          /* matrix[client_idx][client_idx] = commit */
+          QHash<int, QList<QSharedPointer<const PublicKey> > > commit_matrix_clients;
+
+          QHash<int, QSharedPointer<const PublicKey> > master_server_pks;
+          QSharedPointer<const PublicKeySet> master_server_pk_set;
+          QHash<Id, QSharedPointer<const PublicKey> > master_client_pks;
+
           /* Anon author PKs */
+          const QSharedPointer<const PrivateKey> anonymous_sk;
+          const QSharedPointer<const PublicKey> anonymous_pk;
           QList<QSharedPointer<const PublicKey> > slot_pks;
 
           /* Blogdrop ciphertext generators */
@@ -221,8 +242,8 @@ namespace Anonymity {
         public:
           ServerState(QByteArray round_nonce) :
             State(round_nonce),
-            server_priv(new PrivateKey(params)),
-            server_pub(new PublicKey(server_priv)) {}
+            server_sk(new PrivateKey(params)),
+            server_pk(new PublicKey(server_sk)) {}
 
           virtual ~ServerState() {}
 
@@ -233,10 +254,15 @@ namespace Anonymity {
            *   packets[client_id] = (packet, signature)
            */
           QHash<Id, QPair<QByteArray, QByteArray> > client_pub_packets;
+          QHash<Id, QPair<QByteArray, QByteArray> > client_master_pub_packets;
 
           /* Blogdrop server keys */
-          QSharedPointer<PrivateKey> server_priv;
-          QSharedPointer<PublicKey> server_pub;
+          QSharedPointer<const PrivateKey> server_sk;
+          QSharedPointer<const PublicKey> server_pk;
+          QSharedPointer<const PrivateKey> server_master_sk;
+          QSharedPointer<const PublicKey> server_master_pk;
+
+          QList<QSharedPointer<const PublicKey> > commits;
 
           /* Blogdrop server bins */
           QList<QSharedPointer<BlogDropServer> > blogdrop_servers;
@@ -309,6 +335,20 @@ namespace Anonymity {
       void HandleServerPublicKey(const Id &from, QDataStream &stream);
 
       /**
+       * Server handles public key from client 
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleClientMasterPublicKey(const Id &from, QDataStream &stream);
+
+      /**
+       * Client handles public key from server
+       * @param from sender of the message
+       * @param stream message
+       */
+      void HandleServerMasterPublicKey(const Id &from, QDataStream &stream);
+
+      /**
        * Server handles client ciphertext messages
        * @param from sender of the message
        * @param stream message
@@ -349,6 +389,8 @@ namespace Anonymity {
       void ProcessKeyShuffle();
       void SubmitClientPublicKey();
       void SubmitServerPublicKey();
+      void SubmitClientMasterPublicKey();
+      void SubmitServerMasterPublicKey();
       void PrepareForBulk();
       void SubmitClientCiphertext();
       void SetOnlineClients();

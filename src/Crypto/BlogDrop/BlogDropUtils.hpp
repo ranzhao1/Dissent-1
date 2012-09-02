@@ -74,11 +74,12 @@ namespace BlogDrop {
        * We then hash each of these secrets, and add them mod q
        *   out = H(g^ax) + H(g^ay) + H(g^az)  (mod q)
        */
-      static QSharedPointer<PrivateKey> GetMasterSharedSecret(
-          const QSharedPointer<const Parameters> &params,
+      static void GetMasterSharedSecrets(const QSharedPointer<const Parameters> &params,
           const QSharedPointer<const PrivateKey> &priv, 
-          const QList<QSharedPointer<const PublicKey> > &pubs);
-
+          const QList<QSharedPointer<const PublicKey> > &pubs,
+          QSharedPointer<const PrivateKey> &master_priv,
+          QSharedPointer<const PublicKey> &master_pub,
+          QList<QSharedPointer<const PublicKey> > &commits);
   };
 
 }
