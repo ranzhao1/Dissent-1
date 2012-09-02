@@ -42,6 +42,15 @@ namespace AbstractGroup {
       }
 
       /**
+       * Inequality operator
+       * @param other the Element to compare
+       */
+      bool operator!=(const Element &other) const
+      {
+        return !(_data->operator==(other._data.constData()));
+      }
+
+      /**
        * UNSAFE: Get a pointer to the data for this
        * element. 
        */
