@@ -366,11 +366,12 @@ namespace Tunnel {
     qDebug() << "SOCKS Creating connection" << sp->GetConnectionId();
 
     bool proxy_does_lookups = (socket->proxy().capabilities() & QNetworkProxy::HostNameLookupCapability);
+    qDebug() << "Direct" << proxy_does_lookups;
 
     if(sp->GetHostName().IsHostName()) {
       if(proxy_does_lookups) {
         // Connect directly to hostname
-        qDebug() << "SOCKS ConnectToHost" << sp->GetHostName().GetName() << ":" 
+        qDebug() << "SOCKS ConnectToHost Direct" << sp->GetHostName().GetName() << ":" 
           << sp->GetHostName().GetPort() << (sp->GetHostName().IsHostName() ? "DNS" : "Address");
         socket->connectToHost(sp->GetHostName().GetName(), sp->GetHostName().GetPort());
       } else {

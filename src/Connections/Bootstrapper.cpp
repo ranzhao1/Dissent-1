@@ -71,6 +71,8 @@ namespace Connections {
       return;
     }
 
+    if(!_remote_endpoints.size()) return;
+
     int index = (GetConnectionManager()->GetId().GetInteger() %
         _remote_endpoints.size()).GetInt32();
 //    index = (index + _count++) % _remote_endpoints.size();
