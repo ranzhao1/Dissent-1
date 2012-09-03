@@ -16,6 +16,7 @@
 #include "Utils/TimerCallback.hpp"
 #include "Utils/Utils.hpp"
 
+#include "NeffShuffle.hpp"
 #include "NeffKeyShuffle.hpp"
 #include "NullRound.hpp"
 #include "CSBulkRound.hpp"
@@ -1604,3 +1605,4 @@ namespace Anonymity {
   }
 }
 }
+
