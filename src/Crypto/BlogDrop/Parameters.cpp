@@ -85,7 +85,7 @@ namespace BlogDrop {
     QSharedPointer<const AbstractGroup> g1 = ByteGroup::TestingFixed();
     QSharedPointer<const AbstractGroup> gT = ByteGroup::TestingFixed();
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_Xor, round_nonce, g1, gT, 4));
+        new Parameters(ProofType_Xor, round_nonce, g1, gT, 2));
   }
 
   QSharedPointer<Parameters> Parameters::Empty() 
@@ -148,6 +148,10 @@ namespace BlogDrop {
 
       case ProofType_Pairing:
         out = "Pairing";
+        break;
+
+      case ProofType_Xor:
+        out = "Xor";
         break;
 
       case ProofType_Invalid:

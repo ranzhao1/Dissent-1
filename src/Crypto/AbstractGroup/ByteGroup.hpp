@@ -182,7 +182,7 @@ namespace AbstractGroup {
        */
       virtual inline QString ToString() const 
       {
-        return QString("IntegerGroup");
+        return QString("ByteGroup");
       }
 
       /**

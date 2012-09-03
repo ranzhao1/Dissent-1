@@ -45,9 +45,11 @@ namespace Benchmarks {
     if(t == Parameters::ProofType_HashingGenerator) {
     // If we're using hashed, we have to use pre-computed shared secrets
       for(int i=0; i<client_sks_in.count(); i++) { 
-        QSharedPointer<const PrivateKey> priv = BlogDropUtils::GetMasterSharedSecret(params, 
-            client_sks_in[i], server_pks_in);
-        QSharedPointer<const PublicKey> pub(new PublicKey(priv));
+        QSharedPointer<const PrivateKey> priv;
+        QSharedPointer<const PublicKey> pub;
+        QList<QSharedPointer<const PublicKey> > commits;
+        BlogDropUtils::GetMasterSharedSecrets(params, 
+            client_sks_in[i], server_pks_in, priv, pub, commits);
 
         client_pks_out.append(pub);
         client_sks_out.append(priv);
@@ -64,7 +66,9 @@ namespace Benchmarks {
         server_sks_out.append(priv);
       }
 
-    } else if(t == Parameters::ProofType_ElGamal || t == Parameters::ProofType_Pairing) {
+    } else if(t == Parameters::ProofType_ElGamal 
+        || t == Parameters::ProofType_Pairing 
+        || t == Parameters::ProofType_Xor) {
     // If we're using ElGamal, we don't need extra shared secrets
       client_sks_out = client_sks_in;
       server_sks_out = server_sks_in;
@@ -236,6 +240,24 @@ namespace Benchmarks {
 
       // cpp ec
     VerifyNTimesDiffLen(Parameters::CppECElGamalProductionFixed(), p);
+
+      // Xor
+    VerifyNTimesDiffLen(Parameters::XorTestingFixed(), p);
+    cf.SetLibrary(cname);
+  }
+
+  // Cycle through proof types
+  void VerifyNTimesDiffLenXor(verifyN_params *p, bool use_openssl)
+  {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetLibrary(use_openssl ? CryptoFactory::OpenSSL : CryptoFactory::CryptoPP);
+
+      // open ec
+    VerifyNTimesDiffLen(Parameters::OpenECHashingProductionFixed(), p);
+
+      // Xor
+    VerifyNTimesDiffLen(Parameters::XorTestingFixed(), p);
     cf.SetLibrary(cname);
   }
 
@@ -274,6 +296,35 @@ namespace Benchmarks {
       else if(i < 64) i += 8;
       else if(i < 128) i += 16;
       else i += 128;
+    }
+  }
+
+  TEST(Micro, VerifyNClients) {
+
+    verifyN_params p;
+    p.n_servers = 10;
+    p.n_clients = 1000;
+    p.n_gen = 10;
+    p.n_verify = 10;
+    p.vary_n_elms = false;
+
+    qDebug() << header;
+
+    for(int i=2; i<4096;) {
+      p.n_clients = i;
+      VerifyNTimesDiffLenXor(&p, false);
+
+      if(i < 8) i += 1;
+      else if(i < 16) i += 2;
+      else if(i < 32) i += 4;
+      else if(i < 64) i += 8;
+      else if(i < 128) i += 16;
+      else if(i < 256) i += 32;
+      else if(i < 512) i += 64;
+      else if(i < 1024) i += 128;
+      else if(i < 2048) i += 256;
+      else if(i < 4096) i += 512;
+      else i += 1024;
     }
   }
 }
