@@ -1,5 +1,5 @@
 BlogDrop (23 August 2012)
-- Implement XOR test comparison scheme
+- Allow switch BlogDropRound parameters without recompile
 - Implement accountability in BlogDropRound
   for Bryan's hashing generator version
 
