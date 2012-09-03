@@ -6,6 +6,8 @@
 #include "HashingGenServerCiphertext.hpp"
 #include "PairingClientCiphertext.hpp"
 #include "PairingServerCiphertext.hpp"
+#include "XorClientCiphertext.hpp"
+#include "XorServerCiphertext.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -30,6 +32,11 @@ namespace BlogDrop {
 
       case Parameters::ProofType_HashingGenerator:
         c = QSharedPointer<ClientCiphertext>(new HashingGenClientCiphertext(
+              params, server_pks, author_pub));
+        break;
+
+      case Parameters::ProofType_Xor:
+        c = QSharedPointer<ClientCiphertext>(new XorClientCiphertext(
               params, server_pks, author_pub));
         break;
 
@@ -60,6 +67,11 @@ namespace BlogDrop {
 
       case Parameters::ProofType_HashingGenerator:
         c = QSharedPointer<ClientCiphertext>(new HashingGenClientCiphertext(
+              params, server_pks, author_pub, serialized));
+        break;
+
+      case Parameters::ProofType_Xor:
+        c = QSharedPointer<ClientCiphertext>(new XorClientCiphertext(
               params, server_pks, author_pub, serialized));
         break;
 
@@ -104,6 +116,10 @@ namespace BlogDrop {
       s = QSharedPointer<ServerCiphertext>(
           new HashingGenServerCiphertext(params, author_pub, client_pks));
 
+    } else if(t == Parameters::ProofType_Xor) {
+      s = QSharedPointer<ServerCiphertext>(
+          new XorServerCiphertext(params, author_pub, client_pks));
+
     } else {
       qFatal("Invalid proof type");
     }
@@ -145,6 +161,10 @@ namespace BlogDrop {
     } else if(t == Parameters::ProofType_HashingGenerator) {
       s = QSharedPointer<ServerCiphertext>(
           new HashingGenServerCiphertext(params, author_pub, client_pks, serialized));
+
+    } else if(t == Parameters::ProofType_Xor) {
+      s = QSharedPointer<ServerCiphertext>(
+          new XorServerCiphertext(params, author_pub, client_pks, serialized));
 
     } else {
       qFatal("Invalid proof type");

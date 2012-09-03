@@ -118,6 +118,8 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/ThreadedOnionEncryptor.hpp \
            src/Crypto/Serialization.hpp \
            src/Crypto/AbstractGroup/AbstractGroup.hpp \
+           src/Crypto/AbstractGroup/ByteElementData.hpp \
+           src/Crypto/AbstractGroup/ByteGroup.hpp \
            src/Crypto/AbstractGroup/CppECElementData.hpp \
            src/Crypto/AbstractGroup/CppECGroup.hpp \
            src/Crypto/AbstractGroup/Element.hpp \
@@ -150,6 +152,8 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/BlogDrop/PublicKey.hpp \
            src/Crypto/BlogDrop/PublicKeySet.hpp \
            src/Crypto/BlogDrop/ServerCiphertext.hpp \
+           src/Crypto/BlogDrop/XorClientCiphertext.hpp \
+           src/Crypto/BlogDrop/XorServerCiphertext.hpp \
            src/Identity/Authentication/IAuthenticate.hpp \
            src/Identity/Authentication/IAuthenticator.hpp \
            src/Identity/Authentication/LRSAuthenticate.hpp \
@@ -312,6 +316,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/NullPrivateKey.cpp \
            src/Crypto/OnionEncryptor.cpp \
            src/Crypto/ThreadedOnionEncryptor.cpp \
+           src/Crypto/AbstractGroup/ByteGroup.cpp \
            src/Crypto/AbstractGroup/IntegerGroup.cpp \
            src/Crypto/AbstractGroup/CppECGroup.cpp \
            src/Crypto/AbstractGroup/OpenECGroup.cpp \

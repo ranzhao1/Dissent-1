@@ -24,6 +24,7 @@ namespace Dissent {
             ProofType_ElGamal = 0,
             ProofType_Pairing, 
             ProofType_HashingGenerator, 
+            ProofType_Xor, 
             ProofType_Invalid
           } ProofType;
 
@@ -84,6 +85,14 @@ namespace Dissent {
            *   rbits = 510
            */
           static QSharedPointer<Parameters> PairingProductionFixed(QByteArray round_nonce = QByteArray());
+
+          /**
+           * Constructor that uses a *COMPLETELY INSECURE* XOR-based 
+           * scheme for evaluations. The XOR operation takes the same
+           * amount of time as the traditional DC-net but we don't use
+           * secure keys.
+           */
+          static QSharedPointer<Parameters> XorTestingFixed(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that has empty/invalid parameters

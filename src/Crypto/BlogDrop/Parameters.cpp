@@ -2,6 +2,7 @@
 
 #include <pbc/pbc.h>
 
+#include "Crypto/AbstractGroup/ByteGroup.hpp"
 #include "Crypto/AbstractGroup/CppECGroup.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
 #include "Crypto/AbstractGroup/OpenECGroup.hpp"
@@ -77,6 +78,14 @@ namespace BlogDrop {
     QSharedPointer<const AbstractGroup> gT = PairingGTGroup::ProductionFixed();
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_Pairing, round_nonce, g1, gT, 4));
+  }
+  
+  QSharedPointer<Parameters> Parameters::XorTestingFixed(QByteArray round_nonce) 
+  {
+    QSharedPointer<const AbstractGroup> g1 = ByteGroup::TestingFixed();
+    QSharedPointer<const AbstractGroup> gT = ByteGroup::TestingFixed();
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_Xor, round_nonce, g1, gT, 4));
   }
 
   QSharedPointer<Parameters> Parameters::Empty() 

@@ -563,6 +563,12 @@ namespace Tests {
     HashingEndToEndOnce(Parameters::Parameters::OpenECHashingProductionFixed(), false);
   }
 
+  TEST(BlogDrop, XorEndToEnd) 
+  {
+    HashingEndToEndOnce(Parameters::Parameters::XorTestingFixed(), false);
+  }
+
+
 }
 }
 

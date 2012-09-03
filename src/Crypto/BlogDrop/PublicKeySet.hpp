@@ -53,8 +53,14 @@ namespace BlogDrop {
        */
       const Element GetElement() const { return _key; }
 
+      /**
+       * Get number of keys
+       */
+      int GetNKeys() const { return _n_keys; }
+
     private:
 
+      const int _n_keys;
       const QSharedPointer<const Parameters> _params;
 
       /**

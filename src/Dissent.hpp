@@ -83,6 +83,8 @@
 #include "Crypto/Serialization.hpp"
 #include "Crypto/ThreadedOnionEncryptor.hpp"
 #include "Crypto/AbstractGroup/AbstractGroup.hpp"
+#include "Crypto/AbstractGroup/ByteGroup.hpp"
+#include "Crypto/AbstractGroup/ByteElementData.hpp"
 #include "Crypto/AbstractGroup/CppECElementData.hpp"
 #include "Crypto/AbstractGroup/CppECGroup.hpp"
 #include "Crypto/AbstractGroup/Element.hpp"
@@ -115,6 +117,8 @@
 #include "Crypto/BlogDrop/PublicKey.hpp"
 #include "Crypto/BlogDrop/PublicKeySet.hpp"
 #include "Crypto/BlogDrop/ServerCiphertext.hpp"
+#include "Crypto/BlogDrop/XorClientCiphertext.hpp"
+#include "Crypto/BlogDrop/XorServerCiphertext.hpp"
 
 #include "Identity/Authentication/IAuthenticate.hpp"
 #include "Identity/Authentication/IAuthenticator.hpp"

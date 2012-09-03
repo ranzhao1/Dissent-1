@@ -7,6 +7,7 @@ namespace BlogDrop {
 
   PublicKeySet::PublicKeySet(const QSharedPointer<const Parameters> params, 
       const QList<QSharedPointer<const PublicKey> > &keys) :
+    _n_keys(keys.count()),
     _params(params)
   {
     _key = _params->GetKeyGroup()->GetIdentity();
