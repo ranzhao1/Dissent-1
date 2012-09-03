@@ -365,13 +365,24 @@ namespace Tunnel {
 
     qDebug() << "SOCKS Creating connection" << sp->GetConnectionId();
 
+    bool proxy_does_lookups = (socket->proxy().capabilities() & QNetworkProxy::HostNameLookupCapability);
+
     if(sp->GetHostName().IsHostName()) {
-      qDebug() << "SOCKS Hostname" << sp->GetHostName().GetName();
-      int lookup_id = QHostInfo::lookupHost(sp->GetHostName().GetName(), 
-          this, SLOT(TcpDnsLookupFinished(const QHostInfo &)));
-      TcpPendingDnsData dns_data = {socket, sp->GetHostName().GetPort()};
-      _tcp_pending_dns[lookup_id] = dns_data;
+      if(proxy_does_lookups) {
+        // Connect directly to hostname
+        qDebug() << "SOCKS ConnectToHost" << sp->GetHostName().GetName() << ":" 
+          << sp->GetHostName().GetPort() << (sp->GetHostName().IsHostName() ? "DNS" : "Address");
+        socket->connectToHost(sp->GetHostName().GetName(), sp->GetHostName().GetPort());
+      } else {
+        // Resolve hostname, then connect to IP address
+        qDebug() << "SOCKS Hostname" << sp->GetHostName().GetName();
+        int lookup_id = QHostInfo::lookupHost(sp->GetHostName().GetName(), 
+            this, SLOT(TcpDnsLookupFinished(const QHostInfo &)));
+        TcpPendingDnsData dns_data = {socket, sp->GetHostName().GetPort()};
+        _tcp_pending_dns[lookup_id] = dns_data;
+      }
     } else {
+      // Connect directly to IP address
       qDebug() << "SOCKS ConnectToHost" << sp->GetHostName().GetAddress() << ":" 
         << sp->GetHostName().GetPort() << (sp->GetHostName().IsHostName() ? "DNS" : "Address");
       socket->connectToHost(sp->GetHostName().GetAddress(), sp->GetHostName().GetPort());
