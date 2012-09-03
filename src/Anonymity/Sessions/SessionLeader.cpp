@@ -169,7 +169,7 @@ namespace Sessions {
 
   void SessionLeader::CheckRegistration()
   {
-    if(GetGroup().Count() < Session::MinimumRoundSize) {
+    if(_registered.size() + _group.Count() < Session::MinimumRoundSize) {
       return;
     }
 
@@ -384,8 +384,12 @@ namespace Sessions {
 
   void SessionLeader::AddMember(const PublicIdentity &gc)
   {
-    if(!GetGroup().Contains(gc.GetId())) {
-      _group = AddGroupMember(GetGroup(), gc, gc.GetSuperPeer());
+    if(!_group.Contains(gc.GetId()) && !_registered.contains(gc.GetId())) {
+      if(gc.GetSuperPeer()) {
+        _group = AddGroupMember(GetGroup(), gc, gc.GetSuperPeer());
+      } else {
+        _registered[gc.GetId()] = gc;
+      }
     }
 
     _registered_peers.insert(gc.GetId(), gc.GetId());
