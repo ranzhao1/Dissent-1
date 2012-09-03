@@ -26,6 +26,7 @@ def main():
         http]
     '''
     args = ["/tmp/mulk", "-H", #"-q",
+      "--proxy", "socks5h://localhost:8080",
       "-p", "5",
       "-m", "50",
       "-U", "\"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:14.0) Gecko/20120405 Firefox/14.0a1\"",
