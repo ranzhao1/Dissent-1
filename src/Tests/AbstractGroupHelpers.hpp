@@ -90,6 +90,10 @@ namespace Tests {
       QByteArray b = group->ElementToByteArray(a);
       Element a2 = group->ElementFromByteArray(b);
 
+      EXPECT_TRUE(group->IsElement(a));
+      EXPECT_FALSE(group->IsIdentity(a));
+      EXPECT_TRUE(group->IsElement(a2));
+      EXPECT_FALSE(group->IsIdentity(a2));
       EXPECT_EQ(a, a2);
     }
   }

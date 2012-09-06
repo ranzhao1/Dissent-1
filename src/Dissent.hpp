@@ -83,6 +83,8 @@
 #include "Crypto/ThreadedOnionEncryptor.hpp"
 #include "Crypto/AbstractGroup/AbstractGroup.hpp"
 #include "Crypto/AbstractGroup/ByteGroup.hpp"
+#include "Crypto/AbstractGroup/BotanECElementData.hpp"
+#include "Crypto/AbstractGroup/BotanECGroup.hpp"
 #include "Crypto/AbstractGroup/ByteElementData.hpp"
 #include "Crypto/AbstractGroup/CppECElementData.hpp"
 #include "Crypto/AbstractGroup/CppECGroup.hpp"

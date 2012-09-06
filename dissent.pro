@@ -5,7 +5,7 @@
 TEMPLATE = lib
 TARGET = dissent
 DEPENDPATH += 
-INCLUDEPATH += ext/joyent-http-parser/ ext/qt-json/ src/ ext/qxt ext/PBCWrapper-0.8.0
+INCLUDEPATH += ext/joyent-http-parser/ ext/qt-json/ src/ ext/qxt ext/PBCWrapper-0.8.0 /usr/include/botan-1.10/
 CONFIG += qt debug
 QT = core network
 DEFINES += "VERSION=3"
@@ -25,7 +25,7 @@ USE_PBC = "true"
 }
 
 # Input
-LIBS += -lcryptopp 
+LIBS += -lcryptopp -lbotan-1.10
 HEADERS += ext/joyent-http-parser/http_parser.h \
            ext/qt-json/json.h \
            ext/PBCWrapper-0.8.0/G1.h \
@@ -117,6 +117,8 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/ThreadedOnionEncryptor.hpp \
            src/Crypto/Serialization.hpp \
            src/Crypto/AbstractGroup/AbstractGroup.hpp \
+           src/Crypto/AbstractGroup/BotanECElementData.hpp \
+           src/Crypto/AbstractGroup/BotanECGroup.hpp \
            src/Crypto/AbstractGroup/ByteElementData.hpp \
            src/Crypto/AbstractGroup/ByteGroup.hpp \
            src/Crypto/AbstractGroup/CppECElementData.hpp \
@@ -315,6 +317,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/NullPrivateKey.cpp \
            src/Crypto/OnionEncryptor.cpp \
            src/Crypto/ThreadedOnionEncryptor.cpp \
+           src/Crypto/AbstractGroup/BotanECGroup.cpp \
            src/Crypto/AbstractGroup/ByteGroup.cpp \
            src/Crypto/AbstractGroup/IntegerGroup.cpp \
            src/Crypto/AbstractGroup/CppECGroup.cpp \

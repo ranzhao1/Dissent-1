@@ -1,10 +1,14 @@
 #include <QCoreApplication>
 #include <QDebug>
+#include <botan/botan.h>
 
 #include "Dissent.hpp"
 
 int main(int argc, char **argv)
 {
+  // Necessary for Botan crypto library to work
+  Botan::LibraryInitializer init;
+
   QCoreApplication qca(argc, argv);
   QStringList args = QCoreApplication::arguments();
 
