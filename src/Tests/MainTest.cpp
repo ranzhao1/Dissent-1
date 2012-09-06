@@ -1,4 +1,5 @@
 #include <time.h>
+#include <botan/botan.h>
 
 #include "DissentTest.hpp"
 
@@ -7,8 +8,15 @@ void FileDelete(QString filename);
 void FilesExist();
 void FilesDelete();
 
+class DissentEnvironment : public testing::Environment {
+ public:
+   // Necessary for Botan crypto library to work
+   Botan::LibraryInitializer init;
+};
+
 GTEST_API_ int main(int argc, char **argv)
 {
+
   QCoreApplication qca(argc, argv);
 //  CryptoFactory::GetInstance().SetThreading(CryptoFactory::MultiThreaded);
 //  Dissent::Crypto::AsymmetricKey::DefaultKeySize = 512;
@@ -16,7 +24,10 @@ GTEST_API_ int main(int argc, char **argv)
   Logging::UseFile("test.log");
   qDebug() << "Beginning tests";
   FilesExist();
+
+  testing::AddGlobalTestEnvironment(new DissentEnvironment());
   testing::InitGoogleTest(&argc, argv);
+
   int res = RUN_ALL_TESTS();
   FilesDelete();
   return res;

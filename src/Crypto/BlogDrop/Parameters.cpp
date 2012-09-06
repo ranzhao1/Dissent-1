@@ -2,6 +2,7 @@
 
 #include <pbc/pbc.h>
 
+#include "Crypto/AbstractGroup/BotanECGroup.hpp"
 #include "Crypto/AbstractGroup/ByteGroup.hpp"
 #include "Crypto/AbstractGroup/CppECGroup.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
@@ -57,6 +58,21 @@ namespace BlogDrop {
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
   }
+
+  QSharedPointer<Parameters> Parameters::BotanECElGamalProductionFixed(QByteArray round_nonce) 
+  {
+    QSharedPointer<const AbstractGroup> fixed = BotanECGroup::ProductionFixed();
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
+  }
+
+  QSharedPointer<Parameters> Parameters::BotanECHashingProductionFixed(QByteArray round_nonce) 
+  {
+    QSharedPointer<const AbstractGroup> fixed = BotanECGroup::ProductionFixed();
+    return QSharedPointer<Parameters>(
+        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
+  }
+
 
   QSharedPointer<Parameters> Parameters::OpenECElGamalProductionFixed(QByteArray round_nonce) 
   {

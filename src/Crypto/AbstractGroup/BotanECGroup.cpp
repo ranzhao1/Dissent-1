@@ -162,10 +162,7 @@ namespace AbstractGroup {
  
   bool BotanECGroup::DecodeBytes(const Element &a, QByteArray &out) const
   {
-    if(IsIdentity(a)) {
-      out = QByteArray();
-      return true;
-    }
+    if(GetPoint(a).is_zero()) return false;
 
     // output value = floor( x/k )
     Botan::BigInt x = GetPoint(a).get_affine_x();

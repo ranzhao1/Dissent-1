@@ -6,36 +6,34 @@
 namespace Dissent {
 namespace Tests {
 
-  void TestPlaintextEmpty(QSharedPointer<const Parameters> params)
+  void InitParams(QList<QSharedPointer<Parameters> > &plist) 
   {
-    Plaintext p(params);
+    plist.append(Parameters::Parameters::IntegerElGamalTestingFixed());
+    plist.append(Parameters::Parameters::IntegerHashingTestingFixed());
+    plist.append(Parameters::Parameters::CppECElGamalProductionFixed());
+    plist.append(Parameters::Parameters::CppECHashingProductionFixed());
+    plist.append(Parameters::Parameters::OpenECElGamalProductionFixed());
+    plist.append(Parameters::Parameters::OpenECHashingProductionFixed());
+    plist.append(Parameters::Parameters::BotanECElGamalProductionFixed());
+    plist.append(Parameters::Parameters::BotanECHashingProductionFixed());
+    plist.append(Parameters::Parameters::PairingProductionFixed());
+  }
+
+  class BlogDropTest : 
+    public ::testing::TestWithParam<QSharedPointer<const Parameters> > {
+  };
+
+  TEST_P(BlogDropTest, PlaintextEmpty) 
+  {
+    Plaintext p(GetParam());
     QByteArray out;
     EXPECT_FALSE(p.Decode(out));
     EXPECT_EQ(QByteArray(), out);
   }
 
-  TEST(BlogDrop, IntegerPlaintextEmpty) {
-    TestPlaintextEmpty(Parameters::Parameters::IntegerElGamalTestingFixed());
-  }
-
-  TEST(BlogDrop, CppECPlaintextEmpty) 
+  TEST_P(BlogDropTest, PlaintextShort) 
   {
-    TestPlaintextEmpty(Parameters::Parameters::CppECElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, OpenECPlaintextEmpty) 
-  {
-    TestPlaintextEmpty(Parameters::Parameters::OpenECElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, PairingECPlaintextEmpty) 
-  {
-    TestPlaintextEmpty(Parameters::Parameters::PairingProductionFixed());
-  }
-
-  void TestPlaintextShort(QSharedPointer<const Parameters> params)
-  {
-    Plaintext p(params);
+    Plaintext p(GetParam());
 
     QByteArray shorts("shorts");
     p.Encode(shorts);
@@ -45,24 +43,9 @@ namespace Tests {
     EXPECT_EQ(shorts, out);
   }
 
-  TEST(BlogDrop, IntegerPlaintextShort) {
-    TestPlaintextShort(Parameters::Parameters::IntegerElGamalTestingFixed());
-  }
-
-  TEST(BlogDrop, CppECPlaintextShort) {
-    TestPlaintextShort(Parameters::Parameters::CppECElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, OpenECPlaintextShort) {
-    TestPlaintextShort(Parameters::Parameters::OpenECElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, PairingPlaintextShort) {
-    TestPlaintextShort(Parameters::Parameters::PairingProductionFixed());
-  }
-
-  void TestPlaintextRandom(QSharedPointer<const Parameters> params, int divby)
+  TEST_P(BlogDropTest, PlaintextRandom)
   {
+    const QSharedPointer<const Parameters> params = GetParam();
     Plaintext p(params);
 
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
@@ -71,49 +54,29 @@ namespace Tests {
     EXPECT_EQ(params->GetGroupOrder(), params->GetKeyGroup()->GetOrder());
     EXPECT_EQ(params->GetGroupOrder(), params->GetMessageGroup()->GetOrder());
 
-    for(int i=0; i<10; i++) {
-      QByteArray msg(Plaintext::CanFit(params)/divby, 0);
-      rand->GenerateBlock(msg);
+    for(int divby=1; divby<8; divby <<= 1) {
+      for(int i=0; i<10; i++) {
+        QByteArray msg(Plaintext::CanFit(params)/divby, 0);
+        rand->GenerateBlock(msg);
 
-      p.Encode(msg);
+        p.Encode(msg);
 
-      QByteArray output;
-      EXPECT_TRUE(p.Decode(output));
-      EXPECT_GT(output.count(), 0);
-      EXPECT_LT(output.count(), (params->GetNElements()*
-            (params->GetMessageGroup()->GetOrder().GetByteCount()/divby)));
-      EXPECT_GT(output.count(), (params->GetNElements()*
-            ((params->GetMessageGroup()->GetOrder().GetByteCount()-5)/divby)));
-      EXPECT_EQ(msg, output);
+        QByteArray output;
+        EXPECT_TRUE(p.Decode(output));
+        EXPECT_GT(output.count(), 0);
+        EXPECT_LT(output.count(), (params->GetNElements()*
+              (params->GetMessageGroup()->GetOrder().GetByteCount()/divby)));
+        EXPECT_GT(output.count(), (params->GetNElements()*
+              ((params->GetMessageGroup()->GetOrder().GetByteCount()-5)/divby)));
+        EXPECT_EQ(msg, output);
+      }
     }
   }
 
-  TEST(BlogDrop, IntegerPlaintextRandom) {
-    TestPlaintextRandom(Parameters::Parameters::IntegerElGamalTestingFixed(), 1);
-    TestPlaintextRandom(Parameters::Parameters::IntegerElGamalTestingFixed(), 2);
-    TestPlaintextRandom(Parameters::Parameters::IntegerElGamalTestingFixed(), 4);
-  }
-
-  TEST(BlogDrop, CppECPlaintextRandom) {
-    TestPlaintextRandom(Parameters::Parameters::CppECElGamalProductionFixed(), 1);
-    TestPlaintextRandom(Parameters::Parameters::CppECElGamalProductionFixed(), 2);
-    TestPlaintextRandom(Parameters::Parameters::CppECElGamalProductionFixed(), 4);
-  }
-
-  TEST(BlogDrop, OpenECPlaintextRandom) {
-    TestPlaintextRandom(Parameters::Parameters::OpenECElGamalProductionFixed(), 1);
-    TestPlaintextRandom(Parameters::Parameters::OpenECElGamalProductionFixed(), 2);
-    TestPlaintextRandom(Parameters::Parameters::OpenECElGamalProductionFixed(), 4);
-  }
-
-  TEST(BlogDrop, PairingPlaintextRandom) {
-    TestPlaintextRandom(Parameters::Parameters::PairingProductionFixed(), 1);
-    TestPlaintextRandom(Parameters::Parameters::PairingProductionFixed(), 2);
-    TestPlaintextRandom(Parameters::Parameters::PairingProductionFixed(), 4);
-  }
-
-  void TestKeys(QSharedPointer<const Parameters> params)
+  TEST_P(BlogDropTest, Keys)
   {
+    const QSharedPointer<const Parameters> params = GetParam();
+
     for(int i=0; i<20; i++) {
       PrivateKey priv(params);
       Integer x = priv.GetInteger();
@@ -136,24 +99,9 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDrop, IntegerKeys) {
-    TestKeys(Parameters::Parameters::IntegerElGamalTestingFixed());
-  }
-
-  TEST(BlogDrop, CppECKeys) {
-    TestKeys(Parameters::Parameters::CppECElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, OpenECKeys) {
-    TestKeys(Parameters::Parameters::OpenECElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, PairingKeys) {
-    TestKeys(Parameters::Parameters::PairingProductionFixed());
-  }
-
-  void TestPublicKeySet(QSharedPointer<const Parameters> params)
+  TEST_P(BlogDropTest, KeySet)
   {
+    const QSharedPointer<const Parameters> params = GetParam();
     const int nkeys = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
 
     QList<QSharedPointer<const PublicKey> > keys;
@@ -170,22 +118,6 @@ namespace Tests {
     ASSERT_EQ(prod, keyset.GetElement());
   }
 
-  TEST(BlogDrop, IntegerPublicKeySet) {
-    TestPublicKeySet(Parameters::Parameters::IntegerElGamalTestingFixed());
-  }
-
-  TEST(BlogDrop, CppECPublicKeySet) {
-    TestPublicKeySet(Parameters::Parameters::CppECElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, OpenECPublicKeySet) {
-    TestPublicKeySet(Parameters::Parameters::OpenECElGamalProductionFixed());
-  }
- 
-  TEST(BlogDrop, PairingPublicKeySet) {
-    TestPublicKeySet(Parameters::Parameters::PairingProductionFixed());
-  } 
-
   void BenchmarkGroup(QSharedPointer<const Parameters> params,
       QSharedPointer<const AbstractGroup> group)
   {
@@ -199,31 +131,13 @@ namespace Tests {
     }
   }
 
-  void Benchmark(QSharedPointer<const Parameters> params)
+  TEST_P(BlogDropTest, Benchmark)
   {
+    const QSharedPointer<const Parameters> params = GetParam();
     BenchmarkGroup(params, params->GetMessageGroup());
     BenchmarkGroup(params, params->GetKeyGroup());
   }
 
-  TEST(BlogDrop, BenchmarkInteger) 
-  {
-    Benchmark(Parameters::Parameters::IntegerElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, BenchmarkCppEC) 
-  {
-    Benchmark(Parameters::Parameters::CppECElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, BenchmarkOpenEC) 
-  {
-    Benchmark(Parameters::Parameters::OpenECElGamalProductionFixed());
-  }
-
-  TEST(BlogDrop, BenchmarkPairing) 
-  {
-    Benchmark(Parameters::Parameters::PairingProductionFixed());
-  }
 
   /*
   TEST(BlogDrop, BenchmarkIntegerRaw) 
@@ -292,6 +206,18 @@ namespace Tests {
     }
   }
   */
+
+  INSTANTIATE_TEST_CASE_P(BlogDrop, BlogDropTest,
+      ::testing::Values(
+        Parameters::Parameters::IntegerElGamalTestingFixed(),
+        Parameters::Parameters::IntegerHashingTestingFixed(),
+        Parameters::Parameters::CppECElGamalProductionFixed(),
+        Parameters::Parameters::CppECHashingProductionFixed(),
+        Parameters::OpenECElGamalProductionFixed(),
+        Parameters::OpenECHashingProductionFixed(),
+        Parameters::BotanECElGamalProductionFixed(),
+        Parameters::BotanECHashingProductionFixed(),
+        Parameters::PairingProductionFixed()));
 }
 }
 

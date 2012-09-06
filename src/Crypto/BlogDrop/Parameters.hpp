@@ -67,6 +67,20 @@ namespace Dissent {
           /**
            * Constructor that uses 256-bit fixed EC group 
            * (Supposedly 256-bit ECs are equivalent to 3072-bit 
+           * RSA/DH groups) implemented with Botan
+           */
+          static QSharedPointer<Parameters> BotanECElGamalProductionFixed(QByteArray round_nonce = QByteArray());
+
+          /**
+           * Constructor that uses 256-bit fixed EC group 
+           * (Supposedly 256-bit ECs are equivalent to 3072-bit 
+           * RSA/DH groups) implemented with Botan
+           */
+          static QSharedPointer<Parameters> BotanECHashingProductionFixed(QByteArray round_nonce = QByteArray());
+
+          /**
+           * Constructor that uses 256-bit fixed EC group 
+           * (Supposedly 256-bit ECs are equivalent to 3072-bit 
            * RSA/DH groups) implemented with OpenSSL
            */
           static QSharedPointer<Parameters> OpenECElGamalProductionFixed(QByteArray round_nonce = QByteArray());

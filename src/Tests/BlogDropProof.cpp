@@ -64,6 +64,10 @@ namespace Tests {
     TestElGamalServerCiphertext(Parameters::Parameters::CppECElGamalProductionFixed());
   }
 
+  TEST(BlogDropProof, BotanECElGamalServer) {
+    TestElGamalServerCiphertext(Parameters::Parameters::BotanECElGamalProductionFixed());
+  }
+
   TEST(BlogDropProof, OpenECElGamalServer) {
     TestElGamalServerCiphertext(Parameters::Parameters::OpenECElGamalProductionFixed());
   }
@@ -144,6 +148,12 @@ namespace Tests {
   TEST(BlogDrop, CppECClientProof) {
     for(int i=0; i<10; i++) {
       TestClientOnce(Parameters::Parameters::CppECElGamalProductionFixed());
+    }
+  }
+
+  TEST(BlogDrop, BotanECClientProof) {
+    for(int i=0; i<10; i++) {
+      TestClientOnce(Parameters::Parameters::BotanECElGamalProductionFixed());
     }
   }
 
@@ -236,6 +246,12 @@ namespace Tests {
   TEST(BlogDrop, CppECElGamalAuthorProof) {
     for(int i=0; i<10; i++) {
       TestAuthorOnce(Parameters::Parameters::CppECElGamalProductionFixed());
+    }
+  }
+
+  TEST(BlogDrop, BotanECElGamalAuthorProof) {
+    for(int i=0; i<10; i++) {
+      TestAuthorOnce(Parameters::Parameters::BotanECElGamalProductionFixed());
     }
   }
 
@@ -380,10 +396,14 @@ namespace Tests {
     cf.SetLibrary(cname);
   }
 
-
   TEST(BlogDrop, CppECElGamalEndToEnd) 
   {
     ElGamalEndToEndOnce(Parameters::Parameters::CppECElGamalProductionFixed(), false);
+  }
+
+  TEST(BlogDrop, BotanECElGamalEndToEnd) 
+  {
+    ElGamalEndToEndOnce(Parameters::Parameters::BotanECElGamalProductionFixed(), false);
   }
 
   TEST(BlogDrop, OpenECElGamalEndToEnd) 
@@ -556,6 +576,11 @@ namespace Tests {
   TEST(BlogDrop, CppECHashingEndToEnd) 
   {
     HashingEndToEndOnce(Parameters::Parameters::CppECHashingProductionFixed(), false);
+  }
+
+  TEST(BlogDrop, BotanECHashingEndToEnd) 
+  {
+    HashingEndToEndOnce(Parameters::Parameters::BotanECHashingProductionFixed(), false);
   }
 
   TEST(BlogDrop, OpenECHashingEndToEnd) 
