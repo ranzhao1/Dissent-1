@@ -14,8 +14,10 @@ namespace AbstractGroup {
   class PairingGTGroup : public PairingGroup {
 
     public:
-
-      static QSharedPointer<PairingGTGroup> ProductionFixed();
+      /**
+       * Get a fixed group 
+       */
+      static QSharedPointer<PairingGTGroup> GetGroup(GroupSize size);
 
       /**
        * Destructor
@@ -126,7 +128,7 @@ namespace AbstractGroup {
     private:
 
       // Private Constructor
-      PairingGTGroup();
+      PairingGTGroup(GroupSize size);
 
       inline GT GetElement(const Element &a) const
       {

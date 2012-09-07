@@ -26,7 +26,8 @@ int main(int argc, char* argv[]) {
 
   pbc_param_t params;
   pairing_t pairing;
-  pbc_param_init_a_gen(params, qbits, qbits-2);
+  const int rbits = qbits-8;
+  pbc_param_init_a_gen(params, rbits, qbits);
   pbc_param_out_str(stdout, params);
 
   pairing_init_pbc_param(pairing, params);

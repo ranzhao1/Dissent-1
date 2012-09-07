@@ -4,82 +4,86 @@
 namespace Dissent {
 namespace Tests {
 
-  TEST(PairingGroupG1, Basic)
+  class PairingGroupTest : 
+    public ::testing::TestWithParam<int> {
+  };
+
+  TEST_P(PairingGroupTest, G1Basic)
   {
-    AbstractGroup_Basic(PairingG1Group::ProductionFixed());
+    AbstractGroup_Basic(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupGT, Basic)
+  TEST_P(PairingGroupTest, GTBasic)
   {
-    AbstractGroup_Basic(PairingGTGroup::ProductionFixed());
+    AbstractGroup_Basic(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupG1, IsElement)
+  TEST_P(PairingGroupTest, G1IsElement)
   {
-    AbstractGroup_IsElement(PairingG1Group::ProductionFixed());
+    AbstractGroup_IsElement(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupGT, IsElement)
+  TEST_P(PairingGroupTest, GTIsElement)
   {
-    AbstractGroup_IsElement(PairingGTGroup::ProductionFixed());
+    AbstractGroup_IsElement(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
   
-  TEST(PairingGroupG1, RandomExponent)
+  TEST_P(PairingGroupTest, G1RandomExponent)
   {
-    AbstractGroup_RandomExponent(PairingG1Group::ProductionFixed());
+    AbstractGroup_RandomExponent(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupGT, RandomExponent)
+  TEST_P(PairingGroupTest, GTRandomExponent)
   {
-    AbstractGroup_RandomExponent(PairingGTGroup::ProductionFixed());
+    AbstractGroup_RandomExponent(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupG1, Multiplication)
+  TEST_P(PairingGroupTest, G1Multiplication)
   {
-    AbstractGroup_Multiplication(PairingG1Group::ProductionFixed());
+    AbstractGroup_Multiplication(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupGT, Multiplication)
+  TEST_P(PairingGroupTest, GTMultiplication)
   {
-    AbstractGroup_Multiplication(PairingGTGroup::ProductionFixed());
+    AbstractGroup_Multiplication(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupG1, Exponentiation)
+  TEST_P(PairingGroupTest, G1Exponentiation)
   {
-    AbstractGroup_Exponentiation(PairingG1Group::ProductionFixed());
+    AbstractGroup_Exponentiation(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupGT, Exponentiation)
+  TEST_P(PairingGroupTest, GTExponentiation)
   {
-    AbstractGroup_Exponentiation(PairingGTGroup::ProductionFixed());
+    AbstractGroup_Exponentiation(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupG1, Serialize)
+  TEST_P(PairingGroupTest, G1Serialize)
   {
-    AbstractGroup_Serialize(PairingG1Group::ProductionFixed());
+    AbstractGroup_Serialize(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(PairingGroupGT, Serialize)
+  TEST_P(PairingGroupTest, GTSerialize)
   {
-    AbstractGroup_Serialize(PairingGTGroup::ProductionFixed());
+    AbstractGroup_Serialize(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
   /* not implemented yet
-  TEST(PairingGroupG1, Encode)
+  TEST_P(PairingGroupTestG1, Encode)
   {
-    AbstractGroup_Encode(PairingG1Group::ProductionFixed());
+    AbstractGroup_Encode(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
   */
 
-  TEST(PairingGroupGT, Encode)
+  TEST_P(PairingGroupTest, GTEncode)
   {
-    AbstractGroup_Encode(PairingGTGroup::ProductionFixed());
+    AbstractGroup_Encode(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
   }
 
-  TEST(Pairing, Basic)
+  TEST_P(PairingGroupTest, Basic)
   {
-    QSharedPointer<PairingG1Group> group1(PairingG1Group::ProductionFixed());
-    QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::ProductionFixed());
+    QSharedPointer<PairingG1Group> group1(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
+    QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
 
     ASSERT_EQ(group1->GetByteArray(), groupT->GetByteArray());
 
@@ -97,10 +101,10 @@ namespace Tests {
     }
   }
 
-  TEST(Pairing, Exponent)
+  TEST_P(PairingGroupTest, Exponent)
   {
-    QSharedPointer<PairingG1Group> group1(PairingG1Group::ProductionFixed());
-    QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::ProductionFixed());
+    QSharedPointer<PairingG1Group> group1(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
+    QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
 
     ASSERT_EQ(group1->GetByteArray(), groupT->GetByteArray());
 
@@ -127,10 +131,10 @@ namespace Tests {
     }
   }
 
-  TEST(Pairing, DoubleExponent)
+  TEST_P(PairingGroupTest, DoubleExponent)
   {
-    QSharedPointer<PairingG1Group> group1(PairingG1Group::ProductionFixed());
-    QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::ProductionFixed());
+    QSharedPointer<PairingG1Group> group1(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
+    QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
 
     ASSERT_EQ(group1->GetByteArray(), groupT->GetByteArray());
 
@@ -152,10 +156,10 @@ namespace Tests {
     }
   }
 
-  TEST(Pairing, EncodeAndPair)
+  TEST_P(PairingGroupTest, EncodeAndPair)
   {
-    QSharedPointer<PairingG1Group> group1(PairingG1Group::ProductionFixed());
-    QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::ProductionFixed());
+    QSharedPointer<PairingG1Group> group1(PairingG1Group::GetGroup((PairingGroup::GroupSize)GetParam()));
+    QSharedPointer<PairingGTGroup> groupT(PairingGTGroup::GetGroup((PairingGroup::GroupSize)GetParam()));
 
     ASSERT_EQ(group1->GetByteArray(), groupT->GetByteArray());
 
@@ -186,5 +190,8 @@ namespace Tests {
       EXPECT_EQ(msg, out);
     }
   }
+
+  INSTANTIATE_TEST_CASE_P(PairingGroupTest, PairingGroupTest,
+      ::testing::Range(0, (int)PairingGroup::INVALID));
 }
 }

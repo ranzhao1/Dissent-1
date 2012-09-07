@@ -11,13 +11,13 @@ namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
 
-  QSharedPointer<PairingGTGroup> PairingGTGroup::ProductionFixed()
+  QSharedPointer<PairingGTGroup> PairingGTGroup::GetGroup(GroupSize size)
   {
-    return QSharedPointer<PairingGTGroup>(new PairingGTGroup());
+    return QSharedPointer<PairingGTGroup>(new PairingGTGroup(size));
   }
 
-  PairingGTGroup::PairingGTGroup() :
-    PairingGroup()
+  PairingGTGroup::PairingGTGroup(GroupSize size) :
+    PairingGroup(size)
   {
     const unsigned char generatorT_str[] = "generator";
 
@@ -129,7 +129,7 @@ namespace AbstractGroup {
 
   Element PairingGTGroup::RandomElement() const
   {
-    return Element(new PairingElementData<GT>(GT(_pairing, false)));
+    return Element(new PairingElementData<GT>(GT(*_pairing, false)));
   }
 
   int PairingGTGroup::BytesPerElement() const
@@ -259,7 +259,7 @@ namespace AbstractGroup {
     G1 g_a(PairingElementData<G1>::GetElement(a.GetData())); 
     G1 g_b(PairingElementData<G1>::GetElement(b.GetData())); 
 
-    GT gt(_pairing.apply(g_a, g_b));
+    GT gt(_pairing->apply(g_a, g_b));
     return Element(new PairingElementData<GT>(gt));
   }
 
@@ -318,7 +318,7 @@ namespace AbstractGroup {
       qFatal("Buf not long enough");
 
     // convert into GT element
-    GT gt(_pairing, (const unsigned char*)buf.constData(), ret, 10, false);
+    GT gt(*_pairing, (const unsigned char*)buf.constData(), ret, 10, false);
 
     e = Element(new PairingElementData<GT>(gt));
 

@@ -16,6 +16,17 @@ namespace AbstractGroup {
 
     public:
 
+      typedef enum {
+        TESTING_128 = 0,
+        TESTING_256,
+        PRODUCTION_512,
+        PRODUCTION_768,
+        PRODUCTION_1024,
+        PRODUCTION_1280,
+        PRODUCTION_1536,
+        INVALID
+      } GroupSize;
+
       /**
        * Destructor
        */
@@ -167,23 +178,28 @@ namespace AbstractGroup {
 
     protected:
       // Protected constructor
-      PairingGroup();
+      PairingGroup(GroupSize size);
 
-      inline const Pairing &GetPairing() const { return _pairing; }
+      static const char* GetGroupString(GroupSize size);
+      inline const Pairing &GetPairing() const { return *_pairing; }
       Zr IntegerToZr(const Integer &in) const;
       
       QByteArray _param_str;
 
-      Pairing _pairing;
+      QSharedPointer<Pairing> _pairing;
       Element _identity;
       Element _generator;
       Integer _order;
       Integer _field;
 
     private:
-      static const char _param_bytes[]; 
-      static const char _order_bytes[]; 
-      static const char _field_bytes[]; 
+      static const char _param_bytes_128[]; 
+      static const char _param_bytes_256[]; 
+      static const char _param_bytes_512[]; 
+      static const char _param_bytes_768[]; 
+      static const char _param_bytes_1024[]; 
+      static const char _param_bytes_1280[]; 
+      static const char _param_bytes_1536[]; 
 
   };
 

@@ -20,8 +20,10 @@ namespace AbstractGroup {
   class PairingG1Group : public PairingGroup {
 
     public:
-
-      static QSharedPointer<PairingG1Group> ProductionFixed();
+      /**
+       * Get a fixed group 
+       */
+      static QSharedPointer<PairingG1Group> GetGroup(GroupSize size);
 
       /**
        * Destructor
@@ -129,7 +131,7 @@ namespace AbstractGroup {
     private:
 
       // Private Constructor
-      PairingG1Group();
+      PairingG1Group(GroupSize size);
 
       inline G1 GetElement(const Element &a) const
       {

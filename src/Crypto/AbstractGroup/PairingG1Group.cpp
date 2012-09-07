@@ -8,13 +8,13 @@ namespace Dissent {
 namespace Crypto {
 namespace AbstractGroup {
 
-  QSharedPointer<PairingG1Group> PairingG1Group::ProductionFixed()
+  QSharedPointer<PairingG1Group> PairingG1Group::GetGroup(GroupSize size)
   {
-    return QSharedPointer<PairingG1Group>(new PairingG1Group());
+    return QSharedPointer<PairingG1Group>(new PairingG1Group(size));
   }
 
-  PairingG1Group::PairingG1Group() :
-    PairingGroup() 
+  PairingG1Group::PairingG1Group(GroupSize size) :
+    PairingGroup(size) 
   {
     // it doesn't matter what this string is as long as 
     // all nodes agree on what it is
@@ -81,7 +81,7 @@ namespace AbstractGroup {
   { 
     Q_ASSERT(bytes.count());
     const unsigned char *data = (const unsigned char*)(bytes.constData());
-    G1 a(_pairing, data, bytes.count(), false, 16);
+    G1 a(*_pairing, data, bytes.count(), false, 16);
     Q_ASSERT(a.isElementPresent());
     return Element(new PairingElementData<G1>(a));
   }
@@ -95,7 +95,7 @@ namespace AbstractGroup {
 
   Element PairingG1Group::RandomElement() const
   {
-    return Element(new PairingElementData<G1>(G1(_pairing, false)));
+    return Element(new PairingElementData<G1>(G1(*_pairing, false)));
   }
 
   int PairingG1Group::BytesPerElement() const

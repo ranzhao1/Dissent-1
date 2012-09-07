@@ -91,8 +91,8 @@ namespace BlogDrop {
 
   QSharedPointer<Parameters> Parameters::PairingProductionFixed(QByteArray round_nonce) 
   {
-    QSharedPointer<const AbstractGroup> g1 = PairingG1Group::ProductionFixed();
-    QSharedPointer<const AbstractGroup> gT = PairingGTGroup::ProductionFixed();
+    QSharedPointer<const AbstractGroup> g1 = PairingG1Group::GetGroup(PairingGroup::PRODUCTION_512);
+    QSharedPointer<const AbstractGroup> gT = PairingGTGroup::GetGroup(PairingGroup::PRODUCTION_512);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_Pairing, round_nonce, g1, gT, 4));
   }

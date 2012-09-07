@@ -1,10 +1,11 @@
 
-== Microbenchmarks == (over N, L, security parameter) 
-* message size
-* proof generate 
-* proof verify
---> Compare with XOR
---> Show asymptotic performance (huge N, etc)
+
+== Microbenchmarks == (over Nclients, Nservers, L, security parameter) 
+* ciphertext size
+* throughput (plaintext/seconds)
+* proof generate (seconds)
+* proof verify (seconds)
+* Compare with XOR over N
 
 == Macrobenchmarks == (over N, over % nodes sending)
 * (chat-room) tweet-sized messages

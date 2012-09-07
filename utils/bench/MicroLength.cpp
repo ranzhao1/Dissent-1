@@ -262,7 +262,7 @@ namespace Benchmarks {
   }
 
   // Cycle through integer types
-  TEST(Micro, VerifyNLength) {
+  TEST(Micro, VaryLength) {
 
     verifyN_params p;
     p.n_servers = 10;
@@ -275,7 +275,8 @@ namespace Benchmarks {
     VerifyNTimesDiffLenLibrary(&p, false);
   }
 
-  TEST(Micro, VerifyNServers) {
+  // Vary number of servers
+  TEST(Micro, VaryNServers) {
 
     verifyN_params p;
     p.n_servers = 10;
@@ -299,7 +300,8 @@ namespace Benchmarks {
     }
   }
 
-  TEST(Micro, VerifyNClients) {
+  // Vary number of clients
+  TEST(Micro, VaryNClients) {
 
     verifyN_params p;
     p.n_servers = 10;
