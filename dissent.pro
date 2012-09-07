@@ -9,8 +9,8 @@ INCLUDEPATH += ext/joyent-http-parser/ ext/qt-json/ src/ ext/qxt ext/PBCWrapper-
 CONFIG += qt debug
 QT = core network
 DEFINES += "VERSION=3"
-QMAKE_CXXFLAGS += -Werror 
-QMAKE_CFLAGS += -Werror 
+QMAKE_CXXFLAGS += -Werror
+QMAKE_CFLAGS += -Werror
 
 # Comment out to disable use
 # of pairing-based crypto library 

@@ -18,6 +18,20 @@ namespace AbstractGroup {
 
     public:
 
+      typedef enum {
+        TESTING_256 = 0,
+        TESTING_512,
+        TESTING_768,
+        PRODUCTION_1024,
+        PRODUCTION_1536,
+        PRODUCTION_2048,
+        PRODUCTION_2560,
+        PRODUCTION_3072,
+        PRODUCTION_3584,
+        PRODUCTION_4096,
+        INVALID 
+      } GroupSize;
+
       /**
        * Constructor
        * @param p must be a safe prime -- should have the
@@ -28,26 +42,9 @@ namespace AbstractGroup {
       IntegerGroup(Integer p, Integer g);
 
       /**
-       * (Not yet implemented.) Generate a new random group
-       * with a p value of specified bitlength.
-       * @param length of group modulus.
-       */
-      static QSharedPointer<IntegerGroup> Generate(int p_bits);
-
-      /**
        * Get a fixed group with modulus of length 1024 bits
        */
-      static QSharedPointer<IntegerGroup> Production1024Fixed();
-
-      /**
-       * Get a fixed group with modulus of length 2048 bits
-       */
-      static QSharedPointer<IntegerGroup> Production2048Fixed();
-
-      /**
-       * Get a fixed group with modulus of length 512 bits
-       */
-      static QSharedPointer<IntegerGroup> TestingFixed();
+      static QSharedPointer<IntegerGroup> GetGroup(GroupSize size);
 
       /**
        * Get an empty (invalid) group

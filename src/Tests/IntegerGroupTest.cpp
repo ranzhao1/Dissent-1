@@ -4,33 +4,25 @@
 namespace Dissent {
 namespace Tests {
 
-  TEST(IntegerGroup, Basic)
+  class IntegerGroupTest : 
+    public ::testing::TestWithParam<int> {
+  };
+
+  TEST_P(IntegerGroupTest, Basic)
   {
-    QList<QSharedPointer<IntegerGroup> > list;
-
-    list.append(QSharedPointer<IntegerGroup>(new IntegerGroup(11, 3)));
-    list.append(QSharedPointer<IntegerGroup>(IntegerGroup::TestingFixed()));
-    list.append(QSharedPointer<IntegerGroup>(IntegerGroup::Production1024Fixed()));
-    list.append(QSharedPointer<IntegerGroup>(IntegerGroup::Production2048Fixed()));
-
-    for(int i=0; i<list.count(); i++) {
-      AbstractGroup_Basic(list[i]);
-    }
+    const QSharedPointer<IntegerGroup> group = IntegerGroup::GetGroup((IntegerGroup::GroupSize)GetParam());
+    AbstractGroup_Basic(group);
   }
 
-  TEST(IntegerGroup, IsElement)
+  TEST_P(IntegerGroupTest, RandomExponent)
   {
-    AbstractGroup_Basic(IntegerGroup::TestingFixed());
+    const QSharedPointer<IntegerGroup> group = IntegerGroup::GetGroup((IntegerGroup::GroupSize)GetParam());
+    AbstractGroup_RandomExponent(group);
   }
 
-  TEST(IntegerGroup, RandomExponent)
+  TEST_P(IntegerGroupTest, NotElement) 
   {
-    AbstractGroup_RandomExponent(IntegerGroup::TestingFixed());
-  }
-
-  TEST(IntegerGroup, NotElement) 
-  {
-    QSharedPointer<IntegerGroup> group = IntegerGroup::TestingFixed();
+    const QSharedPointer<IntegerGroup> group = IntegerGroup::GetGroup((IntegerGroup::GroupSize)GetParam());
 
     int count = 0;
     for(int i=0; i<100; i++) {
@@ -41,15 +33,20 @@ namespace Tests {
     EXPECT_TRUE(count > 30 && count < 70);
   }
 
-  TEST(IntegerGroup, Serialize)
+  TEST_P(IntegerGroupTest, Serialize)
   {
-    AbstractGroup_Serialize(IntegerGroup::TestingFixed());
+    const QSharedPointer<IntegerGroup> group = IntegerGroup::GetGroup((IntegerGroup::GroupSize)GetParam());
+    AbstractGroup_Serialize(group);
   }
 
-  TEST(IntegerGroup, Encode)
+  TEST_P(IntegerGroupTest, Encode)
   {
-    AbstractGroup_Encode(IntegerGroup::TestingFixed());
+    const QSharedPointer<IntegerGroup> group = IntegerGroup::GetGroup((IntegerGroup::GroupSize)GetParam());
+    AbstractGroup_Encode(group);
   }
+
+  INSTANTIATE_TEST_CASE_P(IntegerGroup, IntegerGroupTest,
+      ::testing::Range(0, (int)IntegerGroup::INVALID));
 
 }
 }

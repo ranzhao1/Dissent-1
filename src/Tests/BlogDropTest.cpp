@@ -4,20 +4,7 @@
 #include <cryptopp/nbtheory.h>
 
 namespace Dissent {
-namespace Tests {
-
-  void InitParams(QList<QSharedPointer<Parameters> > &plist) 
-  {
-    plist.append(Parameters::Parameters::IntegerElGamalTestingFixed());
-    plist.append(Parameters::Parameters::IntegerHashingTestingFixed());
-    plist.append(Parameters::Parameters::CppECElGamalProductionFixed());
-    plist.append(Parameters::Parameters::CppECHashingProductionFixed());
-    plist.append(Parameters::Parameters::OpenECElGamalProductionFixed());
-    plist.append(Parameters::Parameters::OpenECHashingProductionFixed());
-    plist.append(Parameters::Parameters::BotanECElGamalProductionFixed());
-    plist.append(Parameters::Parameters::BotanECHashingProductionFixed());
-    plist.append(Parameters::Parameters::PairingProductionFixed());
-  }
+namespace Tests { 
 
   class BlogDropTest : 
     public ::testing::TestWithParam<QSharedPointer<const Parameters> > {

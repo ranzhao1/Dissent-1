@@ -152,7 +152,7 @@ namespace AbstractGroup {
     data.append(0xff);
 
     // r is an encoding of the string in a big integer
-    CryptoPP::Integer r(("0x"+data.toHex()).constData());
+    CryptoPP::Integer r(reinterpret_cast<const byte*>(data.constData()), data.count());
 
     //qDebug() << "r" << Integer(new CppIntegerData(r)).GetByteArray().toHex();
     

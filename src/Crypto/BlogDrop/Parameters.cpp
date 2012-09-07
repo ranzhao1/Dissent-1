@@ -19,28 +19,28 @@ namespace BlogDrop {
 
   QSharedPointer<Parameters> Parameters::IntegerElGamalTestingFixed() 
   {
-    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::TestingFixed();
+    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::TESTING_256);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_ElGamal, QByteArray(), fixed, fixed, 2));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerElGamalProductionFixed(QByteArray round_nonce) 
   {
-    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::Production2048Fixed();
+    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::PRODUCTION_2048);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 1));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerHashingTestingFixed() 
   {
-    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::TestingFixed();
+    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::TESTING_256);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_HashingGenerator, QByteArray(), fixed, fixed, 2));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerHashingProductionFixed(QByteArray round_nonce) 
   {
-    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::Production2048Fixed();
+    QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::PRODUCTION_2048);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 1));
   }

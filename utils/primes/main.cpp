@@ -21,6 +21,21 @@ QByteArray PrintInteger(const CryptoPP::Integer &i)
   return b;
 }
 
+QByteArray Format(QByteArray num)
+{
+  QByteArray out = "\"0x";
+  num = num.toHex();
+
+  for(int i=0; i<num.count(); i++) {
+    out.append(num[i]);
+    if(i && ((i % 64) == 0)) out.append("\"\n\"");
+  }
+
+  out.append("\"");
+
+  return out;
+}
+
 int main(int argc, char* argv[]) {
   QTextStream err(stderr, QIODevice::WriteOnly);
   if(argc != 2) {
@@ -50,11 +65,11 @@ int main(int argc, char* argv[]) {
   QByteArray p, q, g;
 
   out << "==> p\n";
-  out << PrintInteger(pand.Prime()).toHex() << "\n\n";
+  out << Format(PrintInteger(pand.Prime())) << "\n\n";
   out << "==> q\n";
-  out << PrintInteger(pand.SubPrime()).toHex() << "\n\n";
+  out << Format(PrintInteger(pand.SubPrime())) << "\n\n";
   out << "==> g\n";
-  out << PrintInteger(pand.Generator()).toHex() << "\n\n";
+  out << Format(PrintInteger(pand.Generator())) << "\n\n";
 
   return 0;
 }

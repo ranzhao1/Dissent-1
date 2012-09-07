@@ -203,10 +203,7 @@ namespace AbstractGroup {
       CryptoPP::ECPPoint GetPoint(const Element &e) const;
       inline static CryptoPP::Integer ToCryptoInt(const Integer &e) 
       {
-        // Hex encoding does not include minus sign        
-        CryptoPP::Integer i(("0x"+e.GetByteArray().toHex()).constData());
-        if(e < 0) i.SetNegative();
-        return i;
+        return CppIntegerData::GetInteger(e.GetData()); 
       }
 
       inline static Integer FromCryptoInt(const CryptoPP::Integer &i)
