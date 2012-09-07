@@ -14,36 +14,23 @@ namespace AbstractGroup {
       _g(ToCryptoInt(gx), ToCryptoInt(gy)),
       _field_bytes(p.GetByteArray().count())
     {
-      /*
       qDebug() << " p" << p.GetByteArray().toHex(); 
       qDebug() << " a" << a.GetByteArray().toHex(); 
       qDebug() << " b" << b.GetByteArray().toHex(); 
       qDebug() << "gx" << gx.GetByteArray().toHex(); 
       qDebug() << "gy" << gy.GetByteArray().toHex(); 
-      */
 
       Q_ASSERT(ToCryptoInt(p) == _curve.FieldSize());
     };
 
 
-  QSharedPointer<CppECGroup> CppECGroup::ProductionFixed() 
+  QSharedPointer<CppECGroup> CppECGroup::GetGroup(ECParams::CurveName name) 
   {
-    // RFC 5903 - 256-bit curve
-    const Integer p(QByteArray::fromHex("0xFFFFFFFF000000010000000000"
-                                        "00000000000000FFFFFFFFFFFFFFFFFFFFFFFF"));
-    const Integer q(QByteArray::fromHex("0xFFFFFFFF00000000FFFFFFFFFF"
-                                        "FFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"));
-
-    const Integer a(-3L);
-    const Integer b(QByteArray::fromHex("0x5AC635D8AA3A93E7B3EBBD5576"
-                                        "9886BC651D06B0CC53B0F63BCE3C3E27D2604B"));
-
-    const Integer gx(QByteArray::fromHex("0x6B17D1F2E12C4247F8BCE6E56"
-                                         "3A440F277037D812DEB33A0F4A13945D898C296"));
-    const Integer gy(QByteArray::fromHex("0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE3"
-                                         "3576B315ECECBB6406837BF51F5"));
-
-    return QSharedPointer<CppECGroup>(new CppECGroup(p, q, a, b, gx, gy));
+    ECParams ec(name);
+    return QSharedPointer<CppECGroup>(
+        new CppECGroup(ec.GetP(), ec.GetQ(), 
+          ec.GetA(), ec.GetB(), 
+          ec.GetGx(), ec.GetGy()));
   }
 
   Element CppECGroup::Multiply(const Element &a, const Element &b) const

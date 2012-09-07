@@ -5,6 +5,7 @@
 #include "Crypto/AbstractGroup/BotanECGroup.hpp"
 #include "Crypto/AbstractGroup/ByteGroup.hpp"
 #include "Crypto/AbstractGroup/CppECGroup.hpp"
+#include "Crypto/AbstractGroup/ECParams.hpp"
 #include "Crypto/AbstractGroup/IntegerGroup.hpp"
 #include "Crypto/AbstractGroup/OpenECGroup.hpp"
 #include "Crypto/AbstractGroup/PairingG1Group.hpp"
@@ -47,14 +48,14 @@ namespace BlogDrop {
 
   QSharedPointer<Parameters> Parameters::CppECElGamalProductionFixed(QByteArray round_nonce) 
   {
-    QSharedPointer<const AbstractGroup> fixed = CppECGroup::ProductionFixed();
+    QSharedPointer<const AbstractGroup> fixed = CppECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
   }
 
   QSharedPointer<Parameters> Parameters::CppECHashingProductionFixed(QByteArray round_nonce) 
   {
-    QSharedPointer<const AbstractGroup> fixed = CppECGroup::ProductionFixed();
+    QSharedPointer<const AbstractGroup> fixed = CppECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
   }

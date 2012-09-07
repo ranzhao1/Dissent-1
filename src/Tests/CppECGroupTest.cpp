@@ -4,24 +4,28 @@
 namespace Dissent {
 namespace Tests {
 
-  TEST(CppECGroup, Basic)
+  class CppECGroupTest : 
+    public ::testing::TestWithParam<int> {
+  };
+
+  TEST_P(CppECGroupTest, Basic)
   {
-    AbstractGroup_Basic(CppECGroup::ProductionFixed());
+    AbstractGroup_Basic(CppECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(CppECGroup, IsElement) 
+  TEST_P(CppECGroupTest, IsElement) 
   {
-    AbstractGroup_IsElement(CppECGroup::ProductionFixed());
+    AbstractGroup_IsElement(CppECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(CppECGroup, RandomExponent) 
+  TEST_P(CppECGroupTest, RandomExponent) 
   {
-    AbstractGroup_RandomExponent(CppECGroup::ProductionFixed());
+    AbstractGroup_RandomExponent(CppECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(CppECGroup, NotElement) 
+  TEST_P(CppECGroupTest, NotElement) 
   {
-    QSharedPointer<CppECGroup> group = CppECGroup::ProductionFixed();
+    QSharedPointer<CppECGroup> group = CppECGroup::GetGroup((ECParams::CurveName)GetParam());
 
     int count = 0;
     for(int i=0; i<100; i++) {
@@ -37,25 +41,28 @@ namespace Tests {
     EXPECT_TRUE(count < 5);
   }
   
-  TEST(CppECGroup, Multiplication) 
+  TEST_P(CppECGroupTest, Multiplication) 
   {
-    AbstractGroup_Multiplication(CppECGroup::ProductionFixed());
+    AbstractGroup_Multiplication(CppECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(CppECGroup, Exponentiation) 
+  TEST_P(CppECGroupTest, Exponentiation) 
   {
-    AbstractGroup_Exponentiation(CppECGroup::ProductionFixed());
+    AbstractGroup_Exponentiation(CppECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(CppECGroup, Serialize)
+  TEST_P(CppECGroupTest, Serialize)
   {
-    AbstractGroup_Serialize(CppECGroup::ProductionFixed());
+    AbstractGroup_Serialize(CppECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(CppECGroup, Encode)
+  TEST_P(CppECGroupTest, Encode)
   {
-    AbstractGroup_Encode(CppECGroup::ProductionFixed());
+    AbstractGroup_Encode(CppECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
+
+  INSTANTIATE_TEST_CASE_P(CppECGroupTest, CppECGroupTest,
+      ::testing::Range(0, (int)ECParams::INVALID));
 
 }
 }

@@ -88,6 +88,7 @@
 #include "Crypto/AbstractGroup/ByteElementData.hpp"
 #include "Crypto/AbstractGroup/CppECElementData.hpp"
 #include "Crypto/AbstractGroup/CppECGroup.hpp"
+#include "Crypto/AbstractGroup/ECParams.hpp"
 #include "Crypto/AbstractGroup/Element.hpp"
 #include "Crypto/AbstractGroup/ElementData.hpp"
 #include "Crypto/AbstractGroup/IntegerElementData.hpp"
