@@ -70,6 +70,15 @@ namespace AbstractGroup {
     return QSharedPointer<OpenECGroup>(new OpenECGroup(p, q, a, b, gx, gy, is_nist_curve));
   }
 
+  QSharedPointer<OpenECGroup> OpenECGroup::GetGroup(ECParams::CurveName name) 
+  {
+    ECParams ec(name);
+    return NewGroup(ec.GetP(), ec.GetQ(), 
+          ec.GetA(), ec.GetB(), 
+          ec.GetGx(), ec.GetGy(), 
+          ec.IsNistCurve());
+  }
+
   OpenECGroup::~OpenECGroup() 
   {
     EC_POINT_clear_free(_generator);
@@ -84,54 +93,6 @@ namespace AbstractGroup {
     BN_clear_free(_gy);
     BN_free(_one);
     BN_free(_zero);
-  }
-
-  QSharedPointer<OpenECGroup> OpenECGroup::ProductionFixed() 
-  {
-    // RFC 5903 - 256-bit curve
-    const char *str_p = "FFFFFFFF000000010000000000"
-                    "00000000000000FFFFFFFFFFFFFFFFFFFFFFFF";
-    const char *str_q = "FFFFFFFF00000000FFFFFFFFFF"
-                    "FFFFFFBCE6FAADA7179E84F3B9CAC2FC632551";
-
-    const char *str_a = "-3";
-    const char *str_b = "5AC635D8AA3A93E7B3EBBD5576"
-                    "9886BC651D06B0CC53B0F63BCE3C3E27D2604B";
-
-    const char *str_gx = "6B17D1F2E12C4247F8BCE6E56"
-                     "3A440F277037D812DEB33A0F4A13945D898C296";
-    const char *str_gy = "4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE3"
-                     "3576B315ECECBB6406837BF51F5";
-
-    BIGNUM *p = BN_new();
-    BIGNUM *q = BN_new();
-    BIGNUM *a = BN_new();
-    BIGNUM *b = BN_new();
-    BIGNUM *gx = BN_new();
-    BIGNUM *gy = BN_new();
-
-    CHECK_CALL(p);
-    CHECK_CALL(q);
-    CHECK_CALL(a);
-    CHECK_CALL(b);
-    CHECK_CALL(gx);
-    CHECK_CALL(gy);
-
-    BN_hex2bn(&p, str_p);
-    BN_hex2bn(&q, str_q);
-    BN_hex2bn(&a, str_a);
-    BN_hex2bn(&b, str_b);
-    BN_hex2bn(&gx, str_gx);
-    BN_hex2bn(&gy, str_gy);
-
-    CHECK_CALL(p);
-    CHECK_CALL(q);
-    CHECK_CALL(a);
-    CHECK_CALL(b);
-    CHECK_CALL(gx);
-    CHECK_CALL(gy);
-
-    return QSharedPointer<OpenECGroup>(new OpenECGroup(p, q, a, b, gx, gy, true));
   }
 
   Element OpenECGroup::Multiply(const Element &a, const Element &b) const
@@ -409,6 +370,8 @@ namespace AbstractGroup {
     CHECK_CALL(ret);
     const QByteArray data = i.GetByteArray();
     CHECK_CALL(BN_bin2bn((const unsigned char*)data.constData(), data.count(), ret));
+
+    BN_set_negative(ret, i<0);
   }
   
   Integer OpenECGroup::GetCppInteger(const BIGNUM *a) 

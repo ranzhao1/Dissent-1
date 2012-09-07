@@ -1,3 +1,4 @@
+
 #ifndef DISSENT_CRYPTO_ABSTRACT_GROUP_OPEN_EC_GROUP_H_GUARD
 #define DISSENT_CRYPTO_ABSTRACT_GROUP_OPEN_EC_GROUP_H_GUARD
 
@@ -5,6 +6,7 @@
 #include <QSharedPointer>
 
 #include "AbstractGroup.hpp"
+#include "ECParams.hpp"
 #include "OpenECElementData.hpp"
 
 #ifndef CHECK_CALL
@@ -51,10 +53,9 @@ namespace AbstractGroup {
           const Integer &gy, bool is_nist_curve);
 
       /**
-       * Get a fixed group using the RFC 5903 256-bit curve
-       * (is a NIST curve)
+       * Get a fixed group 
        */
-      static QSharedPointer<OpenECGroup> ProductionFixed();
+      static QSharedPointer<OpenECGroup> GetGroup(ECParams::CurveName name);
 
       /**
        * Destructor

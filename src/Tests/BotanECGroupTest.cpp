@@ -4,40 +4,48 @@
 namespace Dissent {
 namespace Tests {
 
-  TEST(BotanECGroup, Basic)
+  class BotanECGroupTest : 
+    public ::testing::TestWithParam<int> {
+  };
+
+  TEST_P(BotanECGroupTest, Basic)
   {
-    AbstractGroup_Basic(BotanECGroup::ProductionFixed());
+    AbstractGroup_Basic(BotanECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(BotanECGroup, IsElement) 
+  TEST_P(BotanECGroupTest, IsElement) 
   {
-    AbstractGroup_IsElement(BotanECGroup::ProductionFixed());
+    AbstractGroup_IsElement(BotanECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(BotanECGroup, RandomExponent) 
+  TEST_P(BotanECGroupTest, RandomExponent) 
   {
-    AbstractGroup_RandomExponent(BotanECGroup::ProductionFixed());
+    AbstractGroup_RandomExponent(BotanECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
   
-  TEST(BotanECGroup, Multiplication) 
+  TEST_P(BotanECGroupTest, Multiplication) 
   {
-    AbstractGroup_Multiplication(BotanECGroup::ProductionFixed());
+    AbstractGroup_Multiplication(BotanECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(BotanECGroup, Exponentiation) 
+  TEST_P(BotanECGroupTest, Exponentiation) 
   {
-    AbstractGroup_Exponentiation(BotanECGroup::ProductionFixed());
+    AbstractGroup_Exponentiation(BotanECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(BotanECGroup, Serialize)
+  TEST_P(BotanECGroupTest, Serialize)
   {
-    AbstractGroup_Serialize(BotanECGroup::ProductionFixed());
+    AbstractGroup_Serialize(BotanECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(BotanECGroup, Encode)
+  TEST_P(BotanECGroupTest, Encode)
   {
-    AbstractGroup_Encode(BotanECGroup::ProductionFixed());
+    AbstractGroup_Encode(BotanECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
+
+  INSTANTIATE_TEST_CASE_P(BotanECGroupTest, BotanECGroupTest,
+      ::testing::Range(0, (int)ECParams::INVALID));
+
 
 }
 }

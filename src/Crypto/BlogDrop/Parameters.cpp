@@ -62,14 +62,14 @@ namespace BlogDrop {
 
   QSharedPointer<Parameters> Parameters::BotanECElGamalProductionFixed(QByteArray round_nonce) 
   {
-    QSharedPointer<const AbstractGroup> fixed = BotanECGroup::ProductionFixed();
+    QSharedPointer<const AbstractGroup> fixed = BotanECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
   }
 
   QSharedPointer<Parameters> Parameters::BotanECHashingProductionFixed(QByteArray round_nonce) 
   {
-    QSharedPointer<const AbstractGroup> fixed = BotanECGroup::ProductionFixed();
+    QSharedPointer<const AbstractGroup> fixed = BotanECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
   }
@@ -77,14 +77,14 @@ namespace BlogDrop {
 
   QSharedPointer<Parameters> Parameters::OpenECElGamalProductionFixed(QByteArray round_nonce) 
   {
-    QSharedPointer<const AbstractGroup> fixed = OpenECGroup::ProductionFixed();
+    QSharedPointer<const AbstractGroup> fixed = OpenECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
   }
 
   QSharedPointer<Parameters> Parameters::OpenECHashingProductionFixed(QByteArray round_nonce) 
   {
-    QSharedPointer<const AbstractGroup> fixed = OpenECGroup::ProductionFixed();
+    QSharedPointer<const AbstractGroup> fixed = OpenECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
         new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
   }

@@ -4,40 +4,47 @@
 namespace Dissent {
 namespace Tests {
 
-  TEST(OpenECGroup, Basic)
+  class OpenECGroupTest : 
+    public ::testing::TestWithParam<int> {
+  };
+
+  TEST_P(OpenECGroupTest, Basic)
   {
-    AbstractGroup_Basic(OpenECGroup::ProductionFixed());
+    AbstractGroup_Basic(OpenECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(OpenECGroup, IsElement) 
+  TEST_P(OpenECGroupTest, IsElement) 
   {
-    AbstractGroup_IsElement(OpenECGroup::ProductionFixed());
+    AbstractGroup_IsElement(OpenECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(OpenECGroup, RandomExponent) 
+  TEST_P(OpenECGroupTest, RandomExponent) 
   {
-    AbstractGroup_RandomExponent(OpenECGroup::ProductionFixed());
+    AbstractGroup_RandomExponent(OpenECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(OpenECGroup, Multiplication) 
+  TEST_P(OpenECGroupTest, Multiplication) 
   {
-    AbstractGroup_Multiplication(OpenECGroup::ProductionFixed());
+    AbstractGroup_Multiplication(OpenECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(OpenECGroup, Exponentiation) 
+  TEST_P(OpenECGroupTest, Exponentiation) 
   {
-    AbstractGroup_Exponentiation(OpenECGroup::ProductionFixed());
+    AbstractGroup_Exponentiation(OpenECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(OpenECGroup, Serialize)
+  TEST_P(OpenECGroupTest, Serialize)
   {
-    AbstractGroup_Serialize(OpenECGroup::ProductionFixed());
+    AbstractGroup_Serialize(OpenECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
 
-  TEST(OpenECGroup, Encode)
+  TEST_P(OpenECGroupTest, Encode)
   {
-    AbstractGroup_Encode(OpenECGroup::ProductionFixed());
+    AbstractGroup_Encode(OpenECGroup::GetGroup((ECParams::CurveName)GetParam()));
   }
+
+  INSTANTIATE_TEST_CASE_P(OpenECGroupTest, OpenECGroupTest,
+      ::testing::Range(0, (int)ECParams::INVALID));
 
 }
 }

@@ -10,6 +10,7 @@
 #include "Crypto/CppIntegerData.hpp"
 #include "AbstractGroup.hpp"
 #include "BotanECElementData.hpp"
+#include "ECParams.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -37,9 +38,9 @@ namespace AbstractGroup {
           Integer a, Integer b, Integer gx, Integer gy);
 
       /**
-       * Get a fixed group using the RFC 5093 256-bit curve
+       * Get a fixed group 
        */
-      static QSharedPointer<BotanECGroup> ProductionFixed();
+      static QSharedPointer<BotanECGroup> GetGroup(ECParams::CurveName name);
 
       /**
        * Destructor
