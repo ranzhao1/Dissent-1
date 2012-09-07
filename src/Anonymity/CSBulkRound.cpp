@@ -18,6 +18,7 @@
 
 #include "NeffShuffle.hpp"
 #include "NeffKeyShuffle.hpp"
+#include "NeffShuffle.hpp"
 #include "NullRound.hpp"
 #include "CSBulkRound.hpp"
 
@@ -939,7 +940,6 @@ namespace Anonymity {
       rng->GenerateBlock(tmsg);
       if(IsServer()) {
         int gidx = _server_state->rng_to_gidx[idx++];
-        qDebug() << gidx << tmsg.toBase64();
         _server_state->current_phase_log->my_sub_ciphertexts[gidx] = tmsg;
       }
       Xor(xor_msg, xor_msg, tmsg);
