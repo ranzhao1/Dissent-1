@@ -180,7 +180,7 @@ namespace Anonymity {
       class State {
         public:
           State(QByteArray /*round_nonce*/) : 
-            params(Parameters::IntegerHashingTesting()),
+            params(Parameters::OpenECHashingProduction()),
             client_sk(new PrivateKey(params)),
             client_pk(new PublicKey(client_sk)),
             anonymous_sk(new PrivateKey(params)),
