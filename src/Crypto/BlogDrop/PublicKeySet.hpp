@@ -1,6 +1,7 @@
 #ifndef DISSENT_CRYPTO_BLOGDROP_PUBLICKEY_SET_H_GUARD
 #define DISSENT_CRYPTO_BLOGDROP_PUBLICKEY_SET_H_GUARD
 
+#include <QDataStream>
 #include <QList>
 #include <QSharedPointer>
 
@@ -32,6 +33,14 @@ namespace BlogDrop {
           const QList<QSharedPointer<const PublicKey> > &keys);
 
       /**
+       * Constructor: Initialize using a QSet of keys
+       * @params params group parameters
+       * @params keys keyset to use
+       */
+      PublicKeySet(const QSharedPointer<const Parameters> params, 
+          const QByteArray &key);
+
+      /**
        * Return a list of PublicKeySets -- one per ciphertext element.
        * @params params group parameters
        * @params keys a list of format keys[client][element. You will probably
@@ -58,9 +67,19 @@ namespace BlogDrop {
        */
       int GetNKeys() const { return _n_keys; }
 
+      /**
+       * Get serialized version of the integer
+       */
+      inline QByteArray GetByteArray() const { 
+        QByteArray out;
+        QDataStream stream(&out, QIODevice::WriteOnly);
+        stream << _n_keys << _params->GetKeyGroup()->ElementToByteArray(_key);
+        return out;
+      }
+
     private:
 
-      const int _n_keys;
+      int _n_keys;
       const QSharedPointer<const Parameters> _params;
 
       /**

@@ -152,6 +152,9 @@ namespace Benchmarks {
       
       start = QDateTime::currentMSecsSinceEpoch();
       for(int i=0; i<p->n_gen; i++) {
+        // Change the round nonce to make sure things are randomized
+        params->SetRoundNonce(QString("%0 %1").arg(i).arg(nelms).toAscii());
+
         c = BlogDropClient(params, master_client_sks[0], server_pk_set, 
             author_pk).GenerateCoverCiphertext();
       }
@@ -218,32 +221,98 @@ namespace Benchmarks {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(use_openssl ? CryptoFactory::OpenSSL : CryptoFactory::CryptoPP);
-
+    
     // paring
-    VerifyNTimesDiffLen(Parameters::PairingProductionFixed(), p);
+    VerifyNTimesDiffLen(Parameters::PairingProduction(), p);
+    
 
     // hashing
       // integer
-    VerifyNTimesDiffLen(Parameters::IntegerHashingProductionFixed(), p);
+    VerifyNTimesDiffLen(Parameters::IntegerHashingProduction(), p);
+   
     
       // open ec
-    VerifyNTimesDiffLen(Parameters::OpenECHashingProductionFixed(), p);
+    VerifyNTimesDiffLen(Parameters::OpenECHashingProduction(), p);
       // cpp ec
-    VerifyNTimesDiffLen(Parameters::CppECHashingProductionFixed(), p);
-
+    VerifyNTimesDiffLen(Parameters::CppECHashingProduction(), p);
+      // cpp ec
+    VerifyNTimesDiffLen(Parameters::BotanECHashingProduction(), p);
+    
     // elgamal
       // integer
-    VerifyNTimesDiffLen(Parameters::IntegerElGamalProductionFixed(), p);
+    VerifyNTimesDiffLen(Parameters::IntegerElGamalProduction(), p);
 
+    
       // open ec
-    VerifyNTimesDiffLen(Parameters::OpenECElGamalProductionFixed(), p);
-
+    VerifyNTimesDiffLen(Parameters::OpenECElGamalProduction(), p);
       // cpp ec
-    VerifyNTimesDiffLen(Parameters::CppECElGamalProductionFixed(), p);
+    VerifyNTimesDiffLen(Parameters::CppECElGamalProduction(), p);
+      // cpp ec
+    VerifyNTimesDiffLen(Parameters::BotanECElGamalProduction(), p);
 
       // Xor
-    VerifyNTimesDiffLen(Parameters::XorTestingFixed(), p);
+    VerifyNTimesDiffLen(Parameters::XorTesting(), p);
+
     cf.SetLibrary(cname);
+  }
+
+  // Cycle through security parameters
+  void VerifyNTimesDiffLenSecurity(verifyN_params *p)
+  {
+    QList<QSharedPointer<Parameters> > params;
+
+    // integer
+    for(int i=0; i<IntegerGroup::INVALID; i++) {
+      QSharedPointer<IntegerGroup> g = IntegerGroup::GetGroup((IntegerGroup::GroupSize)i);
+
+      params.append(QSharedPointer<Parameters>(new 
+            Parameters(Parameters::ProofType_ElGamal, QByteArray(), g, g, 1)));
+      params.append(QSharedPointer<Parameters>(new 
+            Parameters(Parameters::ProofType_HashingGenerator, QByteArray(), g, g, 1)));
+    }
+
+    // cpp ec
+    for(int i=0; i<ECParams::INVALID; i++) {
+      QSharedPointer<CppECGroup> g = CppECGroup::GetGroup((ECParams::CurveName)i);
+
+      params.append(QSharedPointer<Parameters>(new 
+            Parameters(Parameters::ProofType_ElGamal, QByteArray(), g, g, 1)));
+      params.append(QSharedPointer<Parameters>(new 
+            Parameters(Parameters::ProofType_HashingGenerator, QByteArray(), g, g, 1)));
+    }
+
+    // botan ec
+    for(int i=0; i<ECParams::INVALID; i++) {
+      QSharedPointer<BotanECGroup> g = BotanECGroup::GetGroup((ECParams::CurveName)i);
+
+      params.append(QSharedPointer<Parameters>(new 
+            Parameters(Parameters::ProofType_ElGamal, QByteArray(), g, g, 1)));
+      params.append(QSharedPointer<Parameters>(new 
+            Parameters(Parameters::ProofType_HashingGenerator, QByteArray(), g, g, 1)));
+    }
+
+    // open ec
+    for(int i=0; i<ECParams::INVALID; i++) {
+      QSharedPointer<OpenECGroup> g = OpenECGroup::GetGroup((ECParams::CurveName)i);
+
+      params.append(QSharedPointer<Parameters>(new 
+            Parameters(Parameters::ProofType_ElGamal, QByteArray(), g, g, 1)));
+      params.append(QSharedPointer<Parameters>(new 
+            Parameters(Parameters::ProofType_HashingGenerator, QByteArray(), g, g, 1)));
+    }
+
+    // pairing
+    for(int i=0; i<PairingGroup::INVALID; i++) {
+      QSharedPointer<PairingG1Group> g1 = PairingG1Group::GetGroup((PairingGroup::GroupSize)i);
+      QSharedPointer<PairingGTGroup> gt = PairingGTGroup::GetGroup((PairingGroup::GroupSize)i);
+
+      params.append(QSharedPointer<Parameters>(new 
+            Parameters(Parameters::ProofType_Pairing, QByteArray(), g1, gt, 1)));
+    }
+
+    for(int i=0; i<params.count(); i++) {
+      VerifyNTimesDiffLen(params[i], p);
+    }
   }
 
   // Cycle through proof types
@@ -254,10 +323,10 @@ namespace Benchmarks {
     cf.SetLibrary(use_openssl ? CryptoFactory::OpenSSL : CryptoFactory::CryptoPP);
 
       // open ec
-    VerifyNTimesDiffLen(Parameters::OpenECHashingProductionFixed(), p);
+    VerifyNTimesDiffLen(Parameters::OpenECHashingProduction(), p);
 
       // Xor
-    VerifyNTimesDiffLen(Parameters::XorTestingFixed(), p);
+    VerifyNTimesDiffLen(Parameters::XorTesting(), p);
     cf.SetLibrary(cname);
   }
 
@@ -314,6 +383,36 @@ namespace Benchmarks {
 
     for(int i=2; i<4096;) {
       p.n_clients = i;
+      VerifyNTimesDiffLenLibrary(&p, false);
+
+      if(i < 8) i += 1;
+      else if(i < 16) i += 2;
+      else if(i < 32) i += 4;
+      else if(i < 64) i += 8;
+      else if(i < 128) i += 16;
+      else if(i < 256) i += 32;
+      else if(i < 512) i += 64;
+      else if(i < 1024) i += 128;
+      else if(i < 2048) i += 256;
+      else if(i < 4096) i += 512;
+      else i += 1024;
+    }
+  }
+
+  // Vary number of clients
+  TEST(Micro, XorVaryNClients) {
+
+    verifyN_params p;
+    p.n_servers = 10;
+    p.n_clients = 1000;
+    p.n_gen = 10;
+    p.n_verify = 10;
+    p.vary_n_elms = false;
+
+    qDebug() << header;
+
+    for(int i=2; i<4096;) {
+      p.n_clients = i;
       VerifyNTimesDiffLenXor(&p, false);
 
       if(i < 8) i += 1;
@@ -328,6 +427,20 @@ namespace Benchmarks {
       else if(i < 4096) i += 512;
       else i += 1024;
     }
+  }
+
+  // Cycle through integer types
+  TEST(Micro, VarySecurity) {
+
+    verifyN_params p;
+    p.n_servers = 10;
+    p.n_clients = 1000;
+    p.n_gen = 10;
+    p.n_verify = 10;
+    p.vary_n_elms = false;
+
+    qDebug() << header;
+    VerifyNTimesDiffLenSecurity(&p);
   }
 }
 }

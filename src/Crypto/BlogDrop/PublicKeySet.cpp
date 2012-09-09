@@ -16,6 +16,18 @@ namespace BlogDrop {
     }
   }
 
+  PublicKeySet::PublicKeySet(const QSharedPointer<const Parameters> params, 
+      const QByteArray &key) :
+    _params(params)
+  {
+    QDataStream stream(key);
+
+    QByteArray keybytes;
+    stream >> _n_keys >> keybytes;
+
+    _key = _params->GetKeyGroup()->ElementFromByteArray(keybytes);
+  }
+
   QList<QSharedPointer<const PublicKeySet> > PublicKeySet::CreateClientKeySets(
           const QSharedPointer<const Parameters> params, 
           const QList<QList<QSharedPointer<const PublicKey> > > &keys)

@@ -109,6 +109,8 @@ namespace BlogDrop {
 
       void InitializeLists(QList<Element> &gs, QList<Element> &ys) const;
 
+      QList<QSharedPointer<const Parameters> > _param_copies;
+
       Integer _challenge_1, _challenge_2;
       QList<Integer> _responses;
 

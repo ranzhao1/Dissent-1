@@ -882,6 +882,10 @@ namespace Anonymity {
       }
     }
 
+    for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {
+      _state->master_server_pks_list.append(_state->master_server_pks[server_idx]);
+    }
+
     // Dont need to hold the keys once the BlogDropClients
     // are initialized
     _state->slot_pks.clear();
@@ -1032,6 +1036,11 @@ namespace Anonymity {
 
   QByteArray BlogDropRound::GenerateServerValidation()
   {
+    QList<QList<QByteArray> > by_slot;
+    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+      by_slot.append(QList<QByteArray>());
+    }
+
     for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {
       QList<QByteArray> server_list;
       QDataStream stream(_server_state->server_ciphertexts[server_idx]);
@@ -1042,11 +1051,16 @@ namespace Anonymity {
       }
 
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        if(!_server_state->blogdrop_servers[slot_idx]->AddServerCiphertext(_state->master_server_pks[server_idx],
-              server_list[slot_idx])) {
+        by_slot[slot_idx].append(server_list[slot_idx]);
+      }
+    }
+
+    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+      if(!_server_state->blogdrop_servers[slot_idx]->AddServerCiphertexts(
+              by_slot[slot_idx],
+              _state->master_server_pks_list)) {
             throw QRunTimeError("Server submitted invalid ciphertext");
         }
-      }
     }
 
     QList<QByteArray> plaintexts;

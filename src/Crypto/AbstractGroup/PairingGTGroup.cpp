@@ -40,6 +40,11 @@ namespace AbstractGroup {
   {
   }
 
+  QSharedPointer<AbstractGroup> PairingGTGroup::Copy() const
+  {
+    return QSharedPointer<PairingGTGroup>(new PairingGTGroup(*this));
+  }
+
   Element PairingGTGroup::Multiply(const Element &a, const Element &b) const
   {
     GT e_a(GetElement(a));
@@ -89,8 +94,6 @@ namespace AbstractGroup {
     if(y <= (_field/2)) bit = "0";
     else bit = "1";
 
-    qDebug() << "x1" << x.GetByteArray().toHex();
-    qDebug() << "y1" << y.GetByteArray().toHex();
     return bit + x.GetByteArray();
   }
   
@@ -114,8 +117,6 @@ namespace AbstractGroup {
       if(y <= _field/2) y = ((y * Integer(-1)) % _field);
     }
 
-    qDebug() << "x" << x.GetByteArray().toHex();
-    qDebug() << "y" << y.GetByteArray().toHex();
 
 
 

@@ -23,6 +23,14 @@ namespace AbstractGroup {
       Q_ASSERT(ToBotanInt(p) == _curve.get_p());
     };
 
+  BotanECGroup::BotanECGroup(const BotanECGroup &other) : 
+    _curve(other._curve.get_p(), other._curve.get_a(), other._curve.get_b()),
+    _q(other._q),
+    _g(_curve, other._g.get_affine_x(), other._g.get_affine_y()),
+    _field_bytes(other._field_bytes)
+  {
+  }
+
   QSharedPointer<BotanECGroup> BotanECGroup::GetGroup(ECParams::CurveName name) 
   {
     ECParams ec(name);
@@ -30,6 +38,11 @@ namespace AbstractGroup {
         new BotanECGroup(ec.GetP(), ec.GetQ(), 
           ec.GetA(), ec.GetB(), 
           ec.GetGx(), ec.GetGy()));
+  }
+
+  QSharedPointer<AbstractGroup> BotanECGroup::Copy() const
+  {
+    return QSharedPointer<BotanECGroup>(new BotanECGroup(*this));
   }
 
   Element BotanECGroup::Multiply(const Element &a, const Element &b) const

@@ -63,6 +63,16 @@ namespace AbstractGroup {
       virtual ~OpenECGroup();
 
       /**
+       * Return a pointer to a copy of this group
+       */
+      virtual QSharedPointer<AbstractGroup> Copy() const;
+
+      /**
+       * Copy constructor
+       */
+      OpenECGroup(const OpenECGroup &other);
+
+      /**
        * Add two elliptic curve points
        * @param a first operand 
        * @param b second operand 
@@ -263,6 +273,12 @@ namespace AbstractGroup {
             mont(BN_MONT_CTX_new()),
             group(EC_GROUP_new(
                   is_nist_curve ? EC_GFp_nist_method() : EC_GFp_mont_method())) 
+          {}
+
+          MutableData(const MutableData &other) :
+            ctx(BN_CTX_new()),
+            mont(BN_MONT_CTX_new()),
+            group(EC_GROUP_dup(other.group))
           {}
 
           ~MutableData() {

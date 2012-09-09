@@ -38,6 +38,11 @@ namespace AbstractGroup {
           Integer a, Integer b, Integer gx, Integer gy);
 
       /**
+       * Copy constructor
+       */
+      BotanECGroup(const BotanECGroup &other);
+
+      /**
        * Get a fixed group 
        */
       static QSharedPointer<BotanECGroup> GetGroup(ECParams::CurveName name);
@@ -46,6 +51,11 @@ namespace AbstractGroup {
        * Destructor
        */
       virtual ~BotanECGroup() {}
+
+      /**
+       * Return a pointer to a copy of this group
+       */
+      virtual QSharedPointer<AbstractGroup> Copy() const;
 
       /**
        * Add two elliptic curve points

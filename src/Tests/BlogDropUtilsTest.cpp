@@ -22,19 +22,19 @@ namespace Tests {
   }
 
   TEST(BlogDropUtils, HashedGeneratorInteger) {
-    TestHashed(Parameters::Parameters::IntegerHashingTestingFixed());
+    TestHashed(Parameters::Parameters::IntegerHashingTesting());
   }
 
   TEST(BlogDropUtils, HashedGeneratorCppEC) {
-    TestHashed(Parameters::Parameters::CppECHashingProductionFixed());
+    TestHashed(Parameters::Parameters::CppECHashingProduction());
   }
 
   TEST(BlogDropUtils, HashedGeneratorOpenEC) {
-    TestHashed(Parameters::Parameters::OpenECHashingProductionFixed());
+    TestHashed(Parameters::Parameters::OpenECHashingProduction());
   }
 
   TEST(BlogDropUtils, HashedGeneratorPairing) {
-    TestHashed(Parameters::Parameters::PairingProductionFixed());
+    TestHashed(Parameters::Parameters::PairingProduction());
   }
 
 

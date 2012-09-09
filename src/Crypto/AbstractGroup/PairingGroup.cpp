@@ -186,6 +186,15 @@ namespace AbstractGroup {
 
   };
 
+  PairingGroup::PairingGroup(const PairingGroup &other) :
+    _param_str(other._param_str),
+    _pairing(new Pairing(_param_str.constData(), _param_str.count())),
+    _identity(other._identity),
+    _generator(other._generator),
+    _order(other._order),
+    _field(other._field)
+  {}
+
   PairingGroup::~PairingGroup()
   {}
 

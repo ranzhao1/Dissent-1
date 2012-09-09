@@ -6,6 +6,10 @@
 namespace Dissent {
 namespace Tests {
 
+  class BlogDropProofTest : 
+    public ::testing::TestWithParam<CryptoFactory::ThreadingType> {
+  };
+
   void TestElGamalServerCiphertext(QSharedPointer<const Parameters> params)
   {
     for(int t=0; t<10; t++) {
@@ -44,32 +48,60 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDropProof, CppIntegerElGamalServer) {
+  TEST_P(BlogDropProofTest, CppIntegerElGamalServer) {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
     cf.SetLibrary(CryptoFactory::CryptoPP);
-    TestElGamalServerCiphertext(Parameters::Parameters::IntegerElGamalTestingFixed());
+    cf.SetThreading(GetParam());
+
+    TestElGamalServerCiphertext(Parameters::Parameters::IntegerElGamalTesting());
+
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, OpenIntegerElGamalServer) {
+  TEST_P(BlogDropProofTest, OpenIntegerElGamalServer) {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(CryptoFactory::OpenSSL);
-    TestElGamalServerCiphertext(Parameters::Parameters::IntegerElGamalTestingFixed());
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    TestElGamalServerCiphertext(Parameters::Parameters::IntegerElGamalTesting());
+
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDropProof, CppECElGamalServer) {
-    TestElGamalServerCiphertext(Parameters::Parameters::CppECElGamalProductionFixed());
+  TEST_P(BlogDropProofTest, CppECElGamalServer) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    TestElGamalServerCiphertext(Parameters::Parameters::CppECElGamalProduction());
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDropProof, BotanECElGamalServer) {
-    TestElGamalServerCiphertext(Parameters::Parameters::BotanECElGamalProductionFixed());
+  TEST_P(BlogDropProofTest, BotanECElGamalServer) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    TestElGamalServerCiphertext(Parameters::Parameters::BotanECElGamalProduction());
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDropProof, OpenECElGamalServer) {
-    TestElGamalServerCiphertext(Parameters::Parameters::OpenECElGamalProductionFixed());
+  TEST_P(BlogDropProofTest, OpenECElGamalServer) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    TestElGamalServerCiphertext(Parameters::Parameters::OpenECElGamalProduction());
+
+    cf.SetThreading(tt);
   }
 
   void TestClientOnce(QSharedPointer<const Parameters> params)
@@ -125,48 +157,82 @@ namespace Tests {
     ASSERT_TRUE(c->VerifyProof(0, client_pub));
   }
 
-  TEST(BlogDrop, CppIntegerClientProof) {
+  TEST_P(BlogDropProofTest, CppIntegerClientProof) {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(CryptoFactory::CryptoPP);
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestClientOnce(Parameters::Parameters::IntegerElGamalTestingFixed());
+      TestClientOnce(Parameters::Parameters::IntegerElGamalTesting());
     }
+
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, OpenIntegerClientProof) {
+  TEST_P(BlogDropProofTest, OpenIntegerClientProof) {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(CryptoFactory::OpenSSL);
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestClientOnce(Parameters::Parameters::IntegerElGamalTestingFixed());
+      TestClientOnce(Parameters::Parameters::IntegerElGamalTesting());
     }
+
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, CppECClientProof) {
+  TEST_P(BlogDropProofTest, CppECClientProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestClientOnce(Parameters::Parameters::CppECElGamalProductionFixed());
+      TestClientOnce(Parameters::Parameters::CppECElGamalProduction());
     }
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, BotanECClientProof) {
+  TEST_P(BlogDropProofTest, BotanECClientProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestClientOnce(Parameters::Parameters::BotanECElGamalProductionFixed());
+      TestClientOnce(Parameters::Parameters::BotanECElGamalProduction());
     }
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, OpenECClientProof) {
+  TEST_P(BlogDropProofTest, OpenECClientProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestClientOnce(Parameters::Parameters::OpenECElGamalProductionFixed());
+      TestClientOnce(Parameters::Parameters::OpenECElGamalProduction());
     }
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, PairingClientProof) {
+  TEST_P(BlogDropProofTest, PairingClientProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestClientOnce(Parameters::Parameters::PairingProductionFixed());
+      TestClientOnce(Parameters::Parameters::PairingProduction());
     }
+
+    cf.SetThreading(tt);
   }
 
   void TestAuthorOnce(QSharedPointer<const Parameters> params) 
@@ -223,48 +289,78 @@ namespace Tests {
     ASSERT_TRUE(c->VerifyProof(0, client_pub));
   }
 
-  TEST(BlogDrop, CppIntegerElGamalAuthorProof) {
+  TEST_P(BlogDropProofTest, CppIntegerElGamalAuthorProof) {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(CryptoFactory::CryptoPP);
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestAuthorOnce(Parameters::Parameters::IntegerElGamalTestingFixed());
+      TestAuthorOnce(Parameters::Parameters::IntegerElGamalTesting());
     }
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, OpenIntegerElGamalAuthorProof) {
+  TEST_P(BlogDropProofTest, OpenIntegerElGamalAuthorProof) {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(CryptoFactory::OpenSSL);
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    
     for(int i=0; i<10; i++) {
-      TestAuthorOnce(Parameters::Parameters::IntegerElGamalTestingFixed());
+      TestAuthorOnce(Parameters::Parameters::IntegerElGamalTesting());
     }
+
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, CppECElGamalAuthorProof) {
+  TEST_P(BlogDropProofTest, CppECElGamalAuthorProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestAuthorOnce(Parameters::Parameters::CppECElGamalProductionFixed());
+      TestAuthorOnce(Parameters::Parameters::CppECElGamalProduction());
     }
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, BotanECElGamalAuthorProof) {
+  TEST_P(BlogDropProofTest, BotanECElGamalAuthorProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestAuthorOnce(Parameters::Parameters::BotanECElGamalProductionFixed());
+      TestAuthorOnce(Parameters::Parameters::BotanECElGamalProduction());
     }
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, OpenECElGamalAuthorProof) {
+  TEST_P(BlogDropProofTest, OpenECElGamalAuthorProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestAuthorOnce(Parameters::Parameters::OpenECElGamalProductionFixed());
+      TestAuthorOnce(Parameters::Parameters::OpenECElGamalProduction());
     }
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, PairingAuthorProof) {
+  TEST_P(BlogDropProofTest, PairingAuthorProof) {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     for(int i=0; i<10; i++) {
-      TestAuthorOnce(Parameters::Parameters::PairingProductionFixed());
+      TestAuthorOnce(Parameters::Parameters::PairingProduction());
     }
+    cf.SetThreading(tt);
   }
   
   void ElGamalEndToEndOnce(QSharedPointer<const Parameters> params, bool random = true)
@@ -361,10 +457,8 @@ namespace Tests {
 
     qDebug() << "ADD_SERVER_TO_SERVER";
     for(int i=0; i<nservers; i++) {
-      for(int j=0; j<nservers; j++) {
-        qDebug() << "----------SERVER"<<i<<"--------------";
-        ASSERT_TRUE(servers[j].AddServerCiphertext(servers[i].GetPublicKey(), s[i]));
-      }
+      qDebug() << "----------SERVER"<<i<<"--------------";
+      ASSERT_TRUE(servers[i].AddServerCiphertexts(s, server_pks));
     }
 
     qDebug() << "REVEAL";
@@ -378,42 +472,76 @@ namespace Tests {
   }
   
 
-  TEST(BlogDrop, CppIntegerElGamalEndToEnd) 
+  TEST_P(BlogDropProofTest, CppIntegerElGamalEndToEnd) 
   {
     CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(CryptoFactory::CryptoPP);
-    ElGamalEndToEndOnce(Parameters::Parameters::IntegerElGamalProductionFixed(), false);
+
+    ElGamalEndToEndOnce(Parameters::Parameters::IntegerElGamalProduction(), false);
+
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, OpenIntegerElgamalEndToEnd) 
+  TEST_P(BlogDropProofTest, OpenIntegerElgamalEndToEnd) 
   { 
     CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetThreading(GetParam());
     cf.SetLibrary(CryptoFactory::OpenSSL);
-    ElGamalEndToEndOnce(Parameters::Parameters::IntegerElGamalProductionFixed(), false);
+
+    ElGamalEndToEndOnce(Parameters::Parameters::IntegerElGamalProduction(), false);
+
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, CppECElGamalEndToEnd) 
+  TEST_P(BlogDropProofTest, CppECElGamalEndToEnd) 
   {
-    ElGamalEndToEndOnce(Parameters::Parameters::CppECElGamalProductionFixed(), false);
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    ElGamalEndToEndOnce(Parameters::Parameters::CppECElGamalProduction(), false);
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, BotanECElGamalEndToEnd) 
+  TEST_P(BlogDropProofTest, BotanECElGamalEndToEnd) 
   {
-    ElGamalEndToEndOnce(Parameters::Parameters::BotanECElGamalProductionFixed(), false);
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    ElGamalEndToEndOnce(Parameters::Parameters::BotanECElGamalProduction(), false);
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, OpenECElGamalEndToEnd) 
+  TEST_P(BlogDropProofTest, OpenECElGamalEndToEnd) 
   {
-    ElGamalEndToEndOnce(Parameters::Parameters::OpenECElGamalProductionFixed(), false);
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    ElGamalEndToEndOnce(Parameters::Parameters::OpenECElGamalProduction(), false);
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, PairingEndToEnd) 
+  TEST_P(BlogDropProofTest, PairingEndToEnd) 
   {
-    ElGamalEndToEndOnce(Parameters::Parameters::PairingProductionFixed(), false);
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    ElGamalEndToEndOnce(Parameters::Parameters::PairingProduction(), false);
+
+    cf.SetThreading(tt);
   }
 
   void HashingEndToEndOnce(QSharedPointer<const Parameters> params, bool random = true)
@@ -539,10 +667,8 @@ namespace Tests {
 
     qDebug() << "ADD_SERVER_TO_SERVER";
     for(int i=0; i<nservers; i++) {
-      for(int j=0; j<nservers; j++) {
-        qDebug() << "----------SERVER"<<i<<"--------------";
-        ASSERT_TRUE(servers[j].AddServerCiphertext(servers[i].GetPublicKey(), s[i]));
-      }
+      qDebug() << "----------SERVER"<<i<<"--------------";
+      ASSERT_TRUE(servers[i].AddServerCiphertexts(s, server_pks));
     }
 
     qDebug() << "REVEAL";
@@ -555,45 +681,82 @@ namespace Tests {
     }
   }
 
-  TEST(BlogDrop, CppIntegerHashingEndToEnd) 
+  TEST_P(BlogDropProofTest, CppIntegerHashingEndToEnd) 
   {
     CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetThreading(GetParam());
     cf.SetLibrary(CryptoFactory::CryptoPP);
-    HashingEndToEndOnce(Parameters::Parameters::IntegerHashingProductionFixed(), false);
+    
+    HashingEndToEndOnce(Parameters::Parameters::IntegerHashingProduction(), false);
+
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, OpenIntegerHashingEndToEnd) 
+  TEST_P(BlogDropProofTest, OpenIntegerHashingEndToEnd) 
   {
     CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
+    cf.SetThreading(GetParam());
     cf.SetLibrary(CryptoFactory::OpenSSL);
-    HashingEndToEndOnce(Parameters::Parameters::IntegerHashingProductionFixed(), false);
+
+    HashingEndToEndOnce(Parameters::Parameters::IntegerHashingProduction(), false);
+
     cf.SetLibrary(cname);
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, CppECHashingEndToEnd) 
+  TEST_P(BlogDropProofTest, CppECHashingEndToEnd) 
   {
-    HashingEndToEndOnce(Parameters::Parameters::CppECHashingProductionFixed(), false);
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    HashingEndToEndOnce(Parameters::Parameters::CppECHashingProduction(), false);
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, BotanECHashingEndToEnd) 
+  TEST_P(BlogDropProofTest, BotanECHashingEndToEnd) 
   {
-    HashingEndToEndOnce(Parameters::Parameters::BotanECHashingProductionFixed(), false);
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    HashingEndToEndOnce(Parameters::Parameters::BotanECHashingProduction(), false);
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, OpenECHashingEndToEnd) 
+  TEST_P(BlogDropProofTest, OpenECHashingEndToEnd) 
   {
-    HashingEndToEndOnce(Parameters::Parameters::OpenECHashingProductionFixed(), false);
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    HashingEndToEndOnce(Parameters::Parameters::OpenECHashingProduction(), false);
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDrop, XorEndToEnd) 
+  TEST_P(BlogDropProofTest, XorEndToEnd) 
   {
-    HashingEndToEndOnce(Parameters::Parameters::XorTestingFixed(), false);
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
+    HashingEndToEndOnce(Parameters::Parameters::XorTesting(), false);
+    
+    cf.SetThreading(tt);
   }
 
-
+  INSTANTIATE_TEST_CASE_P(BlogDropProof, BlogDropProofTest,
+      ::testing::Values(
+        CryptoFactory::SingleThreaded,
+        CryptoFactory::MultiThreaded));
 }
 }
 

@@ -44,6 +44,11 @@ namespace AbstractGroup {
       virtual ~AbstractGroup() {}
 
       /**
+       * Return a pointer to a copy of this group
+       */
+      virtual QSharedPointer<AbstractGroup> Copy() const = 0;
+
+      /**
        * The group operation. For integers, this is multiplication, for
        * elliptic curves it's point addition.
        * @param a first operand 

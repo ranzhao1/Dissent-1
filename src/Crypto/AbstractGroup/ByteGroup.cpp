@@ -15,6 +15,11 @@ namespace AbstractGroup {
       Q_ASSERT(n_bytes > 0);
     };
 
+  QSharedPointer<AbstractGroup> ByteGroup::Copy() const
+  {
+    return QSharedPointer<ByteGroup>(new ByteGroup(*this));
+  }
+
   QSharedPointer<ByteGroup> ByteGroup::TestingFixed() 
   {
     return QSharedPointer<ByteGroup>(new ByteGroup(128));

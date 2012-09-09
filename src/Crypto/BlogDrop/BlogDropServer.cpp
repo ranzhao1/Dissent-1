@@ -48,23 +48,16 @@ namespace BlogDrop {
   {
     if(!in.count()) qWarning() << "Added empty client ciphertext list";
 
-    // list[client_idx]
-    QList<QSharedPointer<const ClientCiphertext> > list;
+    QList<QSharedPointer<const PublicKey> > pubs_out;
+    QList<QSharedPointer<const ClientCiphertext> > c_out;
+    ClientCiphertext::VerifyProofs(_params, _server_pk_set, _author_pub, 
+          _phase, pubs, in,
+          c_out, pubs_out);
 
-    // Unpack each ciphertext
-    for(int client_idx=0; client_idx<in.count(); client_idx++) {
-      list.append(CiphertextFactory::CreateClientCiphertext(_params, 
-            _server_pk_set, _author_pub, in[client_idx]));
-    }
+    _client_ciphertexts += c_out;
+    _client_pubs += pubs_out;
 
-    QSet<int> valid = ClientCiphertext::VerifyProofs(_phase, list, pubs);
-
-    foreach(int i, valid) {
-      _client_ciphertexts.append(list[i]);
-      _client_pubs.append(pubs[i]);
-    }
-
-    return (valid.count() == in.count());
+    return (c_out.count() == in.count());
   }
 
   QByteArray BlogDropServer::CloseBin() 
@@ -78,8 +71,8 @@ namespace BlogDrop {
     return s->GetByteArray();
   }
 
-  bool BlogDropServer::AddServerCiphertext(QSharedPointer<const PublicKey> from, 
-      const QByteArray &in) 
+  bool BlogDropServer::AddServerCiphertext(const QByteArray &in,
+      QSharedPointer<const PublicKey> from)
   {
     QSharedPointer<const ServerCiphertext> s = CiphertextFactory::CreateServerCiphertext(
         _params, _client_pks, _author_pub, _client_ciphertexts, in);
@@ -89,6 +82,21 @@ namespace BlogDrop {
       _server_ciphertexts.append(s);
 
     return okay;
+  }
+
+  bool BlogDropServer::AddServerCiphertexts(const QList<QByteArray> &in, 
+      const QList<QSharedPointer<const PublicKey> > &pubs) 
+  {
+    if(!in.count()) qWarning() << "Added empty server ciphertext list";
+
+    QList<QSharedPointer<const ServerCiphertext> > c_out;
+    ServerCiphertext::VerifyProofs(_params, _client_pks, _author_pub, _client_ciphertexts,
+          _phase, pubs, in, c_out);
+
+    _server_ciphertexts += c_out;
+
+    return (c_out.count() == in.count());
+
   }
 
   bool BlogDropServer::RevealPlaintext(QByteArray &out) const

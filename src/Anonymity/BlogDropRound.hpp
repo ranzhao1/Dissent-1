@@ -180,7 +180,7 @@ namespace Anonymity {
       class State {
         public:
           State(QByteArray /*round_nonce*/) : 
-            params(Parameters::IntegerHashingTestingFixed()),
+            params(Parameters::IntegerHashingTesting()),
             client_sk(new PrivateKey(params)),
             client_pk(new PublicKey(client_sk)),
             anonymous_sk(new PrivateKey(params)),
@@ -208,6 +208,7 @@ namespace Anonymity {
           QHash<int, QList<QSharedPointer<const PublicKey> > > commit_matrix_clients;
 
           QHash<int, QSharedPointer<const PublicKey> > master_server_pks;
+          QList<QSharedPointer<const PublicKey> > master_server_pks_list;
           QSharedPointer<const PublicKeySet> master_server_pk_set;
           QHash<Id, QSharedPointer<const PublicKey> > master_client_pks;
 

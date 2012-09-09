@@ -7,7 +7,7 @@
 int main(int argc, char **argv)
 {
   // Necessary for Botan crypto library to work
-  Botan::LibraryInitializer init;
+  Botan::LibraryInitializer init("thread_safe=true");
 
   QCoreApplication qca(argc, argv);
   QStringList args = QCoreApplication::arguments();

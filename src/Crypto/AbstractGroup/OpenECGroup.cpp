@@ -79,6 +79,29 @@ namespace AbstractGroup {
           ec.IsNistCurve());
   }
 
+  QSharedPointer<AbstractGroup> OpenECGroup::Copy() const
+  {
+    return QSharedPointer<OpenECGroup>(new OpenECGroup(*this));
+  }
+
+  OpenECGroup::OpenECGroup(const OpenECGroup &other) :
+    _p(BN_dup(other._p)),
+    _q(BN_dup(other._q)),
+    _a(BN_dup(other._a)),
+    _b(BN_dup(other._b)),
+    _gx(BN_dup(other._gx)),
+    _gy(BN_dup(other._gy)),
+    _zero(BN_dup(other._zero)),
+    _one(BN_dup(other._one)),
+    _data(other._data),
+    _generator(EC_POINT_dup(other._generator, _data->group)),
+    _order(other._order),
+    _field_bytes(other._field_bytes)
+  {
+    CHECK_CALL(_p && _q && _a && _b && _gx && _gy && _zero && _one);
+    CHECK_CALL(_data && _generator);
+  }
+
   OpenECGroup::~OpenECGroup() 
   {
     EC_POINT_clear_free(_generator);

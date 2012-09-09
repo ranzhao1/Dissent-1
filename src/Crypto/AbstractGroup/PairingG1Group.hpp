@@ -31,6 +31,11 @@ namespace AbstractGroup {
       virtual ~PairingG1Group(); 
 
       /**
+       * Return a pointer to a copy of this group
+       */
+      virtual QSharedPointer<AbstractGroup> Copy() const;
+
+      /**
        * Multiply two points
        * @param a first operand 
        * @param b second operand 

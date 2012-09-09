@@ -196,15 +196,15 @@ namespace Tests {
 
   INSTANTIATE_TEST_CASE_P(BlogDrop, BlogDropTest,
       ::testing::Values(
-        Parameters::Parameters::IntegerElGamalTestingFixed(),
-        Parameters::Parameters::IntegerHashingTestingFixed(),
-        Parameters::Parameters::CppECElGamalProductionFixed(),
-        Parameters::Parameters::CppECHashingProductionFixed(),
-        Parameters::OpenECElGamalProductionFixed(),
-        Parameters::OpenECHashingProductionFixed(),
-        Parameters::BotanECElGamalProductionFixed(),
-        Parameters::BotanECHashingProductionFixed(),
-        Parameters::PairingProductionFixed()));
+        Parameters::Parameters::IntegerElGamalTesting(),
+        Parameters::Parameters::IntegerHashingTesting(),
+        Parameters::Parameters::CppECElGamalProduction(),
+        Parameters::Parameters::CppECHashingProduction(),
+        Parameters::OpenECElGamalProduction(),
+        Parameters::OpenECHashingProduction(),
+        Parameters::BotanECElGamalProduction(),
+        Parameters::BotanECHashingProduction(),
+        Parameters::PairingProduction()));
 }
 }
 

@@ -4,8 +4,9 @@
 #include <openssl/bn.h>
 #include <string>
 
-#include <QSharedData>
 #include <QByteArray>
+#include <QSharedData>
+
 #include "IntegerData.hpp"
 #include "Integer.hpp"
 
@@ -24,7 +25,6 @@ namespace Crypto {
    * "Big" OpenSSL IntegerData wrapper
    */
 
-  static BN_CTX *SharedCtx = NULL;
   class OpenIntegerData : public IntegerData {
 
     public:
@@ -36,6 +36,7 @@ namespace Crypto {
       explicit OpenIntegerData(int value = 0)
       {
         CHECK_CALL(_bignum = BN_new());
+        CHECK_CALL(_ctx = BN_CTX_new());
         CHECK_CALL(BN_set_word(_bignum, value));
       }
 
@@ -46,6 +47,7 @@ namespace Crypto {
       explicit OpenIntegerData(const QByteArray &byte_array) 
       {
         CHECK_CALL(_bignum = BN_new());
+        CHECK_CALL(_ctx = BN_CTX_new());
         CHECK_CALL(BN_bin2bn((unsigned const char*)byte_array.constData(),
               byte_array.count(), _bignum));
       }
@@ -58,6 +60,7 @@ namespace Crypto {
       {
         QByteArray byte_array = FromBase64(string);
         CHECK_CALL(_bignum = BN_new());
+        CHECK_CALL(_ctx = BN_CTX_new());
         CHECK_CALL(BN_bin2bn((const unsigned char*)byte_array.constData(), 
               byte_array.count(), _bignum));
       }
@@ -66,7 +69,9 @@ namespace Crypto {
        * Construct using allocated BIGNUM
        * @param bn the BIGNUM*
        */
-      explicit OpenIntegerData(BIGNUM *bn) : _bignum(bn)
+      explicit OpenIntegerData(BIGNUM *bn) : 
+        _bignum(bn),
+        _ctx(BN_CTX_new())
       {}
 
       /**
@@ -103,17 +108,21 @@ namespace Crypto {
         CHECK_CALL(diff = BN_new());
         CHECK_CALL(BN_sub(diff, GetBignum(max), GetBignum(min)));
 
+        BN_CTX *ctx;
+        CHECK_CALL(ctx = BN_CTX_new());
+
         if(prime) {
           while(true) {
             CHECK_CALL(BN_rand_range(bn, diff));
             CHECK_CALL(BN_add(bn, bn, GetBignum(min)));
-            if(BN_is_prime(bn, 80, NULL, GetContext(), NULL)) break;
+            if(BN_is_prime(bn, 80, NULL, ctx, NULL)) break;
           }
         } else {
           CHECK_CALL(BN_rand_range(bn, diff));
           CHECK_CALL(BN_add(bn, bn, GetBignum(min)));
         }
 
+        BN_CTX_free(ctx);
         BN_clear_free(diff);
 
         return new OpenIntegerData(bn);
@@ -125,6 +134,7 @@ namespace Crypto {
       virtual ~OpenIntegerData() 
       {
         BN_clear_free(_bignum); 
+        BN_CTX_free(_ctx); 
       }
 
       /**
@@ -161,8 +171,12 @@ namespace Crypto {
       {
         BIGNUM *bn;
         CHECK_CALL(bn = BN_new());
+        BN_CTX *ctx;
+        CHECK_CALL(ctx = BN_CTX_new());
 
-        CHECK_CALL(BN_mul(bn, _bignum, GetBignum(multiplicand), GetContext()));
+        CHECK_CALL(BN_mul(bn, _bignum, GetBignum(multiplicand), ctx));
+
+        BN_CTX_free(ctx);
         return new OpenIntegerData(bn);
       }
 
@@ -175,7 +189,7 @@ namespace Crypto {
         BIGNUM *bn;
         CHECK_CALL(bn = BN_new());
 
-        CHECK_CALL(BN_div(bn, NULL, _bignum, GetBignum(divisor), GetContext()));
+        CHECK_CALL(BN_div(bn, NULL, _bignum, GetBignum(divisor), _ctx));
         return new OpenIntegerData(bn);
       }
 
@@ -193,8 +207,13 @@ namespace Crypto {
         BIGNUM *bn;
         CHECK_CALL(bn = BN_new());
 
+        BN_CTX *ctx;
+        CHECK_CALL(ctx = BN_CTX_new());
+
         if(BN_is_negative(GetBignum(pow))) qFatal("Cannot handle negative exponents");
-        CHECK_CALL(BN_mod_exp(bn, _bignum, GetBignum(pow), GetBignum(mod), GetContext()));
+        CHECK_CALL(BN_mod_exp(bn, _bignum, GetBignum(pow), GetBignum(mod), ctx));
+
+        BN_CTX_free(ctx);
 
         return new OpenIntegerData(bn);
       }
@@ -222,9 +241,12 @@ namespace Crypto {
         CHECK_CALL(bn = BN_new());
         CHECK_CALL(bn2 = BN_new());
 
-        CHECK_CALL(BN_mod_exp(bn, GetBignum(x1), GetBignum(e1), _bignum, GetContext()));
-        CHECK_CALL(BN_mod_exp(bn2, GetBignum(x2), GetBignum(e2), _bignum, GetContext()));
-        CHECK_CALL(BN_mod_mul(bn, bn, bn2, _bignum, GetContext()));
+        BN_CTX *ctx;
+        CHECK_CALL(ctx = BN_CTX_new());
+
+        CHECK_CALL(BN_mod_exp(bn, GetBignum(x1), GetBignum(e1), _bignum, _ctx));
+        CHECK_CALL(BN_mod_exp(bn2, GetBignum(x2), GetBignum(e2), _bignum, _ctx));
+        CHECK_CALL(BN_mod_mul(bn, bn, bn2, _bignum, _ctx));
         BN_clear_free(bn2);
         return new OpenIntegerData(bn);
       }
@@ -242,7 +264,7 @@ namespace Crypto {
         BIGNUM *bn;
         CHECK_CALL(bn = BN_new());
 
-        CHECK_CALL(BN_mod_mul(bn, _bignum, GetBignum(other), GetBignum(mod), GetContext()));
+        CHECK_CALL(BN_mod_mul(bn, _bignum, GetBignum(other), GetBignum(mod), _ctx));
         return new OpenIntegerData(bn);
       }
 
@@ -258,7 +280,7 @@ namespace Crypto {
         Q_ASSERT(!BN_is_negative(GetBignum(mod)));
         Q_ASSERT(!BN_is_negative(_bignum));
 
-        CHECK_CALL(BN_mod_inverse(bn, _bignum, GetBignum(mod), GetContext()));
+        CHECK_CALL(BN_mod_inverse(bn, _bignum, GetBignum(mod), _ctx));
         return new OpenIntegerData(bn);
       }
 
@@ -273,7 +295,7 @@ namespace Crypto {
         BIGNUM *bn;
         CHECK_CALL(bn = BN_new());
 
-        CHECK_CALL(BN_nnmod(bn, _bignum, GetBignum(modulus), GetContext()));
+        CHECK_CALL(BN_nnmod(bn, _bignum, GetBignum(modulus), _ctx));
         return new OpenIntegerData(bn);
       }
 
@@ -416,16 +438,8 @@ namespace Crypto {
 
     private:
       
-      static BN_CTX* GetContext()
-      {
-        if(SharedCtx == NULL) {
-          CHECK_CALL(SharedCtx = BN_CTX_new());
-        }
-
-        return SharedCtx;
-      }
-
       BIGNUM *_bignum;
+      BN_CTX *_ctx;
 
   };
 }

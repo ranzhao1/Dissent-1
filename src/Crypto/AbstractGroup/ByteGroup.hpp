@@ -42,6 +42,11 @@ namespace AbstractGroup {
       virtual ~ByteGroup() {}
 
       /**
+       * Return a pointer to a copy of this group
+       */
+      virtual QSharedPointer<AbstractGroup> Copy() const;
+
+      /**
        * Multiply two group elements
        * @param a first operand 
        * @param b second operand 

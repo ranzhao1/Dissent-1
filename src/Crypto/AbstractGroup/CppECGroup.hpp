@@ -44,6 +44,11 @@ namespace AbstractGroup {
       virtual ~CppECGroup() {}
 
       /**
+       * Return a pointer to a copy of this group
+       */
+      virtual QSharedPointer<AbstractGroup> Copy() const;
+
+      /**
        * Add two elliptic curve points
        * @param a first operand 
        * @param b second operand 

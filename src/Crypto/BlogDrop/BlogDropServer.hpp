@@ -72,8 +72,22 @@ namespace BlogDrop {
        * @param from public key of the server who sent the ciphertext
        * @param in the serializd server ciphertext to add
        */
-      bool AddServerCiphertext(const QSharedPointer<const PublicKey> from, 
-          const QByteArray &in);
+      bool AddServerCiphertext(const QByteArray &in, 
+          const QSharedPointer<const PublicKey> from);
+
+      /**
+       * Add a list of server ciphertexts and return true if all of the added 
+       * ciphertext are valid
+       * 
+       * This uses threading where possible, so it can be much faster
+       * than adding ciphertexts one at a time.
+       *
+       * WARNING : You must call CloseBin() before calling this method
+       * @param from public key of the server who sent the ciphertext
+       * @param in the serializd server ciphertext to add
+       */
+      bool AddServerCiphertexts(const QList<QByteArray> &in, 
+          const QList<QSharedPointer<const PublicKey> > &pubs);
 
       /**
        * Reveal plaintext for a BlogDrop bin

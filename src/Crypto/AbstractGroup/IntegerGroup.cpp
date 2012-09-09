@@ -25,6 +25,11 @@ namespace AbstractGroup {
       qFatal("g does not generate G*_p");
   }
 
+  QSharedPointer<AbstractGroup> IntegerGroup::Copy() const
+  {
+    return QSharedPointer<IntegerGroup>(new IntegerGroup(*this));
+  }
+
   QSharedPointer<IntegerGroup> IntegerGroup::GetGroup(GroupSize size) 
   {
     const char *bytes_p;

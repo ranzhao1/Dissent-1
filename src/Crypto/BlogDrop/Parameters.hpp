@@ -32,65 +32,65 @@ namespace Dissent {
           /**
            * Constructor that uses 512-bit integer group (for testing)
            */
-          static QSharedPointer<Parameters> IntegerElGamalTestingFixed();
+          static QSharedPointer<Parameters> IntegerElGamalTesting();
 
           /**
            * Constructor that uses 1024-bit fixed integer group 
            */
-          static QSharedPointer<Parameters> IntegerElGamalProductionFixed(
+          static QSharedPointer<Parameters> IntegerElGamalProduction(
               QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that uses 512-bit integer group (for testing)
            */
-          static QSharedPointer<Parameters> IntegerHashingTestingFixed();
+          static QSharedPointer<Parameters> IntegerHashingTesting();
 
           /**
            * Constructor that uses 1024-bit fixed integer group 
            */
-          static QSharedPointer<Parameters> IntegerHashingProductionFixed(QByteArray round_nonce = QByteArray());
+          static QSharedPointer<Parameters> IntegerHashingProduction(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that uses 256-bit fixed EC group 
            * (Supposedly 256-bit ECs are equivalent to 3072-bit 
            * RSA/DH groups) implemented with Crypto++
            */
-          static QSharedPointer<Parameters> CppECElGamalProductionFixed(QByteArray round_nonce = QByteArray());
+          static QSharedPointer<Parameters> CppECElGamalProduction(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that uses 256-bit fixed EC group 
            * (Supposedly 256-bit ECs are equivalent to 3072-bit 
            * RSA/DH groups) implemented with Crypto++
            */
-          static QSharedPointer<Parameters> CppECHashingProductionFixed(QByteArray round_nonce = QByteArray());
+          static QSharedPointer<Parameters> CppECHashingProduction(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that uses 256-bit fixed EC group 
            * (Supposedly 256-bit ECs are equivalent to 3072-bit 
            * RSA/DH groups) implemented with Botan
            */
-          static QSharedPointer<Parameters> BotanECElGamalProductionFixed(QByteArray round_nonce = QByteArray());
+          static QSharedPointer<Parameters> BotanECElGamalProduction(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that uses 256-bit fixed EC group 
            * (Supposedly 256-bit ECs are equivalent to 3072-bit 
            * RSA/DH groups) implemented with Botan
            */
-          static QSharedPointer<Parameters> BotanECHashingProductionFixed(QByteArray round_nonce = QByteArray());
+          static QSharedPointer<Parameters> BotanECHashingProduction(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that uses 256-bit fixed EC group 
            * (Supposedly 256-bit ECs are equivalent to 3072-bit 
            * RSA/DH groups) implemented with OpenSSL
            */
-          static QSharedPointer<Parameters> OpenECElGamalProductionFixed(QByteArray round_nonce = QByteArray());
+          static QSharedPointer<Parameters> OpenECElGamalProduction(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that uses 256-bit fixed EC group 
            * (Supposedly 256-bit ECs are equivalent to 3072-bit 
            * RSA/DH groups) implemented with OpenSSL
            */
-          static QSharedPointer<Parameters> OpenECHashingProductionFixed(QByteArray round_nonce = QByteArray());
+          static QSharedPointer<Parameters> OpenECHashingProduction(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that uses a type-A pairing group from
@@ -98,7 +98,7 @@ namespace Dissent {
            *   qbits = 512
            *   rbits = 510
            */
-          static QSharedPointer<Parameters> PairingProductionFixed(QByteArray round_nonce = QByteArray());
+          static QSharedPointer<Parameters> PairingProduction(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that uses a *COMPLETELY INSECURE* XOR-based 
@@ -106,7 +106,7 @@ namespace Dissent {
            * amount of time as the traditional DC-net but we don't use
            * secure keys.
            */
-          static QSharedPointer<Parameters> XorTestingFixed(QByteArray round_nonce = QByteArray());
+          static QSharedPointer<Parameters> XorTesting(QByteArray round_nonce = QByteArray());
 
           /**
            * Constructor that has empty/invalid parameters
@@ -117,6 +117,11 @@ namespace Dissent {
            * Destructor
            */
           virtual ~Parameters() {}
+
+          /**
+           * Copy constructor
+           */
+          Parameters(const Parameters &p);
 
           /**
            * Get the group that contains the public key elements 
@@ -145,9 +150,10 @@ namespace Dissent {
            */
           inline bool UsesPairing() const { return (GetProofType() == ProofType_Pairing); }
 
-          QByteArray GetRoundNonce() const { return _round_nonce; }
-          virtual void SetNElements(int new_n) { _n_elements = new_n; }
-          virtual int GetNElements() const { return _n_elements; }
+          inline QByteArray GetRoundNonce() const { return _round_nonce; }
+          virtual inline void SetNElements(int new_n) { _n_elements = new_n; }
+          virtual inline void SetRoundNonce(QByteArray nonce ) { _round_nonce = nonce; }
+          virtual inline int GetNElements() const { return _n_elements; }
 
           inline Integer GetGroupOrder() const { 
             // For proofs to work, the two groups must have the same order

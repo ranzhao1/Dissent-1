@@ -10,7 +10,9 @@ void FilesDelete();
 
 class DissentEnvironment : public testing::Environment {
  public:
+
    // Necessary for Botan crypto library to work
+   DissentEnvironment() : init("thread_safe=true") {};
    Botan::LibraryInitializer init;
 };
 

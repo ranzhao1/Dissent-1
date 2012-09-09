@@ -24,6 +24,12 @@ namespace BlogDrop {
 
       typedef Dissent::Crypto::AbstractGroup::Element Element;
 
+      typedef struct {
+        QSharedPointer<const ClientCiphertext> c;
+        QSharedPointer<const PublicKey> pub;
+        int phase;
+      } MapData;
+
       /**
        * Constructor: Initialize a ciphertext with a fresh
        * one-time public key
@@ -77,12 +83,16 @@ namespace BlogDrop {
       /**
        * Verify a set of proofs. Uses threading if available, so this might
        * be much faster than verifying each proof in turn
-       * @param phase transmisssion round/phase index
-       * @param c list of ciphertexts
-       * @returns set of indices of valid proofs
        */
-      static QSet<int> VerifyProofs(int phase, const QList<QSharedPointer<const ClientCiphertext> > &c, 
-        const QList<QSharedPointer<const PublicKey> > &pubs);
+      static void VerifyProofs(
+          const QSharedPointer<const Parameters> params,
+          const QSharedPointer<const PublicKeySet> pk_set,
+          const QSharedPointer<const PublicKey> author_pk,
+          int phase, 
+          const QList<QSharedPointer<const PublicKey> > &pubs,
+          const QList<QByteArray> &c,
+          QList<QSharedPointer<const ClientCiphertext> > &c_out,
+          QList<QSharedPointer<const PublicKey> > &pubs_out);
 
       virtual inline QList<Element> GetElements() const 
       { 
@@ -119,6 +129,8 @@ namespace BlogDrop {
       const int _n_elms;
 
     private:
+
+      static bool VerifyOnce(MapData m);
 
   };
 

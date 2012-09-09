@@ -14,15 +14,21 @@ namespace AbstractGroup {
       _g(ToCryptoInt(gx), ToCryptoInt(gy)),
       _field_bytes(p.GetByteArray().count())
     {
+      /*
       qDebug() << " p" << p.GetByteArray().toHex(); 
       qDebug() << " a" << a.GetByteArray().toHex(); 
       qDebug() << " b" << b.GetByteArray().toHex(); 
       qDebug() << "gx" << gx.GetByteArray().toHex(); 
       qDebug() << "gy" << gy.GetByteArray().toHex(); 
+      */
 
       Q_ASSERT(ToCryptoInt(p) == _curve.FieldSize());
     };
 
+  QSharedPointer<AbstractGroup> CppECGroup::Copy() const
+  {
+    return QSharedPointer<CppECGroup>(new CppECGroup(*this));
+  }
 
   QSharedPointer<CppECGroup> CppECGroup::GetGroup(ECParams::CurveName name) 
   {

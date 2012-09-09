@@ -33,6 +33,11 @@ namespace AbstractGroup {
       virtual ~PairingGroup();
 
       /**
+       * Copy constructor
+       */
+      PairingGroup(const PairingGroup &other);
+
+      /**
        * Multiply two points
        * @param a first operand 
        * @param b second operand 
