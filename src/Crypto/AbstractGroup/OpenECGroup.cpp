@@ -93,7 +93,7 @@ namespace AbstractGroup {
     _gy(BN_dup(other._gy)),
     _zero(BN_dup(other._zero)),
     _one(BN_dup(other._one)),
-    _data(other._data),
+    _data(new MutableData(*other._data)),
     _generator(EC_POINT_dup(other._generator, _data->group)),
     _order(other._order),
     _field_bytes(other._field_bytes)
@@ -200,7 +200,12 @@ namespace AbstractGroup {
   
   Element OpenECGroup::ElementFromByteArray(const QByteArray &bytes) const 
   { 
-    EC_POINT *point = EC_POINT_new(_data->group);
+    EC_POINT *point;
+
+    CHECK_CALL(_data->group);
+    CHECK_CALL(_data->ctx);
+
+    CHECK_CALL(point = EC_POINT_new(_data->group));
     CHECK_CALL(EC_POINT_oct2point(_data->group, point, 
           (const unsigned char*)bytes.constData(), bytes.count(), _data->ctx));
     return NewElement(point);

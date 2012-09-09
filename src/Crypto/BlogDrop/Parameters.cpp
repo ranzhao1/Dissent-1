@@ -137,7 +137,8 @@ namespace BlogDrop {
     _key_group(p._key_group->Copy()),
     _msg_group(p._msg_group->Copy()),
     _n_elements(p._n_elements)
-  {}
+  {
+  }
 
   QByteArray Parameters::GetByteArray() const
   {

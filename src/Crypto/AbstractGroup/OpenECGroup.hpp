@@ -273,13 +273,21 @@ namespace AbstractGroup {
             mont(BN_MONT_CTX_new()),
             group(EC_GROUP_new(
                   is_nist_curve ? EC_GFp_nist_method() : EC_GFp_mont_method())) 
-          {}
+          {
+            CHECK_CALL(ctx);
+            CHECK_CALL(mont);
+            CHECK_CALL(group);
+          }
 
           MutableData(const MutableData &other) :
             ctx(BN_CTX_new()),
             mont(BN_MONT_CTX_new()),
             group(EC_GROUP_dup(other.group))
-          {}
+          {
+            CHECK_CALL(ctx);
+            CHECK_CALL(mont);
+            CHECK_CALL(group);
+          }
 
           ~MutableData() {
             EC_GROUP_clear_free(group);
