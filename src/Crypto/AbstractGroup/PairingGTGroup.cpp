@@ -16,8 +16,7 @@ namespace AbstractGroup {
     return QSharedPointer<PairingGTGroup>(new PairingGTGroup(size));
   }
 
-  PairingGTGroup::PairingGTGroup(GroupSize size) :
-    PairingGroup(size)
+  void PairingGTGroup::SetupGroup() 
   {
     const unsigned char generatorT_str[] = "generator";
 
@@ -33,7 +32,18 @@ namespace AbstractGroup {
 
     Integer gx, gy;
     GetPBCElementCoordinates(_generator, gx, gy);
+  }
 
+  PairingGTGroup::PairingGTGroup(GroupSize size) :
+    PairingGroup(size)
+  {
+    SetupGroup();
+  }
+
+  PairingGTGroup::PairingGTGroup(const PairingGTGroup &other) :
+    PairingGroup(other._size)
+  {
+    SetupGroup();
   }
 
   PairingGTGroup::~PairingGTGroup() 
@@ -116,9 +126,6 @@ namespace AbstractGroup {
       // y > _field/2
       if(y <= _field/2) y = ((y * Integer(-1)) % _field);
     }
-
-
-
 
     return IntegersToElement(x, y);
   }

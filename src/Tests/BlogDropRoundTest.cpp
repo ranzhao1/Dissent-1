@@ -6,34 +6,73 @@
 namespace Dissent {
 namespace Tests {
 
-  TEST(BlogDropRound, BasicManaged)
+  class BlogDropRoundTest : 
+    public ::testing::TestWithParam<CryptoFactory::ThreadingType> {
+  };
+
+  TEST_P(BlogDropRoundTest, BasicManaged)
   {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     RoundTest_Basic(SessionCreator(TCreateRound<BlogDropRound>),
         Group::ManagedSubgroup);
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDropRound, MultiRoundManaged)
+  TEST_P(BlogDropRoundTest, MultiRoundManaged)
   {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     RoundTest_MultiRound(SessionCreator(TCreateRound<BlogDropRound>),
         Group::ManagedSubgroup);
+
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDropRound, AddOne)
+  TEST_P(BlogDropRoundTest, AddOne)
   {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     RoundTest_AddOne(SessionCreator(TCreateRound<BlogDropRound>),
         Group::ManagedSubgroup);
+    
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDropRound, PeerDisconnectMiddleManaged)
+  TEST_P(BlogDropRoundTest, PeerDisconnectMiddleManaged)
   {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     RoundTest_PeerDisconnectMiddle(SessionCreator(TCreateRound<BlogDropRound>),
         Group::ManagedSubgroup);
+    
+    cf.SetThreading(tt);
   }
 
-  TEST(BlogDropRound, PeerTransientIssueMiddle)
+  TEST_P(BlogDropRoundTest, PeerTransientIssueMiddle)
   {
+    CryptoFactory &cf = CryptoFactory::GetInstance();
+    CryptoFactory::ThreadingType tt = cf.GetThreadingType();
+    cf.SetThreading(GetParam());
+
     RoundTest_PeerDisconnectMiddle(SessionCreator(TCreateRound<BlogDropRound>),
         Group::ManagedSubgroup);
+    
+    cf.SetThreading(tt);
   }
+
+  INSTANTIATE_TEST_CASE_P(BlogDropRound, BlogDropRoundTest,
+      ::testing::Values(
+        CryptoFactory::SingleThreaded,
+        CryptoFactory::MultiThreaded));
 }
 }

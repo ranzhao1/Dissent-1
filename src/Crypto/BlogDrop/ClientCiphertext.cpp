@@ -53,27 +53,27 @@ namespace BlogDrop {
       }
 
     } else if(tt == CryptoFactory::MultiThreaded) {
-      QList<MapData> m;
+      QList<QSharedPointer<MapData> > ms;
 
       // Unpack each ciphertext copying parameters to
-      // avoid shared data
+      // avoid shared data. Each thread must have its
+      // own Parameters object.
       for(int client_idx=0; client_idx<c.count(); client_idx++) {
-        QSharedPointer<const Parameters> newp(new Parameters(*params));
-        MapData item = {CiphertextFactory::CreateClientCiphertext(
-              newp,
-              QSharedPointer<const PublicKeySet>(new PublicKeySet(newp, server_pk_set->GetByteArray())), 
-              QSharedPointer<const PublicKey>(new PublicKey(newp, author_pk->GetByteArray())), 
-              c[client_idx]), 
-              QSharedPointer<const PublicKey>(new PublicKey(newp, pubs[client_idx]->GetByteArray())),
-              phase};
-        m.append(item);
+        QSharedPointer<MapData> m(new MapData());
+        m->params = new Parameters(*params);
+        m->server_pk_set = server_pk_set->GetByteArray();
+        m->author_pk = author_pk->GetByteArray();
+        m->client_pk = pubs[client_idx]->GetByteArray();
+        m->ciphertext = c[client_idx];
+        ms.append(m);
       }
 
-      QList<bool> valid_list = QtConcurrent::blockingMapped(m, VerifyOnce);
+      QList<bool> valid_list = QtConcurrent::blockingMapped(ms, VerifyOnce);
 
       for(int client_idx=0; client_idx<valid_list.count(); client_idx++) {
         if(valid_list[client_idx]) {
-          c_out.append(m[client_idx].c);
+          c_out.append(CiphertextFactory::CreateClientCiphertext(
+                  params, server_pk_set, author_pk, c[client_idx]));
           pubs_out.append(pubs[client_idx]);
         }
       }
@@ -83,9 +83,17 @@ namespace BlogDrop {
     }
   }
 
-  bool ClientCiphertext::VerifyOnce(MapData m)
+  bool ClientCiphertext::VerifyOnce(QSharedPointer<MapData> m)
   {
-    return m.c->VerifyProof(m.phase, m.pub);
+    QSharedPointer<const Parameters> params(m->params);
+    QSharedPointer<const PublicKeySet> server_pk_set(new PublicKeySet(params, m->server_pk_set));
+    QSharedPointer<const PublicKey> author_pk(new PublicKey(params, m->author_pk));
+    QSharedPointer<const PublicKey> client_pk(new PublicKey(params, m->client_pk));
+
+    QSharedPointer<const ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(params, server_pk_set,
+        author_pk, m->ciphertext);
+
+    return c->VerifyProof(m->phase, client_pk);
   }
 
 }

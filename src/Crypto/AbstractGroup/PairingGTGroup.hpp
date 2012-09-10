@@ -20,6 +20,11 @@ namespace AbstractGroup {
       static QSharedPointer<PairingGTGroup> GetGroup(GroupSize size);
 
       /**
+       * Copy constructor 
+       */
+      PairingGTGroup(const PairingGTGroup &other); 
+
+      /**
        * Destructor
        */
       virtual ~PairingGTGroup(); 
@@ -140,6 +145,7 @@ namespace AbstractGroup {
         return GT(PairingElementData<GT>::GetElement(a.GetData())); 
       }
 
+      void SetupGroup();
       void GetPBCElementCoordinates(const Element &a, Integer &x, Integer &y) const;
       bool SolveForY(const Integer &x, Integer &y) const;
       Element IntegersToElement(const Integer &x, Integer &y) const;

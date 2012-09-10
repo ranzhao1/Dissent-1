@@ -97,10 +97,9 @@ namespace BlogDrop {
     //qDebug() << "orig" << nonce.GetByteArray().toHex();
 
     //qDebug() << "nbytes" << (bytes);
-    nonce = nonce % (Integer(2).Pow(bytes*8, params->GetMessageGroup()->GetOrder()));
     //qDebug() << nonce.GetByteArray().toHex();
 
-    const QByteArray nonce_str = nonce.GetByteArray();
+    const QByteArray nonce_str = nonce.GetByteArray().left(bytes);
 
     Element gen;
     int i;

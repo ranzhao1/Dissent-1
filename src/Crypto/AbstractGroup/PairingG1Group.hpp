@@ -26,6 +26,11 @@ namespace AbstractGroup {
       static QSharedPointer<PairingG1Group> GetGroup(GroupSize size);
 
       /**
+       * Copy constructor 
+       */
+      PairingG1Group(const PairingG1Group &other); 
+
+      /**
        * Destructor
        */
       virtual ~PairingG1Group(); 
@@ -143,6 +148,7 @@ namespace AbstractGroup {
         return G1(PairingElementData<G1>::GetElement(a.GetData())); 
       }
       void GetPBCElementCoordinates(const Element &a, Integer &x, Integer &y) const;
+      void SetupGroup();
  
   };
 

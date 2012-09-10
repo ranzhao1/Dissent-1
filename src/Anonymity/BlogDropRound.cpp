@@ -991,6 +991,13 @@ namespace Anonymity {
 
   void BlogDropRound::GenerateServerCiphertext()
   {
+    QList<QList<QByteArray> > by_slot;
+    QList<QSharedPointer<const PublicKey> > client_pks;
+
+    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+      by_slot.append(QList<QByteArray>());
+    }
+
     // For each user
     foreach(const Id& id, _server_state->client_ciphertexts.keys()) {
 
@@ -1006,13 +1013,15 @@ namespace Anonymity {
 
       // For each slot
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        _server_state->blogdrop_servers[slot_idx]->AddClientCiphertext(ctexts[slot_idx],
-            _state->master_client_pks[id]);
+        by_slot[slot_idx].append(ctexts[slot_idx]);
       }
+
+      client_pks.append(_state->master_client_pks[id]);
     }
 
     QList<QByteArray> server_ctexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+      _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx], client_pks);
       server_ctexts.append(_server_state->blogdrop_servers[slot_idx]->CloseBin());
     }
 

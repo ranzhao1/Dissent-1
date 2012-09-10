@@ -188,7 +188,8 @@ namespace AbstractGroup {
       static const char* GetGroupString(GroupSize size);
       inline const Pairing &GetPairing() const { return *_pairing; }
       Zr IntegerToZr(const Integer &in) const;
-      
+
+      GroupSize _size;
       QByteArray _param_str;
 
       QSharedPointer<Pairing> _pairing;

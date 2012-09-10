@@ -24,11 +24,15 @@ namespace BlogDrop {
 
       typedef Dissent::Crypto::AbstractGroup::Element Element;
 
-      typedef struct {
-        QSharedPointer<const ClientCiphertext> c;
-        QSharedPointer<const PublicKey> pub;
-        int phase;
-      } MapData;
+      class MapData {
+        public: 
+          Parameters *params;
+          QByteArray server_pk_set;
+          QByteArray author_pk;
+          QByteArray client_pk;
+          QByteArray ciphertext;
+          int phase;
+      }; 
 
       /**
        * Constructor: Initialize a ciphertext with a fresh
@@ -130,7 +134,7 @@ namespace BlogDrop {
 
     private:
 
-      static bool VerifyOnce(MapData m);
+      static bool VerifyOnce(QSharedPointer<MapData> m);
 
   };
 

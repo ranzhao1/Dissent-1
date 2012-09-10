@@ -51,7 +51,7 @@ namespace BlogDrop {
       const QSharedPointer<const Parameters> params, 
       const QSharedPointer<const PublicKeySet> server_pks,
       const QSharedPointer<const PublicKey> author_pub,
-      const QByteArray &serialized)
+      const QByteArray serialized)
   {
     QSharedPointer<ClientCiphertext> c;
     switch(params->GetProofType()) {
@@ -86,7 +86,7 @@ namespace BlogDrop {
       const QSharedPointer<const Parameters> params, 
       const QSharedPointer<const PublicKeySet> client_pks,
       const QSharedPointer<const PublicKey> author_pub,
-      const QList<QSharedPointer<const ClientCiphertext> > &client_ctexts)
+      const QList<QSharedPointer<const ClientCiphertext> > client_ctexts)
   {
     QSharedPointer<ServerCiphertext> s;
     Parameters::ProofType t = params->GetProofType();
@@ -131,8 +131,8 @@ namespace BlogDrop {
       const QSharedPointer<const Parameters> params, 
       const QSharedPointer<const PublicKeySet> client_pks,
       const QSharedPointer<const PublicKey> author_pub,
-      const QList<QSharedPointer<const ClientCiphertext> > &client_ctexts, 
-      const QByteArray &serialized)
+      const QList<QSharedPointer<const ClientCiphertext> > client_ctexts, 
+      const QByteArray serialized)
   {
     QSharedPointer<ServerCiphertext> s;
     Parameters::ProofType t = params->GetProofType();

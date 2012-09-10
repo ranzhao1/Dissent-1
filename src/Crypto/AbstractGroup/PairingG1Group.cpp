@@ -13,8 +13,7 @@ namespace AbstractGroup {
     return QSharedPointer<PairingG1Group>(new PairingG1Group(size));
   }
 
-  PairingG1Group::PairingG1Group(GroupSize size) :
-    PairingGroup(size) 
+  void PairingG1Group::SetupGroup() 
   {
     // it doesn't matter what this string is as long as 
     // all nodes agree on what it is
@@ -32,12 +31,28 @@ namespace AbstractGroup {
     _generator = Element(new PairingElementData<G1>(generator));
   }
 
+  PairingG1Group::PairingG1Group(GroupSize size) :
+    PairingGroup(size) 
+  {
+    SetupGroup();
+  }
+
   PairingG1Group::~PairingG1Group() 
   {}
 
+  PairingG1Group::PairingG1Group(const PairingG1Group &other) :
+    PairingGroup(other._size)
+  {
+    SetupGroup();
+  }
+
   QSharedPointer<AbstractGroup> PairingG1Group::Copy() const
   {
-    return QSharedPointer<PairingG1Group>(new PairingG1Group(*this));
+    QSharedPointer<PairingG1Group> group(new PairingG1Group(*this));
+    group->_identity = group->ElementFromByteArray(ElementToByteArray(_identity));
+    group->_generator = group->ElementFromByteArray(ElementToByteArray(_generator));
+
+    return group;
   }
 
   Element PairingG1Group::Multiply(const Element &a, const Element &b) const

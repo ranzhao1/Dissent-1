@@ -22,8 +22,12 @@ namespace BlogDrop {
       typedef Dissent::Crypto::AbstractGroup::Element Element;
 
       typedef struct {
-        QSharedPointer<const ServerCiphertext> c;
-        QSharedPointer<const PublicKey> pub;
+        Parameters *params;
+        QByteArray client_ciphertext_list;
+        QByteArray server_pk_set;
+        QByteArray author_pk;
+        QByteArray server_pk;
+        QByteArray server_ciphertext;
         int phase;
       } MapData;
 
@@ -62,7 +66,7 @@ namespace BlogDrop {
        */
       static void VerifyProofs(
           const QSharedPointer<const Parameters> params,
-          const QSharedPointer<const PublicKeySet> pk_set,
+          const QSharedPointer<const PublicKeySet> server_pk_set,
           const QSharedPointer<const PublicKey> author_pk,
           const QList<QSharedPointer<const ClientCiphertext> > client_ctexts,
           int phase, 
@@ -88,7 +92,7 @@ namespace BlogDrop {
 
     private: 
 
-      static bool VerifyOnce(MapData m);
+      static bool VerifyOnce(QSharedPointer<MapData> m);
   };
 }
 }

@@ -49,7 +49,7 @@ namespace BlogDrop {
           const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKeySet> server_pks,
           const QSharedPointer<const PublicKey> author_pub,
-          const QByteArray &serialized);
+          const QByteArray serialized);
 
       /**
        * Create a new server ciphertext that matches a set of 
@@ -63,7 +63,7 @@ namespace BlogDrop {
           const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKeySet> client_pks,
           const QSharedPointer<const PublicKey> author_pub,
-          const QList<QSharedPointer<const ClientCiphertext> > &client_ctexts);
+          const QList<QSharedPointer<const ClientCiphertext> > client_ctexts);
 
       /**
        * Unserialize a server ciphertext 
@@ -77,8 +77,8 @@ namespace BlogDrop {
           const QSharedPointer<const Parameters> params, 
           const QSharedPointer<const PublicKeySet> client_pks,
           const QSharedPointer<const PublicKey> author_pub,
-          const QList<QSharedPointer<const ClientCiphertext> > &client_ctexts,
-          const QByteArray &serialized);
+          const QList<QSharedPointer<const ClientCiphertext> > client_ctexts,
+          const QByteArray serialized);
   };
 
 }
