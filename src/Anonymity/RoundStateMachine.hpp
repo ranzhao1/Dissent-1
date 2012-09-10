@@ -121,6 +121,7 @@ namespace Anonymity {
           }
           _log = Log();
           IncrementPhase();
+          qDebug() << "In" << _round->ToString() << "starting phase";
         }
 
         if(state == -1) {
