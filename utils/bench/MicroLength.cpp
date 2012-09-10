@@ -153,7 +153,7 @@ namespace Benchmarks {
       start = QDateTime::currentMSecsSinceEpoch();
       for(int i=0; i<p->n_gen; i++) {
         // Change the round nonce to make sure things are randomized
-        params->SetRoundNonce(QString("%0 %1").arg(i).arg(nelms).toAscii());
+        params->SetRoundNonce(QString("%0 %1 %2").arg(i).arg(nelms).arg(QString(author_pk->GetByteArray())).toAscii());
 
         c = BlogDropClient(params, master_client_sks[0], server_pk_set, 
             author_pk).GenerateCoverCiphertext();
@@ -221,10 +221,10 @@ namespace Benchmarks {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(use_openssl ? CryptoFactory::OpenSSL : CryptoFactory::CryptoPP);
-    
+  
     // paring
     VerifyNTimesDiffLen(Parameters::PairingProduction(), p);
-    
+     
 
     // hashing
       // integer
