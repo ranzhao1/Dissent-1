@@ -120,7 +120,8 @@ namespace Anonymity {
        */
       inline virtual QString ToString() const
       {
-        return "BlogDropRound: " + GetRoundId().ToString() +
+        QString param = _state ? _state->params->ToString() : "NULL";
+        return "BlogDropRound/" + param + ": " + GetRoundId().ToString() +
           " Phase: " + QString::number(_state_machine.GetPhase());
       }
 
