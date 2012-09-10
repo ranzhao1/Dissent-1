@@ -65,6 +65,7 @@ namespace BlogDrop {
         m->author_pk = author_pk->GetByteArray();
         m->client_pk = pubs[client_idx]->GetByteArray();
         m->ciphertext = c[client_idx];
+        m->phase = phase;
         ms.append(m);
       }
 

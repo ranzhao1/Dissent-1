@@ -668,7 +668,7 @@ namespace Tests {
     qDebug() << "ADD_SERVER_TO_SERVER";
     for(int i=0; i<nservers; i++) {
       qDebug() << "----------SERVER"<<i<<"--------------";
-      ASSERT_TRUE(servers[i].AddServerCiphertexts(s, server_pks));
+      ASSERT_TRUE(servers[i].AddServerCiphertexts(s, master_server_pub));
     }
 
     qDebug() << "REVEAL";
