@@ -221,7 +221,7 @@ namespace Benchmarks {
     CryptoFactory &cf = CryptoFactory::GetInstance();
     CryptoFactory::LibraryName cname = cf.GetLibraryName();
     cf.SetLibrary(use_openssl ? CryptoFactory::OpenSSL : CryptoFactory::CryptoPP);
-  
+ 
     // paring
     VerifyNTimesDiffLen(Parameters::PairingProduction(), p);
      
@@ -252,7 +252,7 @@ namespace Benchmarks {
 
       // Xor
     VerifyNTimesDiffLen(Parameters::XorTesting(), p);
-
+    
     cf.SetLibrary(cname);
   }
 
@@ -375,27 +375,27 @@ namespace Benchmarks {
     verifyN_params p;
     p.n_servers = 10;
     p.n_clients = 1000;
-    p.n_gen = 10;
-    p.n_verify = 10;
+    p.n_gen = 40;
+    p.n_verify = 0;
     p.vary_n_elms = false;
 
     qDebug() << header;
 
-    for(int i=2; i<4096;) {
+    for(int i=8; i<8192;) {
       p.n_clients = i;
       VerifyNTimesDiffLenLibrary(&p, false);
 
-      if(i < 8) i += 1;
-      else if(i < 16) i += 2;
-      else if(i < 32) i += 4;
-      else if(i < 64) i += 8;
-      else if(i < 128) i += 16;
-      else if(i < 256) i += 32;
-      else if(i < 512) i += 64;
-      else if(i < 1024) i += 128;
-      else if(i < 2048) i += 256;
-      else if(i < 4096) i += 512;
-      else i += 1024;
+      if(i < 8) i += 4;
+      else if(i < 16) i += 8;
+      else if(i < 32) i += 16;
+      else if(i < 64) i += 32;
+      else if(i < 128) i += 64;
+      else if(i < 256) i += 128;
+      else if(i < 512) i += 256;
+      else if(i < 1024) i += 512;
+      else if(i < 2048) i += 1024;
+      else if(i < 4096) i += 2048;
+      else i += 4096;
     }
   }
 
@@ -435,8 +435,9 @@ namespace Benchmarks {
     verifyN_params p;
     p.n_servers = 10;
     p.n_clients = 1000;
-    p.n_gen = 10;
-    p.n_verify = 10;
+    // XXX test 
+    p.n_gen = 40;
+    p.n_verify = 0;
     p.vary_n_elms = false;
 
     qDebug() << header;
