@@ -998,6 +998,9 @@ namespace Anonymity {
       by_slot.append(QList<QByteArray>());
     }
 
+    qDebug() << ToString() << "generating ciphertext for" <<
+      _server_state->client_ciphertexts.count() << "out of" << GetGroup().Count();
+
     // For each user
     foreach(const Id& id, _server_state->client_ciphertexts.keys()) {
 
