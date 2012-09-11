@@ -27,8 +27,6 @@ namespace Dissent {
 
 namespace Anonymity {
 
-  const int BlogDropRound::MaxPlaintextLength = 8 * 1024;
-
   BlogDropRound::BlogDropRound(const Group &group, const PrivateIdentity &ident,
       const Id &round_id, QSharedPointer<Network> network,
       GetDataCallback &get_data, CreateRound create_shuffle) :
@@ -917,15 +915,20 @@ namespace Anonymity {
   QByteArray BlogDropRound::ComputeClientPlaintext()
   {
     QByteArray this_plaintext = _state->next_plaintext;
+    const int nelms_orig = _state->blogdrop_author->GetParameters()->GetNElements();
 
-    QPair<QByteArray, bool> pair = GetData(MaxPlaintextLength);
+    // The maximum length is (255 * bytes_per_element)
+    _state->blogdrop_author->GetParameters()->SetNElements(255);
+    const int max_len = _state->blogdrop_author->MaxPlaintextLength();
+    _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
+
+    QPair<QByteArray, bool> pair = GetData(max_len);
     if(pair.first.size() > 0) {
       qDebug() << "Found a message of" << pair.first.size();
     }
     _state->next_plaintext = pair.first;
 
     // First byte is number of elements
-    const int nelms_orig = _state->blogdrop_author->GetParameters()->GetNElements();
     unsigned int i=1;
     for(; i<255 && _state->blogdrop_author->MaxPlaintextLength() < (_state->next_plaintext.count()+1); i++) {
       _state->blogdrop_author->GetParameters()->SetNElements(i);

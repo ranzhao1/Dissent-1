@@ -68,11 +68,6 @@ namespace Anonymity {
       };
 
       /**
-       * Longest plaintext the round will accept
-       */
-      static const int MaxPlaintextLength;
-
-      /**
        * Constructor
        * @param group Group used during this round
        * @param ident the local nodes credentials
