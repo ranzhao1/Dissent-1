@@ -37,7 +37,7 @@ namespace Tunnel {
 
     public:
   
-      static const int BytesPerPacket = 128;
+      static const int BytesPerPacket = 1024;
 
       typedef Dissent::Crypto::AsymmetricKey AsymmetricKey;
       typedef Dissent::Crypto::Hash Hash;
