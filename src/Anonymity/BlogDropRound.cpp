@@ -922,7 +922,6 @@ namespace Anonymity {
     _state->blogdrop_author->GetParameters()->SetNElements(max_elms);
     const int max_len = _state->blogdrop_author->MaxPlaintextLength();
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
-    qDebug() << "Max elms" << max_elms << "max_len" << max_len;
 
     QPair<QByteArray, bool> pair = GetData(max_len);
     if(pair.first.size() > 0) {
@@ -932,16 +931,18 @@ namespace Anonymity {
 
     // First byte is number of elements
     int i=0;
-    qDebug() << "Now at nelms" << i+1 << "len" << _state->blogdrop_author->MaxPlaintextLength() << "/" <<
-        _state->next_plaintext.count()+1;
-    for(; i<max_elms && _state->blogdrop_author->MaxPlaintextLength() < (_state->next_plaintext.count()+1); i++) {
+
+    // Msg + 1 byte for length
+    const int next_plaintext_len = _state->next_plaintext.count()+1;
+    for(; i<max_elms && _state->blogdrop_author->MaxPlaintextLength() < next_plaintext_len; i++) {
       _state->blogdrop_author->GetParameters()->SetNElements(i+1);
-      qDebug() << "Now at nelms" << i+1 << "len" << _state->blogdrop_author->MaxPlaintextLength() << "/" <<
-        _state->next_plaintext.count()+1;
     }
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
-    return QByteArray(1, i) + this_plaintext;
+    QByteArray out = QByteArray(1, (char)i) + this_plaintext;
+
+    Q_ASSERT(out.count() <= _state->blogdrop_author->MaxPlaintextLength());
+    return out;
   }
 
   QByteArray BlogDropRound::GenerateClientCiphertext()
