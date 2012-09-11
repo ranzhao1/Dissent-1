@@ -916,9 +916,10 @@ namespace Anonymity {
   {
     QByteArray this_plaintext = _state->next_plaintext;
     const int nelms_orig = _state->blogdrop_author->GetParameters()->GetNElements();
+    const int max_elms = 256;
 
     // The maximum length is (255 * bytes_per_element)
-    _state->blogdrop_author->GetParameters()->SetNElements(255);
+    _state->blogdrop_author->GetParameters()->SetNElements(max_elms);
     const int max_len = _state->blogdrop_author->MaxPlaintextLength();
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
@@ -929,9 +930,9 @@ namespace Anonymity {
     _state->next_plaintext = pair.first;
 
     // First byte is number of elements
-    unsigned int i=1;
-    for(; i<255 && _state->blogdrop_author->MaxPlaintextLength() < (_state->next_plaintext.count()+1); i++) {
-      _state->blogdrop_author->GetParameters()->SetNElements(i);
+    int i=0;
+    for(; i<max_elms && _state->blogdrop_author->MaxPlaintextLength() < (_state->next_plaintext.count()+1); i++) {
+      _state->blogdrop_author->GetParameters()->SetNElements(i+1);
     }
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
@@ -1109,8 +1110,8 @@ namespace Anonymity {
       }
 
       const int slot_length = (unsigned char)plain[0];
-      qDebug() << "Next nelms:" << slot_length;
-      _server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length);
+      qDebug() << "Next nelms:" << slot_length+1;
+      _server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length+1);
 
       plaintexts.append(plain);
 
@@ -1163,10 +1164,10 @@ namespace Anonymity {
       }
 
       const int slot_length = (unsigned char)plaintexts[slot_idx][0];
-      qDebug() << "Next nelms:" << slot_length;
-      _state->blogdrop_clients[slot_idx]->GetParameters()->SetNElements(slot_length);
+      qDebug() << "Next nelms:" << slot_length+1;
+      _state->blogdrop_clients[slot_idx]->GetParameters()->SetNElements(slot_length+1);
       if(slot_idx == _state->my_idx) {
-        _state->blogdrop_author->GetParameters()->SetNElements(slot_length);
+        _state->blogdrop_author->GetParameters()->SetNElements(slot_length+1);
       }
     }
   }
