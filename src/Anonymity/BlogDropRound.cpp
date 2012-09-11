@@ -1195,6 +1195,7 @@ namespace Anonymity {
           _state->slots_open[slot_idx] = false;
         } else {
           qDebug() << "Next nelms:" << slot_length;
+          _state->slots_open[slot_idx] = true;
           _server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length);
         }
       } else {
@@ -1261,6 +1262,7 @@ namespace Anonymity {
         _state->slots_open[slot_idx] = false;
       } else {
         qDebug() << "Next nelms:" << slot_length;
+        _state->slots_open[slot_idx] = true;
         _state->blogdrop_clients[slot_idx]->GetParameters()->SetNElements(slot_length);
         if(slot_idx == _state->my_idx) {
           _state->blogdrop_author->GetParameters()->SetNElements(slot_length);
