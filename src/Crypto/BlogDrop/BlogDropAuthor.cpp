@@ -21,7 +21,7 @@ namespace BlogDrop {
   {
     const int can_fit = Plaintext::CanFit(GetParameters());
     if(in.count() > MaxPlaintextLength()) {
-      qWarning() << "Plaintext is too long";
+      qWarning() << "Plaintext is too long is:" << in.count() << ", max:" << MaxPlaintextLength();
       return false; 
     }
 

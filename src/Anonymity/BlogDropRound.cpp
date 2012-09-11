@@ -916,12 +916,13 @@ namespace Anonymity {
   {
     QByteArray this_plaintext = _state->next_plaintext;
     const int nelms_orig = _state->blogdrop_author->GetParameters()->GetNElements();
-    const int max_elms = 256;
+    const int max_elms = 255;
 
     // The maximum length is (255 * bytes_per_element)
     _state->blogdrop_author->GetParameters()->SetNElements(max_elms);
     const int max_len = _state->blogdrop_author->MaxPlaintextLength();
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
+    qDebug() << "Max elms" << max_elms << "max_len" << max_len;
 
     QPair<QByteArray, bool> pair = GetData(max_len);
     if(pair.first.size() > 0) {
@@ -931,8 +932,12 @@ namespace Anonymity {
 
     // First byte is number of elements
     int i=0;
+    qDebug() << "Now at nelms" << i+1 << "len" << _state->blogdrop_author->MaxPlaintextLength() << "/" <<
+        _state->next_plaintext.count()+1;
     for(; i<max_elms && _state->blogdrop_author->MaxPlaintextLength() < (_state->next_plaintext.count()+1); i++) {
       _state->blogdrop_author->GetParameters()->SetNElements(i+1);
+      qDebug() << "Now at nelms" << i+1 << "len" << _state->blogdrop_author->MaxPlaintextLength() << "/" <<
+        _state->next_plaintext.count()+1;
     }
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 

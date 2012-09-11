@@ -8,7 +8,7 @@
 namespace Dissent {
 namespace Tests {
 
-  static const int TEST_MESSAGE_LENGTH = 240;
+  static const int TEST_MESSAGE_LENGTH = 7140;
 
   typedef bool (*BadGuyCB)(Round *);
 
