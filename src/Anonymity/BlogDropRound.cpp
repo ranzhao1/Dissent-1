@@ -927,7 +927,7 @@ namespace Anonymity {
     // First byte is number of elements
     const int nelms_orig = _state->blogdrop_author->GetParameters()->GetNElements();
     unsigned int i=1;
-    for(; i<256 && _state->blogdrop_author->MaxPlaintextLength() < (_state->next_plaintext.count()+1); i++) {
+    for(; i<255 && _state->blogdrop_author->MaxPlaintextLength() < (_state->next_plaintext.count()+1); i++) {
       _state->blogdrop_author->GetParameters()->SetNElements(i);
     }
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
