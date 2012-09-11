@@ -22,56 +22,56 @@ namespace BlogDrop {
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::TESTING_256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_ElGamal, QByteArray(), fixed, fixed, 2));
+        new Parameters(ProofType_ElGamal, QByteArray(), fixed, fixed, 4));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerElGamalProduction(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::PRODUCTION_2048);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 1));
+        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 2));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerHashingTesting() 
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::TESTING_256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_HashingGenerator, QByteArray(), fixed, fixed, 2));
+        new Parameters(ProofType_HashingGenerator, QByteArray(), fixed, fixed, 4));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerHashingProduction(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::PRODUCTION_2048);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 1));
+        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 2));
   }
 
   QSharedPointer<Parameters> Parameters::CppECElGamalProduction(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = CppECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
+        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 16));
   }
 
   QSharedPointer<Parameters> Parameters::CppECHashingProduction(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = CppECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
+        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 16));
   }
 
   QSharedPointer<Parameters> Parameters::BotanECElGamalProduction(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = BotanECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
+        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 16));
   }
 
   QSharedPointer<Parameters> Parameters::BotanECHashingProduction(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = BotanECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
+        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 16));
   }
 
 
@@ -79,14 +79,14 @@ namespace BlogDrop {
   {
     QSharedPointer<const AbstractGroup> fixed = OpenECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 8));
+        new Parameters(ProofType_ElGamal, round_nonce, fixed, fixed, 16));
   }
 
   QSharedPointer<Parameters> Parameters::OpenECHashingProduction(QByteArray round_nonce) 
   {
     QSharedPointer<const AbstractGroup> fixed = OpenECGroup::GetGroup(ECParams::NIST_P256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 8));
+        new Parameters(ProofType_HashingGenerator, round_nonce, fixed, fixed, 16));
   }
 
   QSharedPointer<Parameters> Parameters::PairingProduction(QByteArray round_nonce) 
@@ -94,7 +94,7 @@ namespace BlogDrop {
     QSharedPointer<const AbstractGroup> g1 = PairingG1Group::GetGroup(PairingGroup::PRODUCTION_512);
     QSharedPointer<const AbstractGroup> gT = PairingGTGroup::GetGroup(PairingGroup::PRODUCTION_512);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_Pairing, round_nonce, g1, gT, 4));
+        new Parameters(ProofType_Pairing, round_nonce, g1, gT, 8));
   }
   
   QSharedPointer<Parameters> Parameters::XorTesting(QByteArray round_nonce) 
@@ -102,7 +102,7 @@ namespace BlogDrop {
     QSharedPointer<const AbstractGroup> g1 = ByteGroup::TestingFixed();
     QSharedPointer<const AbstractGroup> gT = ByteGroup::TestingFixed();
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_Xor, round_nonce, g1, gT, 2));
+        new Parameters(ProofType_Xor, round_nonce, g1, gT, 4));
   }
 
   QSharedPointer<Parameters> Parameters::Empty() 
