@@ -7,6 +7,17 @@ import time
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer
 
+"""
+This is the trace server. Run it like
+this:
+
+  python server.py port
+
+The server will listen on all interfaces at
+the specified port for incoming requests
+from client.py.
+
+"""
 class BenchHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
   def do_GET(self):

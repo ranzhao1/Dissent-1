@@ -12,6 +12,20 @@ import sys
 import urllib2 
 import urlparse
 
+"""
+
+This is the trace client. You run it like this:
+
+  python client.py socks_ip socks_port server_ip server_port < trace.tr
+
+The "trace.tr" is the name of your trace file generated
+using crawl.py. The socks parameters are either the ip/port of
+a socks proxy or are "none" and "none" if you don't want to
+use a socks server. The server ip/port is the location of
+the machine running the server.py script.
+
+"""
+
 if len(sys.argv) != 5:
   raise Exception("Usage: %s socks_ip socks_port server_ip server_port" % sys.argv[0])
 

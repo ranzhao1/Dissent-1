@@ -11,6 +11,23 @@ import urlparse
 
 N_THREADS = 5
 
+""""
+Crawler. Use this script to generate a web trace
+that you can use with client.py and server.py.
+DO NOT RUN this script unless you need a new trace
+file -- the existing trace file should be okay.
+
+Run it like this:
+  python crawl.py < top-1k-corr.csv > trace.out
+
+The input CSV file contains a list of index,URL pairs:
+  1,google.com
+  2,facebook.com
+  3,youtube.com
+  ...
+
+""""
+
 # Global queue of dicts (uid, parent_id, depth, url)
 q = Queue()
 seen_lock = Lock()
