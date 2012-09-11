@@ -1105,7 +1105,7 @@ namespace Anonymity {
         throw QRunTimeError("Could not decode plaintext message. Maybe bad anon author?");
       }
 
-      const int slot_length = plain[0];
+      const int slot_length = (unsigned char)plain[0];
       qDebug() << "Next nelms:" << slot_length;
       _server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length);
 
@@ -1159,7 +1159,7 @@ namespace Anonymity {
         PushData(GetSharedPointer(), plaintexts[slot_idx].mid(1)); 
       }
 
-      const int slot_length = plaintexts[slot_idx][0];
+      const int slot_length = (unsigned char)plaintexts[slot_idx][0];
       qDebug() << "Next nelms:" << slot_length;
       _state->blogdrop_clients[slot_idx]->GetParameters()->SetNElements(slot_length);
       if(slot_idx == _state->my_idx) {
