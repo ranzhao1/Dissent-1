@@ -64,7 +64,8 @@ def parse_html(base_url, content):
 
 def print_asset_info(item, content_type, content, dur):
   print "%(id)s,%(parent_id)s,%(depth)d," % item,
-  print "%s,%d,%0.3f" % (content_type, len(content), dur)
+  print "%s,%d,%0.3f," % (content_type, len(content), dur),
+  print "%(url)s" % item
 
 # Consumer
 def worker():
@@ -93,14 +94,13 @@ def worker():
       print_asset_info(item, ctype, content, dur)  
 
     except Exception as e:
-      print e
+      sys.stderr.write("%s\n" % e)
       raise e
     finally:
       q.task_done()
 
 
 def main():
-  print "==URL crawler=="
 
   for line in sys.stdin:
     for i in range(N_THREADS):
