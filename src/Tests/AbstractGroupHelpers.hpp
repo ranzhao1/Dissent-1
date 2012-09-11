@@ -103,12 +103,14 @@ namespace Tests {
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
 
+    qDebug() << "=====";
     QByteArray out;
     QByteArray msg(rand->GetInt(1, group->BytesPerElement()), 0);
     for(int i=0; i<100; i++) {
       rand->GenerateBlock(msg);
 
       Element a = group->EncodeBytes(msg);
+      
       EXPECT_EQ(group->GetIdentity(), group->Exponentiate(a, group->GetOrder()));
       Element b = group->RandomElement();
       Element binv = group->Inverse(b);

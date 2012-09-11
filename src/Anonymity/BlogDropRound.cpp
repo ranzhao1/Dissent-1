@@ -55,6 +55,9 @@ namespace Anonymity {
 
     _state->n_servers = GetGroup().GetSubgroup().Count();
     _state->n_clients = GetGroup().Count();
+
+    // All slots start out opened
+    _state->slots_open = QBitArray(GetGroup().Count(), true);
   }
 
   void BlogDropRound::InitServer()
@@ -263,6 +266,13 @@ namespace Anonymity {
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
         _server_state->blogdrop_servers[slot_idx]->ClearBin();
       }
+    }
+
+    // Increment the always_open pointer until we find a closed
+    // slot or we wrap around
+    for(int user_idx=0; user_idx<_state->n_clients; user_idx++) {
+      _state->always_open = (_state->always_open+1) % _state->n_clients;
+      if(!_state->slots_open[_state->always_open]) break;
     }
 
     if(_stop_next) {
@@ -918,15 +928,19 @@ namespace Anonymity {
     const int nelms_orig = _state->blogdrop_author->GetParameters()->GetNElements();
     const int max_elms = 255;
 
-    // The maximum length is (255 * bytes_per_element)
+    // The maximum length is (255 * bytes_per_element) - 1 byte for length
     _state->blogdrop_author->GetParameters()->SetNElements(max_elms);
-    const int max_len = _state->blogdrop_author->MaxPlaintextLength();
+    const int max_len = _state->blogdrop_author->MaxPlaintextLength()-1;
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
     QPair<QByteArray, bool> pair = GetData(max_len);
     if(pair.first.size() > 0) {
       qDebug() << "Found a message of" << pair.first.size();
+      _state->phases_since_transmission = 0;
+    } else {
+      _state->phases_since_transmission++;
     }
+
     _state->next_plaintext = pair.first;
 
     // First byte is number of elements
@@ -934,8 +948,8 @@ namespace Anonymity {
 
     // Msg + 1 byte for length
     const int next_plaintext_len = _state->next_plaintext.count()+1;
-    for(i=0; i<max_elms; i++) {
-      _state->blogdrop_author->GetParameters()->SetNElements(i+1);
+    for(i=1; i<max_elms; i++) {
+      _state->blogdrop_author->GetParameters()->SetNElements(i);
       if(next_plaintext_len <= _state->blogdrop_author->MaxPlaintextLength()) 
         break;
     }
@@ -943,8 +957,17 @@ namespace Anonymity {
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
     QByteArray lenbytes(1, '\0');
-    lenbytes[0] = (char)i;
+
+    if(_state->phases_since_transmission > (GetGroup().Count()/2)) {
+      qDebug() << "Closing slot!";
+      lenbytes[0] = '\0';
+    } else {
+      lenbytes[0] = (char)i;
+    }
+
+    
     QByteArray out = lenbytes + this_plaintext;
+
 
     qDebug() << "out" << out.count() << "max" << _state->blogdrop_author->MaxPlaintextLength();
     Q_ASSERT(out.count() <= _state->blogdrop_author->MaxPlaintextLength());
@@ -957,14 +980,20 @@ namespace Anonymity {
 
     QByteArray c;
     for(int slot_idx=0; slot_idx < _state->n_clients; slot_idx++) {
-      if(slot_idx == _state->my_idx) {
-        QByteArray m = ComputeClientPlaintext();
-        
-        if(!_state->blogdrop_author->GenerateAuthorCiphertext(c, m)) 
-          throw QRunTimeError("Could not generate author ciphertext");
+      if(SlotIsOpen(slot_idx)) {
 
+        if(slot_idx == _state->my_idx) {
+          QByteArray m = ComputeClientPlaintext();
+          
+          if(!_state->blogdrop_author->GenerateAuthorCiphertext(c, m)) 
+            throw QRunTimeError("Could not generate author ciphertext");
+
+        } else {
+          c = _state->blogdrop_clients[slot_idx]->GenerateCoverCiphertext();
+        }
       } else {
-        c = _state->blogdrop_clients[slot_idx]->GenerateCoverCiphertext();
+        qDebug() << "Client skipping closed slot" << slot_idx;
+        c = QByteArray();
       }
 
       ctexts.append(c);
@@ -1054,17 +1083,36 @@ namespace Anonymity {
 
       // For each slot
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+        if(!SlotIsOpen(slot_idx)) {
+          qDebug() << "Not adding client ciphertext to closed slot" << slot_idx;
+          continue;
+        }
         by_slot[slot_idx].append(ctexts[slot_idx]);
       }
 
       client_pks.append(_state->master_client_pks[id]);
     }
 
+    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+      if(!SlotIsOpen(slot_idx)) {
+        Q_ASSERT(!by_slot[slot_idx].count());
+      }
+    }
+
     QList<QByteArray> server_ctexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx], client_pks);
-      server_ctexts.append(_server_state->blogdrop_servers[slot_idx]->CloseBin());
+      QByteArray c;
+      if(SlotIsOpen(slot_idx)) {
+        _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx], client_pks);
+        c = _server_state->blogdrop_servers[slot_idx]->CloseBin();
+      } else {
+        qDebug() << "Not creating server ciphertext for closed slot" << slot_idx;
+      }
+
+      server_ctexts.append(c);
     }
+
+    Q_ASSERT(server_ctexts.count() == _state->n_clients);
 
     QDataStream stream(&(_server_state->my_ciphertext), QIODevice::WriteOnly);
     stream << server_ctexts;
@@ -1106,27 +1154,40 @@ namespace Anonymity {
     }
 
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      if(!_server_state->blogdrop_servers[slot_idx]->AddServerCiphertexts(
-              by_slot[slot_idx],
-              _state->master_server_pks_list)) {
-            throw QRunTimeError("Server submitted invalid ciphertext");
-        }
+      if(SlotIsOpen(slot_idx)) {
+        if(!_server_state->blogdrop_servers[slot_idx]->AddServerCiphertexts(
+                by_slot[slot_idx],
+                _state->master_server_pks_list)) {
+              throw QRunTimeError("Server submitted invalid ciphertext");
+          }
+      } else {
+        qDebug() << "Not adding server ciphertext to closed slot" << slot_idx;
+      }
     }
 
     QList<QByteArray> plaintexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-
       QByteArray plain;
-      if(!_server_state->blogdrop_servers[slot_idx]->RevealPlaintext(plain)) {
-        throw QRunTimeError("Could not decode plaintext message. Maybe bad anon author?");
+
+      if(SlotIsOpen(slot_idx)) {
+        if(!_server_state->blogdrop_servers[slot_idx]->RevealPlaintext(plain)) {
+          throw QRunTimeError("Could not decode plaintext message. Maybe bad anon author?");
+        }
+
+        const int slot_length = (unsigned char)plain[0];
+
+        if(!slot_length) {
+          qDebug() << "Closing slot" << slot_idx;
+          _state->slots_open[slot_idx] = false;
+        } else {
+          qDebug() << "Next nelms:" << slot_length;
+          _server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length);
+        }
+      } else {
+        qDebug() << "Not decoding message for closed slot" << slot_idx;
       }
 
-      const int slot_length = (unsigned char)plain[0];
-      qDebug() << "Next nelms:" << slot_length+1;
-      _server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length+1);
-
       plaintexts.append(plain);
-
       qDebug() << "Decoding message" << plain.toHex();
     }
 
@@ -1170,18 +1231,33 @@ namespace Anonymity {
     stream >> plaintexts;
 
     for(int slot_idx=0; slot_idx<plaintexts.count(); slot_idx++) {
+      if(!SlotIsOpen(slot_idx)) {
+        qDebug() << "Skipping closed slot" << slot_idx;
+        continue;
+      }
+
       if(!plaintexts[slot_idx].isEmpty() && plaintexts[slot_idx].count() > 1) {
         qDebug() << "Pushing cleartext of length" << plaintexts[slot_idx].mid(1).count();
         PushData(GetSharedPointer(), plaintexts[slot_idx].mid(1)); 
       }
 
       const int slot_length = (unsigned char)plaintexts[slot_idx][0];
-      qDebug() << "Next nelms:" << slot_length+1;
-      _state->blogdrop_clients[slot_idx]->GetParameters()->SetNElements(slot_length+1);
-      if(slot_idx == _state->my_idx) {
-        _state->blogdrop_author->GetParameters()->SetNElements(slot_length+1);
+      if(!slot_length) {
+        qDebug() << "Closing slot" << slot_idx;
+        _state->slots_open[slot_idx] = false;
+      } else {
+        qDebug() << "Next nelms:" << slot_length;
+        _state->blogdrop_clients[slot_idx]->GetParameters()->SetNElements(slot_length);
+        if(slot_idx == _state->my_idx) {
+          _state->blogdrop_author->GetParameters()->SetNElements(slot_length);
+        }
       }
     }
+  }
+
+  bool BlogDropRound::SlotIsOpen(int slot_idx)
+  {
+    return (_state->slots_open[slot_idx] || slot_idx == _state->always_open);
   }
 
 }

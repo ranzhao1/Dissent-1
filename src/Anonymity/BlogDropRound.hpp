@@ -1,6 +1,7 @@
 #ifndef DISSENT_ANONYMITY_BLOG_DROP_ROUND_H_GUARD
 #define DISSENT_ANONYMITY_BLOG_DROP_ROUND_H_GUARD
 
+#include <QBitArray>
 #include <QMetaEnum>
 
 #include "Crypto/BlogDrop/BlogDropAuthor.hpp"
@@ -185,7 +186,9 @@ namespace Anonymity {
             client_sk(new PrivateKey(params)),
             client_pk(new PublicKey(client_sk)),
             anonymous_sk(new PrivateKey(params)),
-            anonymous_pk(new PublicKey(anonymous_sk)) {}
+            anonymous_pk(new PublicKey(anonymous_sk)),
+            phases_since_transmission(0),
+            always_open(0) {}
 
           virtual ~State() {}
 
@@ -238,6 +241,10 @@ namespace Anonymity {
 
           int n_clients;
           int n_servers;
+
+          QBitArray slots_open;
+          int phases_since_transmission;
+          int always_open;
       };
 
       /**
@@ -408,6 +415,8 @@ namespace Anonymity {
 
       void ProcessCleartext();
       void ConcludeClientCiphertextSubmission(const int &);
+
+      inline bool SlotIsOpen(int slot_idx);
 
       QSharedPointer<ServerState> _server_state;
       QSharedPointer<State> _state;
