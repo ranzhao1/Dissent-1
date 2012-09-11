@@ -930,13 +930,16 @@ namespace Anonymity {
     _state->next_plaintext = pair.first;
 
     // First byte is number of elements
-    int i=0;
+    int i;
 
     // Msg + 1 byte for length
     const int next_plaintext_len = _state->next_plaintext.count()+1;
-    for(; i<max_elms && _state->blogdrop_author->MaxPlaintextLength() < next_plaintext_len; i++) {
+    for(i=0; i<max_elms; i++) {
       _state->blogdrop_author->GetParameters()->SetNElements(i+1);
+      if(next_plaintext_len <= _state->blogdrop_author->MaxPlaintextLength()) 
+        break;
     }
+
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
     QByteArray lenbytes(1, '\0');
