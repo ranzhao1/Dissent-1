@@ -403,7 +403,7 @@ namespace Tunnel {
     }
 
     do {
-      QByteArray data = _socket->read(64000);
+      QByteArray data = _socket->read(BytesPerPacket);
       qDebug() << "SOCKS Read" << data.count() << "bytes from socket";
       TcpRequestPacket reqp(_conn_id, _signing_key->Sign(data), data);
 

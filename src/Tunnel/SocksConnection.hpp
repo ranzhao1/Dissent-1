@@ -36,6 +36,9 @@ namespace Tunnel {
     Q_OBJECT
 
     public:
+  
+      static const int BytesPerPacket = 128;
+
       typedef Dissent::Crypto::AsymmetricKey AsymmetricKey;
       typedef Dissent::Crypto::Hash Hash;
       typedef Dissent::Crypto::Library Library;
