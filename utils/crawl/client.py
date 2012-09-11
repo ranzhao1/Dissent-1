@@ -16,8 +16,9 @@ if len(sys.argv) != 5:
   raise Exception("Usage: %s socks_ip socks_port server_ip server_port" % sys.argv[0])
 
 # Route through SOCKS proxy
-socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, sys.argv[1], int(sys.argv[2]), True)
-socket.socket = socks.socksocket
+if not (sys.argv[1] == "none" and sys.argv[2] == "none"):
+  socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, sys.argv[1], int(sys.argv[2]), True)
+  socket.socket = socks.socksocket
 
 # Global queue of dicts (uid, parent_id, depth, url)
 q = Queue()
@@ -45,7 +46,7 @@ def fetch_url(mydata):
   end = time.time()
 
   data = f.read()
-  sys.stderr.write("Got %d bytes in %0.2fs\n" % (len(data), end-start))
+#sys.stderr.write("Got %d bytes in %0.2fs\n" % (len(data), end-start))
 
 # Consumer
 def worker():
@@ -85,7 +86,10 @@ def process_lines(lines):
   start = time.time()
 
   q.put('0')
-  q.join()   
+  try:
+    q.join()   
+  except KeyboardInterrupt:
+    sys.exit()
   end = time.time()
 
   print "%0.2f,%d" % (end-start, bytecount)
