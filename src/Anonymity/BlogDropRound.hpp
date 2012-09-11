@@ -236,7 +236,6 @@ namespace Anonymity {
           QHash<int, QByteArray> signatures;
 
           int my_idx;
-          int phase;
           Id my_server;
 
           int n_clients;

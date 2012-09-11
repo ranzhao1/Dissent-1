@@ -37,8 +37,6 @@ namespace BlogDrop {
     c->SetAuthorProof(GetPhase(), GetClientKey(), _author_priv, m);
     out = c->GetByteArray();
 
-    NextPhase();
-    
     return !data.count();
   }
 

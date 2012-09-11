@@ -23,7 +23,6 @@ namespace BlogDrop {
   {
     QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(_params, _server_pks, _author_pub);
     c->SetProof(GetPhase(), _client_priv);
-    NextPhase();
     return c->GetByteArray();
   }
 

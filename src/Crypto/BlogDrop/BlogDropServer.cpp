@@ -24,8 +24,6 @@ namespace BlogDrop {
     _client_pubs.clear();
     _server_ciphertexts.clear();
     _client_pks.clear();
-
-    _phase++;
   }
 
   bool BlogDropServer::AddClientCiphertext(QByteArray in, 

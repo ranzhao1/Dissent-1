@@ -265,6 +265,8 @@ namespace Anonymity {
 
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
         _server_state->blogdrop_servers[slot_idx]->ClearBin();
+        _server_state->blogdrop_servers[slot_idx]->NextPhase();
+        qDebug() << "Server slot" << slot_idx << "phase" << _server_state->blogdrop_servers[slot_idx]->GetPhase();
       }
     }
 
@@ -274,6 +276,13 @@ namespace Anonymity {
       _state->always_open = (_state->always_open+1) % _state->n_clients;
       if(!_state->slots_open[_state->always_open]) break;
     }
+
+    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
+      _state->blogdrop_clients[slot_idx]->NextPhase();
+      qDebug() << "Client slot" << slot_idx << "phase" << _state->blogdrop_clients[slot_idx]->GetPhase();
+    }
+
+    _state->blogdrop_author->NextPhase();
 
     if(_stop_next) {
       SetInterrupted();
@@ -958,6 +967,8 @@ namespace Anonymity {
 
     QByteArray lenbytes(1, '\0');
 
+    qDebug() << "Phases since xmit" << _state->phases_since_transmission << "thresh"
+      << GetGroup().Count()/2;
     if(_state->phases_since_transmission > (GetGroup().Count()/2)) {
       qDebug() << "Closing slot!";
       lenbytes[0] = '\0';
@@ -980,6 +991,7 @@ namespace Anonymity {
 
     QByteArray c;
     for(int slot_idx=0; slot_idx < _state->n_clients; slot_idx++) {
+      qDebug() << "Generating for slot" << slot_idx;
       if(SlotIsOpen(slot_idx)) {
 
         if(slot_idx == _state->my_idx) {
@@ -1103,6 +1115,8 @@ namespace Anonymity {
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
       QByteArray c;
       if(SlotIsOpen(slot_idx)) {
+        Q_ASSERT(by_slot[slot_idx].count() == _state->n_clients);
+
         _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx], client_pks);
         c = _server_state->blogdrop_servers[slot_idx]->CloseBin();
       } else {
@@ -1257,6 +1271,7 @@ namespace Anonymity {
 
   bool BlogDropRound::SlotIsOpen(int slot_idx)
   {
+//    qDebug() << "SlotIsOpen always" << _state->always_open;
     return (_state->slots_open[slot_idx] || slot_idx == _state->always_open);
   }
 

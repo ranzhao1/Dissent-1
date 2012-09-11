@@ -40,14 +40,14 @@ namespace BlogDrop {
 
       inline QSharedPointer<Parameters> GetParameters() const { return _params; }
 
+      inline void NextPhase() { _phase++; }
+      inline int GetPhase() const { return _phase; }
+
     protected: 
 
       inline QSharedPointer<const PrivateKey> GetClientKey() const { return _client_priv; }
       inline QSharedPointer<const PublicKeySet> GetServerKeys() const { return _server_pks; }
       inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; }
-
-      inline int GetPhase() const { return _phase; }
-      inline void NextPhase() { _phase++; }
 
     private:
 

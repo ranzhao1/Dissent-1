@@ -104,6 +104,9 @@ namespace BlogDrop {
 
       inline QSharedPointer<Parameters> GetParameters() const { return _params; }
 
+      inline void NextPhase() { _phase++; }
+      inline int GetPhase() const { return _phase; }
+
     private:
 
       int _phase;
