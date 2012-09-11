@@ -26,7 +26,7 @@ namespace BlogDrop {
        * @param author_pub author public key
        * @param server_priv server private key
        */
-      explicit BlogDropServer(const QSharedPointer<const Parameters> params,  
+      explicit BlogDropServer(const QSharedPointer<Parameters> params,  
           const QSharedPointer<const PrivateKey> server_priv,
           const QSharedPointer<const PublicKeySet> server_pk_set,
           const QSharedPointer<const PublicKey> author_pub);
@@ -102,11 +102,13 @@ namespace BlogDrop {
         return QSharedPointer<const PublicKey>(new PublicKey(_server_priv));
       }
 
+      inline QSharedPointer<Parameters> GetParameters() const { return _params; }
+
     private:
 
       int _phase;
 
-      QSharedPointer<const Parameters> _params;
+      QSharedPointer<Parameters> _params;
       QSharedPointer<const PrivateKey> _server_priv;
       QSharedPointer<const PublicKeySet> _server_pk_set;
       QSharedPointer<const PublicKey> _author_pub;

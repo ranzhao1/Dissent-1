@@ -26,6 +26,9 @@ namespace Dissent {
   using Utils::Serialization;
 
 namespace Anonymity {
+
+  const int BlogDropRound::MaxPlaintextLength = 8 * 1024;
+
   BlogDropRound::BlogDropRound(const Group &group, const PrivateIdentity &ident,
       const Id &round_id, QSharedPointer<Network> network,
       GetDataCallback &get_data, CreateRound create_shuffle) :
@@ -860,13 +863,15 @@ namespace Anonymity {
         new PublicKeySet(_state->params, _state->master_server_pks.values()));
 
     _state->blogdrop_author = QSharedPointer<BlogDropAuthor>(
-        new BlogDropAuthor(_state->params, 
+        new BlogDropAuthor(
+              QSharedPointer<Parameters>(new Parameters(*_state->params)),
           _state->master_client_sk, 
           _state->master_server_pk_set, 
           _state->anonymous_sk));
 
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      QSharedPointer<BlogDropClient> c(new BlogDropClient(_state->params, 
+      QSharedPointer<BlogDropClient> c(new BlogDropClient(
+              QSharedPointer<Parameters>(new Parameters(*_state->params)),
             _state->master_client_sk,
             _state->master_server_pk_set, 
             _state->slot_pks[slot_idx])); 
@@ -875,7 +880,8 @@ namespace Anonymity {
 
     if(IsServer()) {
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        QSharedPointer<BlogDropServer> s(new BlogDropServer(_state->params,
+        QSharedPointer<BlogDropServer> s(new BlogDropServer(
+              QSharedPointer<Parameters>(new Parameters(*_state->params)),
           _server_state->master_server_sk,
           _state->master_server_pk_set, _state->slot_pks[slot_idx]));
         _server_state->blogdrop_servers.append(s);
@@ -908,21 +914,37 @@ namespace Anonymity {
     VerifiableSend(_state->my_server, payload);
   }
 
+  QByteArray BlogDropRound::ComputeClientPlaintext()
+  {
+    QByteArray this_plaintext = _state->next_plaintext;
+
+    QPair<QByteArray, bool> pair = GetData(MaxPlaintextLength);
+    if(pair.first.size() > 0) {
+      qDebug() << "Found a message of" << pair.first.size();
+    }
+    _state->next_plaintext = pair.first;
+
+    // First byte is number of elements
+    const int nelms_orig = _state->blogdrop_author->GetParameters()->GetNElements();
+    unsigned int i=1;
+    for(; i<256 && _state->blogdrop_author->MaxPlaintextLength() < (_state->next_plaintext.count()+1); i++) {
+      _state->blogdrop_author->GetParameters()->SetNElements(i);
+    }
+    _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
+
+    return QByteArray(1, i) + this_plaintext;
+  }
+
   QByteArray BlogDropRound::GenerateClientCiphertext()
   {
-    const int maxlen = _state->blogdrop_author->MaxPlaintextLength();
     QList<QByteArray> ctexts;
 
     QByteArray c;
     for(int slot_idx=0; slot_idx < _state->n_clients; slot_idx++) {
       if(slot_idx == _state->my_idx) {
-
-        QPair<QByteArray, bool> pair = GetData(maxlen);
-        if(pair.first.size() > 0) {
-          qDebug() << "Found a message of" << pair.first.size();
-        }
+        QByteArray m = ComputeClientPlaintext();
         
-        if(!_state->blogdrop_author->GenerateAuthorCiphertext(c, pair.first)) 
+        if(!_state->blogdrop_author->GenerateAuthorCiphertext(c, m)) 
           throw QRunTimeError("Could not generate author ciphertext");
 
       } else {
@@ -1083,6 +1105,10 @@ namespace Anonymity {
         throw QRunTimeError("Could not decode plaintext message. Maybe bad anon author?");
       }
 
+      const int slot_length = plain[0];
+      qDebug() << "Next nelms:" << slot_length;
+      _server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length);
+
       plaintexts.append(plain);
 
       qDebug() << "Decoding message" << plain.toHex();
@@ -1128,9 +1154,16 @@ namespace Anonymity {
     stream >> plaintexts;
 
     for(int slot_idx=0; slot_idx<plaintexts.count(); slot_idx++) {
-      if(!plaintexts[slot_idx].isEmpty()) {
-        qDebug() << "Pushing cleartext of length" << plaintexts[slot_idx].count();
-        PushData(GetSharedPointer(), plaintexts[slot_idx]); 
+      if(!plaintexts[slot_idx].isEmpty() && plaintexts[slot_idx].count() > 1) {
+        qDebug() << "Pushing cleartext of length" << plaintexts[slot_idx].mid(1).count();
+        PushData(GetSharedPointer(), plaintexts[slot_idx].mid(1)); 
+      }
+
+      const int slot_length = plaintexts[slot_idx][0];
+      qDebug() << "Next nelms:" << slot_length;
+      _state->blogdrop_clients[slot_idx]->GetParameters()->SetNElements(slot_length);
+      if(slot_idx == _state->my_idx) {
+        _state->blogdrop_author->GetParameters()->SetNElements(slot_length);
       }
     }
   }

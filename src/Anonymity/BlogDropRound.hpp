@@ -68,6 +68,11 @@ namespace Anonymity {
       };
 
       /**
+       * Longest plaintext the round will accept
+       */
+      static const int MaxPlaintextLength;
+
+      /**
        * Constructor
        * @param group Group used during this round
        * @param ident the local nodes credentials
@@ -222,6 +227,9 @@ namespace Anonymity {
           QSharedPointer<BlogDropAuthor> blogdrop_author;
           QList<QSharedPointer<BlogDropClient> > blogdrop_clients;
 
+          /* Plaintext for next phase */
+          QByteArray next_plaintext;
+          
           /* Plaintext output */
           QByteArray cleartext;
 
@@ -397,6 +405,7 @@ namespace Anonymity {
       void SubmitClientList();
       void SubmitServerCiphertext();
       void GenerateServerCiphertext();
+      QByteArray ComputeClientPlaintext();
       QByteArray GenerateClientCiphertext();
       QByteArray GenerateServerValidation();
       void SubmitValidation();

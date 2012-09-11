@@ -6,7 +6,7 @@ namespace Dissent {
 namespace Crypto {
 namespace BlogDrop {
 
-  BlogDropServer::BlogDropServer(const QSharedPointer<const Parameters> params, 
+  BlogDropServer::BlogDropServer(const QSharedPointer<Parameters> params, 
       const QSharedPointer<const PrivateKey> server_priv,
       const QSharedPointer<const PublicKeySet> server_pk_set,
       const QSharedPointer<const PublicKey> author_pub) :

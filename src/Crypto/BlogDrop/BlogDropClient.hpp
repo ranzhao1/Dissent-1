@@ -23,7 +23,7 @@ namespace BlogDrop {
        * @param server_pks Server public keys
        * @param author_pub author public key
        */
-      explicit BlogDropClient(const QSharedPointer<const Parameters> params, 
+      explicit BlogDropClient(const QSharedPointer<Parameters> params, 
           const QSharedPointer<const PrivateKey> client_priv,
           const QSharedPointer<const PublicKeySet> server_pks,
           const QSharedPointer<const PublicKey> author_pub);
@@ -38,9 +38,10 @@ namespace BlogDrop {
        */
       QByteArray GenerateCoverCiphertext();
 
+      inline QSharedPointer<Parameters> GetParameters() const { return _params; }
+
     protected: 
 
-      inline QSharedPointer<const Parameters> GetParameters() const { return _params; }
       inline QSharedPointer<const PrivateKey> GetClientKey() const { return _client_priv; }
       inline QSharedPointer<const PublicKeySet> GetServerKeys() const { return _server_pks; }
       inline QSharedPointer<const PublicKey> GetAuthorKey() const { return _author_pub; }
@@ -52,7 +53,7 @@ namespace BlogDrop {
 
       int _phase;
 
-      QSharedPointer<const Parameters> _params;
+      QSharedPointer<Parameters> _params;
       QSharedPointer<const PrivateKey> _client_priv;
       QSharedPointer<const PublicKeySet> _server_pks;
       QSharedPointer<const PublicKey> _author_pub;
