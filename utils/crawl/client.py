@@ -71,10 +71,14 @@ def worker():
       q.task_done()
 
 def process_lines(lines):
-  global q
   bytecount = 0
   for l in lines:
-    (uid, parent_id, depth, ctype, length, dur, url) = l.split(',', 6)
+    if l.strip() == "": continue
+    try:
+      (uid, parent_id, depth, ctype, length, dur, url) = l.split(',', 6)
+    except ValueError as e:
+       sys.stderr.write("Could not split: %s\n" % str(l))
+       raise e
     asset_data[uid] = {'id': uid, 'length': int(length), 'time': float(dur), 'url': url.strip()}
     asset_children[uid] = set()
     
