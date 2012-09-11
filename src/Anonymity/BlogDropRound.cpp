@@ -939,8 +939,11 @@ namespace Anonymity {
     }
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
-    QByteArray out = QByteArray(1, (char)i) + this_plaintext;
+    QByteArray lenbytes(1, '\0');
+    lenbytes[0] = (char)i;
+    QByteArray out = lenbytes + this_plaintext;
 
+    qDebug() << "out" << out.count() << "max" << _state->blogdrop_author->MaxPlaintextLength();
     Q_ASSERT(out.count() <= _state->blogdrop_author->MaxPlaintextLength());
     return out;
   }
