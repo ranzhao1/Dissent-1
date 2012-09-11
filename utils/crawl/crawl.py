@@ -14,6 +14,7 @@ N_THREADS = 5
 # Global queue of dicts (uid, parent_id, depth, url)
 q = Queue()
 seen_lock = Lock()
+print_lock = Lock()
 seen = set()
 
 class NullException(Exception):
@@ -63,9 +64,10 @@ def parse_html(base_url, content):
   return urllst
 
 def print_asset_info(item, content_type, content, dur):
-  print "%(id)s,%(parent_id)s,%(depth)d," % item,
-  print "%s,%d,%0.3f," % (content_type, len(content), dur),
-  print "%(url)s" % item
+  with print_lock:
+    print "%(id)s,%(parent_id)s,%(depth)d," % item,
+    print "%s,%d,%0.3f," % (content_type, len(content), dur),
+    print "%(url)s" % item
 
 # Consumer
 def worker():
