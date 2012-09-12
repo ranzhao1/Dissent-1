@@ -935,11 +935,13 @@ namespace Anonymity {
   {
     QByteArray this_plaintext = _state->next_plaintext;
     const int nelms_orig = _state->blogdrop_author->GetParameters()->GetNElements();
-    const int max_elms = 255;
+    const int max_elms = 1024*64;
+
+    const int len_length = 4;
 
     // The maximum length is (255 * bytes_per_element) - 1 byte for length
     _state->blogdrop_author->GetParameters()->SetNElements(max_elms);
-    const int max_len = _state->blogdrop_author->MaxPlaintextLength()-1;
+    const int max_len = _state->blogdrop_author->MaxPlaintextLength() - len_length;
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
     QPair<QByteArray, bool> pair = GetData(max_len);
@@ -956,7 +958,7 @@ namespace Anonymity {
     int i;
 
     // Msg + 1 byte for length
-    const int next_plaintext_len = _state->next_plaintext.count()+1;
+    const int next_plaintext_len = _state->next_plaintext.count() + len_length;
     for(i=1; i<max_elms; i++) {
       _state->blogdrop_author->GetParameters()->SetNElements(i);
       if(next_plaintext_len <= _state->blogdrop_author->MaxPlaintextLength()) 
@@ -965,18 +967,21 @@ namespace Anonymity {
 
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
-    QByteArray lenbytes(1, '\0');
 
     qDebug() << "Phases since xmit" << _state->phases_since_transmission << "thresh"
       << GetGroup().Count()/2;
+    int slotlen;
     if(_state->phases_since_transmission > (GetGroup().Count()/2)) {
       qDebug() << "Closing slot!";
-      lenbytes[0] = '\0';
+      slotlen = 0;
     } else {
-      lenbytes[0] = (char)i;
+      slotlen = i;
     }
 
     
+    QByteArray lenbytes(4, '\0');
+    Utils::Serialization::WriteInt(slotlen, lenbytes, 0);
+    Q_ASSERT(lenbytes.count() == 4);
     QByteArray out = lenbytes + this_plaintext;
 
 
@@ -1188,7 +1193,8 @@ namespace Anonymity {
           throw QRunTimeError("Could not decode plaintext message. Maybe bad anon author?");
         }
 
-        const int slot_length = (unsigned char)plain[0];
+        // 4 bytes in an int
+        const int slot_length = Utils::Serialization::ReadInt(plain, 0);
 
         if(!slot_length) {
           qDebug() << "Closing slot" << slot_idx;
@@ -1251,12 +1257,14 @@ namespace Anonymity {
         continue;
       }
 
-      if(!plaintexts[slot_idx].isEmpty() && plaintexts[slot_idx].count() > 1) {
-        qDebug() << "Pushing cleartext of length" << plaintexts[slot_idx].mid(1).count();
-        PushData(GetSharedPointer(), plaintexts[slot_idx].mid(1)); 
+      // An int is 4 bytes long
+      const int len_length = 4;
+      if(!plaintexts[slot_idx].isEmpty() && plaintexts[slot_idx].count() > len_length) {
+        qDebug() << "Pushing cleartext of length" << plaintexts[slot_idx].mid(len_length).count();
+        PushData(GetSharedPointer(), plaintexts[slot_idx].mid(len_length)); 
       }
 
-      const int slot_length = (unsigned char)plaintexts[slot_idx][0];
+      const int slot_length = Utils::Serialization::ReadInt(plaintexts[slot_idx], 0);
       if(!slot_length) {
         qDebug() << "Closing slot" << slot_idx;
         _state->slots_open[slot_idx] = false;
