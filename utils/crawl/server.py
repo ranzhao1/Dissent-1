@@ -36,6 +36,16 @@ class BenchHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
       self.wfile.write(os.urandom(b))
       self.wfile.close()
 
+  def do_POST(self):
+    print self.headers
+    print self.path
+
+    count = 0
+    for line in self.rfile:
+      count += len(line)
+
+    print "Read %d bytes" % count
+
 class ThreadedServer(ThreadingMixIn, SocketServer.TCPServer):
   pass
 
