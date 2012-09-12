@@ -37,4 +37,5 @@ HEADERS += ext/googletest/include/gtest/gtest-death-test.h \
 
 SOURCES += ext/googletest/src/gtest-all.cc \
            utils/bench/MainBench.cpp\
+           utils/bench/Exp.cpp\
            utils/bench/MicroLength.cpp

@@ -56,8 +56,8 @@ namespace Anonymity {
     _state->n_servers = GetGroup().GetSubgroup().Count();
     _state->n_clients = GetGroup().Count();
 
-    // All slots start out opened
-    _state->slots_open = QBitArray(GetGroup().Count(), true);
+    // All slots start out closed
+    _state->slots_open = QBitArray(GetGroup().Count(), false);
   }
 
   void BlogDropRound::InitServer()
@@ -968,10 +968,12 @@ namespace Anonymity {
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
 
+    // Slots stay open for 5 rounds
+    const int threshold = 5;
     qDebug() << "Phases since xmit" << _state->phases_since_transmission << "thresh"
-      << GetGroup().Count()/2;
+      << threshold;
     int slotlen;
-    if(_state->phases_since_transmission > (GetGroup().Count()/2)) {
+    if(_state->phases_since_transmission > threshold) {
       qDebug() << "Closing slot!";
       slotlen = 0;
     } else {

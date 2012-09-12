@@ -40,11 +40,20 @@ class BenchHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     print self.headers
     print self.path
 
+    total = int(self.headers["Content-Length"])
     count = 0
-    for line in self.rfile:
-      count += len(line)
+    while count < total:
+      d = self.rfile.read(total)
+      count += len(d)
 
-    print "Read %d bytes" % count
+      print "Read %d bytes" % count
+
+    self.rfile.close()
+    self.send_response(200)
+    self.send_header("Content-type", "text/html")
+    self.send_header("Content-Length", 0)
+    self.end_headers()
+    self.wfile.close()
 
 class ThreadedServer(ThreadingMixIn, SocketServer.TCPServer):
   pass
