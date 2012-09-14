@@ -49,6 +49,7 @@ namespace BlogDrop {
             _elements.append(_params->GetMessageGroup()->Multiply(
                 _params->GetMessageGroup()->GetIdentity(), e));
           }
+        //  qDebug() << "Xoring for server" << server_idx;
         }
       }
 

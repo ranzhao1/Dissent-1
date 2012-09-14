@@ -155,7 +155,6 @@ namespace AbstractGroup {
     CryptoPP::Integer x, y;
     for(int i=0; i<_k; i++) {
       // x = rk + i mod p
-      qDebug() << "trying" << i;
       x = ((r*_k)+i);
 
       Q_ASSERT(x < _curve.FieldSize());

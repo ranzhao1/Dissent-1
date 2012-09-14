@@ -222,8 +222,6 @@ namespace BlogDrop {
 
     bool ret = (sum == hash);
 
-    if(!ret) qFatal("Failed");
-
     return ret;
   }
 

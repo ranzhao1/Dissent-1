@@ -55,7 +55,24 @@ namespace Benchmarks {
 
       qDebug() << g->GetSecurityParameter() << total;
     }
+  }
 
+  TEST(Exp, VaryPairing) {
+    QSharedPointer<PairingG1Group> g1 = PairingG1Group::GetGroup(PairingGroup::PRODUCTION_512);
+    QSharedPointer<PairingGTGroup> gT = PairingGTGroup::GetGroup(PairingGroup::PRODUCTION_512);
+
+    int total = 0;
+
+    for(int i=0; i<1000; i++) {
+      Element p = g1->RandomElement();
+      Element q = g1->RandomElement();
+      int start = QDateTime::currentMSecsSinceEpoch();
+      Element r = gT->ApplyPairing(p, q);
+      int end = QDateTime::currentMSecsSinceEpoch();
+
+      total += (end-start);
+    }
+    qDebug() << gT->GetSecurityParameter() << total;
 
   }
 

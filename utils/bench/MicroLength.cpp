@@ -84,8 +84,8 @@ namespace Benchmarks {
   void VerifyNTimes(QSharedPointer<Parameters> params, 
       verifyN_params *p, verifyN_stats *s)
   {
-    const int nservers = p->n_clients;
-    const int nclients = p->n_servers;
+    const int nclients = p->n_clients;
+    const int nservers = p->n_servers;
     const int author_idx = 1;
 
     // Generate an author PK
@@ -323,7 +323,7 @@ namespace Benchmarks {
     cf.SetLibrary(use_openssl ? CryptoFactory::OpenSSL : CryptoFactory::CryptoPP);
 
       // open ec
-    VerifyNTimesDiffLen(Parameters::OpenECHashingProduction(), p);
+    //VerifyNTimesDiffLen(Parameters::OpenECHashingProduction(), p);
 
       // Xor
     VerifyNTimesDiffLen(Parameters::XorTesting(), p);
@@ -334,10 +334,10 @@ namespace Benchmarks {
   TEST(Micro, VaryLength) {
 
     verifyN_params p;
-    p.n_servers = 10;
-    p.n_clients = 1000;
-    p.n_gen = 10;
-    p.n_verify = 10;
+    p.n_servers = 16;
+    p.n_clients = 1024;
+    p.n_gen = 32;
+    p.n_verify = 32;
     p.vary_n_elms = true;
 
     qDebug() << header;
@@ -348,10 +348,10 @@ namespace Benchmarks {
   TEST(Micro, VaryNServers) {
 
     verifyN_params p;
-    p.n_servers = 10;
-    p.n_clients = 1000;
-    p.n_gen = 10;
-    p.n_verify = 10;
+    p.n_servers = 16;
+    p.n_clients = 1024;
+    p.n_gen = 32;
+    p.n_verify = 32;
     p.vary_n_elms = false;
 
     qDebug() << header;
@@ -373,10 +373,10 @@ namespace Benchmarks {
   TEST(Micro, VaryNClients) {
 
     verifyN_params p;
-    p.n_servers = 10;
-    p.n_clients = 1000;
-    p.n_gen = 40;
-    p.n_verify = 0;
+    p.n_servers = 16;
+    p.n_clients = 1024;
+    p.n_gen = 32;
+    p.n_verify = 32;
     p.vary_n_elms = false;
 
     qDebug() << header;
@@ -399,6 +399,7 @@ namespace Benchmarks {
     }
   }
 
+  /*
   // Vary number of clients
   TEST(Micro, XorVaryNClients) {
 
@@ -428,16 +429,16 @@ namespace Benchmarks {
       else i += 1024;
     }
   }
+  */
 
   // Cycle through integer types
   TEST(Micro, VarySecurity) {
 
     verifyN_params p;
-    p.n_servers = 10;
-    p.n_clients = 1000;
-    // XXX test 
-    p.n_gen = 40;
-    p.n_verify = 0;
+    p.n_servers = 16;
+    p.n_clients = 1024;
+    p.n_gen = 32;
+    p.n_verify = 32;
     p.vary_n_elms = false;
 
     qDebug() << header;
