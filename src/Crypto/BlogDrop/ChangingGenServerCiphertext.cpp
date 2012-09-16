@@ -153,6 +153,8 @@ namespace BlogDrop {
     gs.append(_params->GetKeyGroup()->GetGenerator());
     for(int i=0; i<_params->GetNElements(); i++) { 
       gs.append(ComputeGenerator(_client_pks, GetAuthorKey(), phase, i));
+      //qDebug() << "Server" << phase << i << _params->GetKeyGroup()->ElementToByteArray(server_pub->GetElement()).toHex();
+      //qDebug() << "Client PKS" << phase << i << _params->GetKeyGroup()->ElementToByteArray(_client_pks->GetElement()).toHex();
     }
 
     // y(0) = server PK

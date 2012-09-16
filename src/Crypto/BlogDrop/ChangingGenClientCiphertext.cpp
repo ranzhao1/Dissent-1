@@ -265,7 +265,10 @@ namespace BlogDrop {
     gs.append(g_key);
     for(int i=0; i<GetNElements(); i++) { 
       gs.append(ComputeAndCacheGenerator(cache, _server_pks, GetAuthorKey(), phase, i));
+      //qDebug() << "Client" << phase << i << _params->GetKeyGroup()->ElementToByteArray(client_pub->GetElement()).toHex();
+      //qDebug() << "Server PKS" << phase << i << _params->GetKeyGroup()->ElementToByteArray(_server_pks->GetElement()).toHex();
     }
+
 
     // y_auth = author PK
     // y(i) = one-time PK i

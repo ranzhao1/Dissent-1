@@ -82,7 +82,7 @@ namespace BlogDrop {
         params->GetKeyGroup()->GetGenerator(), exp);
 
     Element base = params->ApplyPairing(prod_pks->GetElement(), tau);
-    //qDebug() << "Base" << phase << element_idx << params->GetMessageGroup()->ElementToByteArray(base).toHex();
+    //qDebug() << "Base" << phase << element_idx << params->GetKeyGroup()->ElementToByteArray(prod_pks->GetElement()).toHex();
     return base;
   }
 

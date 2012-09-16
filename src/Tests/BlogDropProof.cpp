@@ -377,9 +377,7 @@ namespace Tests {
       author_idx = 0;
     }
 
-    //XXX debug
-    nservers = 5;
-    nclients = 7;
+    QSharedPointer<Parameters> p(new Parameters(*params));
 
     // Generate an author PK
     const QSharedPointer<const PrivateKey> author_priv(new PrivateKey(params));
@@ -412,8 +410,7 @@ namespace Tests {
     qDebug() << "CREATE_SERVER";
     QList<BlogDropServer> servers;
     for(int i=0; i<nservers; i++) {
-      servers.append(BlogDropServer(
-            QSharedPointer<Parameters>(new Parameters(*params)), server_sks[i], server_pk_set, author_pk));
+      servers.append(BlogDropServer(p, server_sks[i], server_pk_set, author_pk));
     }
 
     for(int i=0; i<nservers; i++) {
@@ -425,9 +422,7 @@ namespace Tests {
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
 
-    BlogDropAuthor auth(
-        QSharedPointer<Parameters>(new Parameters(*params)), 
-        client_sks[author_idx], server_pk_set, author_priv);
+    BlogDropAuthor auth(p, client_sks[author_idx], server_pk_set, author_priv);
 
     QByteArray msg(auth.MaxPlaintextLength(), 0);
     rand->GenerateBlock(msg);
@@ -440,9 +435,7 @@ namespace Tests {
     qDebug() << "CLIENTS";
     // Generate client ciphertext and give it to all servers
     for(int client_idx=0; client_idx<nclients; client_idx++) {
-      BlogDropClient client(QSharedPointer<Parameters>(new Parameters(*params)),
-          client_sks[client_idx], server_pk_set, 
-            author_pk);
+      BlogDropClient client(p, client_sks[client_idx], server_pk_set, author_pk);
       EXPECT_EQ(0, client.GetPhase());
       QByteArray c = client.GenerateCoverCiphertext();
 

@@ -48,11 +48,7 @@ namespace AbstractGroup {
 
   QSharedPointer<AbstractGroup> PairingG1Group::Copy() const
   {
-    QSharedPointer<PairingG1Group> group(new PairingG1Group(*this));
-    group->_identity = group->ElementFromByteArray(ElementToByteArray(_identity));
-    group->_generator = group->ElementFromByteArray(ElementToByteArray(_generator));
-
-    return group;
+    return QSharedPointer<PairingG1Group>(new PairingG1Group(*this));
   }
 
   Element PairingG1Group::Multiply(const Element &a, const Element &b) const
