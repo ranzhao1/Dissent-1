@@ -835,6 +835,8 @@ namespace Anonymity {
 
   void BlogDropRound::PrepareForBulk()
   {
+    // If we're using one of the hashing schemes, we need to do
+    // key exchange to set up the session 
     if(UsesHashingGenerator()) {
       for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {
         for(int client_idx=0; client_idx<GetGroup().Count(); client_idx++) {
@@ -868,7 +870,11 @@ namespace Anonymity {
     } else {
       _state->master_client_sk = _state->client_sk;
       _state->master_client_pk = _state->client_pk;
+      _state->master_client_pks = _state->client_pks;
       _state->master_server_pks = _state->server_pks;
+
+      Q_ASSERT(_state->master_client_pks.count() == GetGroup().Count());
+      Q_ASSERT(_state->master_server_pks.count() == GetGroup().GetSubgroup().Count());
 
       if(IsServer()) {
         _server_state->master_server_sk = _server_state->server_sk;
@@ -1005,7 +1011,7 @@ namespace Anonymity {
           QByteArray m = ComputeClientPlaintext();
           
           if(!_state->blogdrop_author->GenerateAuthorCiphertext(c, m)) 
-            throw QRunTimeError("Could not generate author ciphertext");
+            qFatal("Could not generate author ciphertext");
 
         } else {
           c = _state->blogdrop_clients[slot_idx]->GenerateCoverCiphertext();
@@ -1095,28 +1101,33 @@ namespace Anonymity {
       stream >> ctexts;
 
       if(ctexts.count() != _state->n_clients) {
-        throw QRunTimeError("Ciphertext vector has invalid length");
+        qFatal("Ciphertext vector has invalid length");
       }
 
       Q_ASSERT(_state->client_pks.contains(id));
 
       // For each slot
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        if(!SlotIsOpen(slot_idx)) {
+        if(SlotIsOpen(slot_idx)) {
+          by_slot[slot_idx].append(ctexts[slot_idx]);
+        } else {
           qDebug() << "Not adding client ciphertext to closed slot" << slot_idx;
-          continue;
         }
-        by_slot[slot_idx].append(ctexts[slot_idx]);
       }
 
       client_pks.append(_state->master_client_pks[id]);
+      Q_ASSERT(!_state->master_client_pks[id].isNull());
     }
 
+    Q_ASSERT(client_pks.count() == _state->n_clients);
+
+    /*
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
       if(!SlotIsOpen(slot_idx)) {
         Q_ASSERT(!by_slot[slot_idx].count());
       }
     }
+    */
 
     QList<QByteArray> server_ctexts;
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
@@ -1126,6 +1137,7 @@ namespace Anonymity {
 
         _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx], client_pks);
         c = _server_state->blogdrop_servers[slot_idx]->CloseBin();
+        qDebug() << "Creating server ciphertext for slot" << slot_idx;
       } else {
         qDebug() << "Not creating server ciphertext for closed slot" << slot_idx;
       }
@@ -1166,7 +1178,7 @@ namespace Anonymity {
       stream >> server_list;
 
       if(server_list.count() != _state->n_clients) {
-        throw QRunTimeError("Server submitted ciphertext list of wrong length");
+        qFatal("Server submitted ciphertext list of wrong length");
       }
 
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
@@ -1179,7 +1191,7 @@ namespace Anonymity {
         if(!_server_state->blogdrop_servers[slot_idx]->AddServerCiphertexts(
                 by_slot[slot_idx],
                 _state->master_server_pks_list)) {
-              throw QRunTimeError("Server submitted invalid ciphertext");
+              qFatal("Server submitted invalid ciphertext");
           }
       } else {
         qDebug() << "Not adding server ciphertext to closed slot" << slot_idx;
@@ -1192,7 +1204,7 @@ namespace Anonymity {
 
       if(SlotIsOpen(slot_idx)) {
         if(!_server_state->blogdrop_servers[slot_idx]->RevealPlaintext(plain)) {
-          throw QRunTimeError("Could not decode plaintext message. Maybe bad anon author?");
+          qFatal("Could not decode plaintext message. Maybe bad anon author?");
         }
 
         // 4 bytes in an int

@@ -146,8 +146,7 @@ namespace Tests {
       set.insert(egc->GetChallenge1().GetByteArray());
       set.insert(egc->GetChallenge2().GetByteArray());
       foreach(const Integer &i, egc->GetResponses()) {
-        set.insert(i.GetByteArray());
-        EXPECT_TRUE(i.GetByteArray().count());
+        set.insert(i.GetByteArray()); EXPECT_TRUE(i.GetByteArray().count());
         qDebug() << i.GetByteArray().toHex();
       }
 
@@ -378,6 +377,10 @@ namespace Tests {
       author_idx = 0;
     }
 
+    //XXX debug
+    nservers = 5;
+    nclients = 7;
+
     // Generate an author PK
     const QSharedPointer<const PrivateKey> author_priv(new PrivateKey(params));
     const QSharedPointer<const PublicKey> author_pk(new PublicKey(author_priv));
@@ -413,6 +416,10 @@ namespace Tests {
             QSharedPointer<Parameters>(new Parameters(*params)), server_sks[i], server_pk_set, author_pk));
     }
 
+    for(int i=0; i<nservers; i++) {
+      EXPECT_EQ(0, servers[0].GetPhase());
+    }
+
     qDebug() << "RANDOM_PLAINTEXT";
     // Get a random plaintext
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
@@ -433,9 +440,11 @@ namespace Tests {
     qDebug() << "CLIENTS";
     // Generate client ciphertext and give it to all servers
     for(int client_idx=0; client_idx<nclients; client_idx++) {
-      QByteArray c = BlogDropClient(QSharedPointer<Parameters>(new Parameters(*params)),
+      BlogDropClient client(QSharedPointer<Parameters>(new Parameters(*params)),
           client_sks[client_idx], server_pk_set, 
-            author_pk).GenerateCoverCiphertext();
+            author_pk);
+      EXPECT_EQ(0, client.GetPhase());
+      QByteArray c = client.GenerateCoverCiphertext();
 
       if(client_idx == author_idx) {
         ASSERT_TRUE(auth.GenerateAuthorCiphertext(c, msg)); 
@@ -470,8 +479,8 @@ namespace Tests {
     for(int i=0; i<nservers; i++) {
       qDebug() << "REVEAL" << i;
       QByteArray out;
-      ASSERT_TRUE(servers[i].RevealPlaintext(out));
-      ASSERT_EQ(msg, out);
+      EXPECT_TRUE(servers[i].RevealPlaintext(out));
+      EXPECT_EQ(msg, out);
     }
   }
   
