@@ -70,7 +70,7 @@ namespace Applications {
       static QHash<QString, SessionType> BuildStringToTypeHash()
       {
         QHash<QString, SessionType> hash;
-        for(int idx = NULL_ROUND; idx <= INVALID; idx++) {
+        for(int idx = NULL_ROUND; idx < INVALID; idx++) {
           hash[SessionNames(idx)] = static_cast<SessionType>(idx);
         }
         return hash;
