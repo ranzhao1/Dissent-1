@@ -16,7 +16,7 @@ namespace Tests {
     CryptoFactory::ThreadingType tt = cf.GetThreadingType();
     cf.SetThreading(GetParam());
 
-    RoundTest_Basic(SessionCreator(TCreateRound<BlogDropRound>),
+    RoundTest_Basic(SessionCreator(TCreateBlogDropRound_Testing<BlogDropRound>),
         Group::ManagedSubgroup);
 
     cf.SetThreading(tt);
@@ -28,7 +28,7 @@ namespace Tests {
     CryptoFactory::ThreadingType tt = cf.GetThreadingType();
     cf.SetThreading(GetParam());
 
-    RoundTest_MultiRound(SessionCreator(TCreateRound<BlogDropRound>),
+    RoundTest_MultiRound(SessionCreator(TCreateBlogDropRound_Testing<BlogDropRound>),
         Group::ManagedSubgroup);
 
     cf.SetThreading(tt);
@@ -40,7 +40,7 @@ namespace Tests {
     CryptoFactory::ThreadingType tt = cf.GetThreadingType();
     cf.SetThreading(GetParam());
 
-    RoundTest_AddOne(SessionCreator(TCreateRound<BlogDropRound>),
+    RoundTest_AddOne(SessionCreator(TCreateBlogDropRound_Testing<BlogDropRound>),
         Group::ManagedSubgroup);
     
     cf.SetThreading(tt);
@@ -52,7 +52,7 @@ namespace Tests {
     CryptoFactory::ThreadingType tt = cf.GetThreadingType();
     cf.SetThreading(GetParam());
 
-    RoundTest_PeerDisconnectMiddle(SessionCreator(TCreateRound<BlogDropRound>),
+    RoundTest_PeerDisconnectMiddle(SessionCreator(TCreateBlogDropRound_Testing<BlogDropRound>),
         Group::ManagedSubgroup);
     
     cf.SetThreading(tt);
@@ -64,7 +64,7 @@ namespace Tests {
     CryptoFactory::ThreadingType tt = cf.GetThreadingType();
     cf.SetThreading(GetParam());
 
-    RoundTest_PeerDisconnectMiddle(SessionCreator(TCreateRound<BlogDropRound>),
+    RoundTest_PeerDisconnectMiddle(SessionCreator(TCreateBlogDropRound_Testing<BlogDropRound>),
         Group::ManagedSubgroup);
     
     cf.SetThreading(tt);

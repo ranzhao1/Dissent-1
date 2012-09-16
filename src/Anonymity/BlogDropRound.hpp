@@ -78,7 +78,8 @@ namespace Anonymity {
        * @param create_shuffle optional parameter specifying a shuffle round
        * to create, currently used for testing
        */
-      explicit BlogDropRound(const Group &group, const PrivateIdentity &ident,
+      explicit BlogDropRound(QSharedPointer<Parameters> blogdrop_params, 
+          const Group &group, const PrivateIdentity &ident,
           const Id &round_id, QSharedPointer<Network> network,
           GetDataCallback &get_data,
           CreateRound create_shuffle = &TCreateRound<NullRound>);
@@ -181,8 +182,8 @@ namespace Anonymity {
        */
       class State {
         public:
-          State(QByteArray round_nonce) : 
-            params(Parameters::PairingProduction(round_nonce)),
+          State(QSharedPointer<const Parameters> round_params) : 
+            params(round_params),
             client_sk(new PrivateKey(params)),
             client_pk(new PublicKey(client_sk)),
             anonymous_sk(new PrivateKey(params)),
@@ -251,8 +252,8 @@ namespace Anonymity {
        */
       class ServerState : public State {
         public:
-          ServerState(QByteArray round_nonce) :
-            State(round_nonce),
+          ServerState(QSharedPointer<const Parameters> round_params) :
+            State(round_params),
             server_sk(new PrivateKey(params)),
             server_pk(new PublicKey(server_sk)) {}
 
@@ -417,11 +418,59 @@ namespace Anonymity {
 
       inline bool SlotIsOpen(int slot_idx);
 
+      QSharedPointer<Parameters> _params;
       QSharedPointer<ServerState> _server_state;
       QSharedPointer<State> _state;
       RoundStateMachine<BlogDropRound> _state_machine;
       bool _stop_next;
   };
+
+  template <typename B> QSharedPointer<Round> TCreateBlogDropRound_ElGamal(
+      const Round::Group &group, const Round::PrivateIdentity &ident,
+      const Connections::Id &round_id,
+      QSharedPointer<Connections::Network> network,
+      Messaging::GetDataCallback &get_data)
+  {
+    QSharedPointer<B> round(new B(Crypto::BlogDrop::Parameters::OpenECElGamalProduction(), 
+          group, ident, round_id, network, get_data));
+    round->SetSharedPointer(round);
+    return round;
+  }
+  
+  template <typename B> QSharedPointer<Round> TCreateBlogDropRound_Hashing(
+      const Round::Group &group, const Round::PrivateIdentity &ident,
+      const Connections::Id &round_id,
+      QSharedPointer<Connections::Network> network,
+      Messaging::GetDataCallback &get_data)
+  {
+    QSharedPointer<B> round(new B(Crypto::BlogDrop::Parameters::OpenECHashingProduction(), 
+          group, ident, round_id, network, get_data));
+    round->SetSharedPointer(round);
+    return round;
+  }
+
+  template <typename B> QSharedPointer<Round> TCreateBlogDropRound_Pairing(
+      const Round::Group &group, const Round::PrivateIdentity &ident,
+      const Connections::Id &round_id,
+      QSharedPointer<Connections::Network> network,
+      Messaging::GetDataCallback &get_data)
+  {
+    QSharedPointer<B> round(new B(Crypto::BlogDrop::Parameters::PairingProduction(), 
+          group, ident, round_id, network, get_data));
+    round->SetSharedPointer(round);
+    return round;
+  }
+  template <typename B> QSharedPointer<Round> TCreateBlogDropRound_Testing(
+      const Round::Group &group, const Round::PrivateIdentity &ident,
+      const Connections::Id &round_id,
+      QSharedPointer<Connections::Network> network,
+      Messaging::GetDataCallback &get_data)
+  {
+    QSharedPointer<B> round(new B(Crypto::BlogDrop::Parameters::IntegerElGamalTesting(), 
+          group, ident, round_id, network, get_data));
+    round->SetSharedPointer(round);
+    return round;
+  }
 }
 }
 

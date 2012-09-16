@@ -31,20 +31,24 @@ namespace Applications {
           "repeatingbulk",
           "csbulk",
           "tolerantbulk",
-          "blogdrop",
+          "blogdrop_elgamal",
+          "blogdrop_hashing",
+          "blogdrop_pairing",
         };
         return sessions[id];
       }
 
       enum SessionType {
-        INVALID = -1,
         NULL_ROUND = 0,
         SHUFFLE,
         BULK,
         REPEATING_BULK,
         CSBULK,
         TOLERANT_BULK,
-        BLOGDROP,
+        BLOGDROP_ELGAMAL,
+        BLOGDROP_HASHING,
+        BLOGDROP_PAIRING,
+        INVALID,
       };
 
       static SessionType GetSessionType(const QString &stype)
@@ -66,7 +70,7 @@ namespace Applications {
       static QHash<QString, SessionType> BuildStringToTypeHash()
       {
         QHash<QString, SessionType> hash;
-        for(int idx = NULL_ROUND; idx <= BLOGDROP; idx++) {
+        for(int idx = NULL_ROUND; idx <= INVALID; idx++) {
           hash[SessionNames(idx)] = static_cast<SessionType>(idx);
         }
         return hash;

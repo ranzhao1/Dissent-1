@@ -12,6 +12,7 @@
 #include "Connections/ConnectionManager.hpp"
 #include "Connections/DefaultNetwork.hpp"
 #include "Connections/Id.hpp"
+#include "Crypto/BlogDrop/Parameters.hpp"
 #include "Identity/Authentication/NullAuthenticate.hpp"
 #include "Identity/Authentication/NullAuthenticator.hpp"
 #include "Messaging/RpcHandler.hpp"
@@ -28,6 +29,9 @@ using Dissent::Anonymity::RepeatingBulkRound;
 using Dissent::Anonymity::Sessions::Session;
 using Dissent::Anonymity::Sessions::SessionLeader;
 using Dissent::Anonymity::ShuffleRound;
+using Dissent::Anonymity::TCreateBlogDropRound_ElGamal;
+using Dissent::Anonymity::TCreateBlogDropRound_Hashing;
+using Dissent::Anonymity::TCreateBlogDropRound_Pairing;
 using Dissent::Anonymity::TCreateBulkRound;
 using Dissent::Anonymity::TCreateRound;
 using Dissent::Connections::ConnectionManager;
@@ -35,6 +39,7 @@ using Dissent::Connections::DefaultNetwork;
 using Dissent::Connections::Network;
 using Dissent::Connections::Id;
 using Dissent::Crypto::AsymmetricKey;
+using Dissent::Crypto::BlogDrop::Parameters;
 using Dissent::Crypto::CryptoFactory;
 using Dissent::Crypto::Library;
 using Dissent::Identity::Group;
@@ -68,8 +73,14 @@ namespace Applications {
       case CSBULK:
         cr = &TCreateBulkRound<CSBulkRound, NeffKeyShuffle>;
         break;
-      case BLOGDROP:
-        cr = &TCreateRound<BlogDropRound>;
+      case BLOGDROP_PAIRING:
+        cr = &TCreateBlogDropRound_Pairing<BlogDropRound>;
+        break;
+      case BLOGDROP_ELGAMAL:
+        cr = &TCreateBlogDropRound_ElGamal<BlogDropRound>;
+        break;
+      case BLOGDROP_HASHING:
+        cr = &TCreateBlogDropRound_Hashing<BlogDropRound>;
         break;
       default:
         qFatal("Invalid session type");

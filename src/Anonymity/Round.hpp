@@ -7,6 +7,7 @@
 
 #include "Connections/Id.hpp"
 #include "Connections/Network.hpp"
+#include "Crypto/BlogDrop/Parameters.hpp"
 #include "Identity/Group.hpp"
 #include "Identity/PrivateIdentity.hpp"
 #include "Messaging/GetDataCallback.hpp"
@@ -317,6 +318,7 @@ namespace Anonymity {
     round->SetSharedPointer(round);
     return round;
   }
+
 }
 }
 

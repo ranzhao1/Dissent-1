@@ -27,10 +27,12 @@ namespace Dissent {
 
 namespace Anonymity {
 
-  BlogDropRound::BlogDropRound(const Group &group, const PrivateIdentity &ident,
+  BlogDropRound::BlogDropRound(QSharedPointer<Parameters> params,
+      const Group &group, const PrivateIdentity &ident,
       const Id &round_id, QSharedPointer<Network> network,
       GetDataCallback &get_data, CreateRound create_shuffle) :
     BaseBulkRound(group, ident, round_id, network, get_data, create_shuffle),
+    _params(params),
     _state_machine(this),
     _stop_next(false)
   {
@@ -62,7 +64,8 @@ namespace Anonymity {
 
   void BlogDropRound::InitServer()
   {
-    _server_state = QSharedPointer<ServerState>(new ServerState(GetRoundId().GetByteArray()));
+    _params->SetRoundNonce(GetRoundId().GetByteArray());
+    _server_state = QSharedPointer<ServerState>(new ServerState(_params));
     _state = _server_state;
     Q_ASSERT(_state);
 
@@ -149,7 +152,8 @@ namespace Anonymity {
 
   void BlogDropRound::InitClient()
   {
-    _state = QSharedPointer<State>(new State(GetRoundId().GetByteArray()));
+    _params->SetRoundNonce(GetRoundId().GetByteArray());
+    _state = QSharedPointer<State>(new State(_params));
 
     foreach(const QSharedPointer<Connection> &con,
         GetNetwork()->GetConnectionManager()->
@@ -266,7 +270,7 @@ namespace Anonymity {
       for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
         _server_state->blogdrop_servers[slot_idx]->ClearBin();
         _server_state->blogdrop_servers[slot_idx]->NextPhase();
-        qDebug() << "Server slot" << slot_idx << "phase" << _server_state->blogdrop_servers[slot_idx]->GetPhase();
+        //qDebug() << "Server slot" << slot_idx << "phase" << _server_state->blogdrop_servers[slot_idx]->GetPhase();
       }
     }
 
@@ -279,7 +283,7 @@ namespace Anonymity {
 
     for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
       _state->blogdrop_clients[slot_idx]->NextPhase();
-      qDebug() << "Client slot" << slot_idx << "phase" << _state->blogdrop_clients[slot_idx]->GetPhase();
+      //qDebug() << "Client slot" << slot_idx << "phase" << _state->blogdrop_clients[slot_idx]->GetPhase();
     }
 
     _state->blogdrop_author->NextPhase();
@@ -398,9 +402,9 @@ namespace Anonymity {
       }
 
       Id round_id;
-      QByteArray key_bytes;
+      QByteArray key_bytes, proof_bytes;
       QDataStream stream(pair.first);
-      stream >> round_id >> key_bytes;
+      stream >> round_id >> proof_bytes >> key_bytes;
 
       if(round_id != GetRoundId()) {
         Stop("Got public key with invalid round ID");
@@ -410,6 +414,11 @@ namespace Anonymity {
       _state->client_pks[client_id] = QSharedPointer<const PublicKey>(new PublicKey(_state->params, key_bytes));
       if(!_state->client_pks[client_id]->IsValid()) {
         Stop("Got invalid client public key");
+        return;
+      }
+
+      if(!_state->client_pks[client_id]->VerifyKnowledge(proof_bytes)) {
+        Stop("Got invalid client public key proof of knowledge");
         return;
       }
     }
@@ -733,7 +742,9 @@ namespace Anonymity {
     // to my server
     QByteArray packet;
     QDataStream pstream(&packet, QIODevice::WriteOnly);
-    pstream << GetRoundId() << _state->client_pk->GetByteArray();
+    pstream << GetRoundId() 
+      << _state->client_pk->ProveKnowledge(_state->client_sk)
+      << _state->client_pk->GetByteArray();
     QByteArray signature = GetPrivateIdentity().GetSigningKey()->Sign(packet);
 
     QByteArray payload;
@@ -1267,7 +1278,7 @@ namespace Anonymity {
 
     for(int slot_idx=0; slot_idx<plaintexts.count(); slot_idx++) {
       if(!SlotIsOpen(slot_idx)) {
-        qDebug() << "Skipping closed slot" << slot_idx;
+        //qDebug() << "Skipping closed slot" << slot_idx;
         continue;
       }
 
@@ -1280,10 +1291,10 @@ namespace Anonymity {
 
       const int slot_length = Utils::Serialization::ReadInt(plaintexts[slot_idx], 0);
       if(!slot_length) {
-        qDebug() << "Closing slot" << slot_idx;
+        //qDebug() << "Closing slot" << slot_idx;
         _state->slots_open[slot_idx] = false;
       } else {
-        qDebug() << "Next nelms:" << slot_length;
+        //qDebug() << "Next nelms:" << slot_length;
         _state->slots_open[slot_idx] = true;
         _state->blogdrop_clients[slot_idx]->GetParameters()->SetNElements(slot_length);
         if(slot_idx == _state->my_idx) {

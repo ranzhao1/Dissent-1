@@ -152,7 +152,7 @@ namespace Dissent {
 
           inline QByteArray GetRoundNonce() const { return _round_nonce; }
           virtual inline void SetNElements(int new_n) { _n_elements = new_n; }
-          virtual inline void SetRoundNonce(QByteArray nonce ) { _round_nonce = nonce; }
+          virtual inline void SetRoundNonce(QByteArray nonce) { _round_nonce = nonce; }
           virtual inline int GetNElements() const { return _n_elements; }
 
           inline Integer GetGroupOrder() const { 
