@@ -22,7 +22,7 @@ namespace BlogDrop {
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::TESTING_256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_ElGamal, QByteArray(), fixed, fixed, 2));
+        new Parameters(ProofType_ElGamal, QByteArray(), fixed, fixed, 4));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerElGamalProduction(QByteArray round_nonce) 
@@ -36,7 +36,7 @@ namespace BlogDrop {
   {
     QSharedPointer<const AbstractGroup> fixed = IntegerGroup::GetGroup(IntegerGroup::TESTING_256);
     return QSharedPointer<Parameters>(
-        new Parameters(ProofType_HashingGenerator, QByteArray(), fixed, fixed, 2));
+        new Parameters(ProofType_HashingGenerator, QByteArray(), fixed, fixed, 4));
   }
 
   QSharedPointer<Parameters> Parameters::IntegerHashingProduction(QByteArray round_nonce) 

@@ -60,6 +60,9 @@ namespace Anonymity {
 
     // All slots start out closed
     _state->slots_open = QBitArray(GetGroup().Count(), false);
+
+    if(!VerifyAllProofs && _params->GetProofType() == Parameters::ProofType_ElGamal)
+      qFatal("When using ElGamal variant, you *must* verify all client proofs");
   }
 
   void BlogDropRound::InitServer()
@@ -686,8 +689,8 @@ namespace Anonymity {
 
   QPair<QByteArray, bool> BlogDropRound::GetShuffleData(int)
   {
-    _state->shuffle_data = _state->anonymous_pk->GetByteArray();
-
+    QDataStream stream(&_state->shuffle_data, QIODevice::WriteOnly);
+    stream << _state->anonymous_pk->GetByteArray() << _state->anonymous_sig_key->GetPublicKey()->GetByteArray();
     return QPair<QByteArray, bool>(_state->shuffle_data, false);
   }
 
@@ -714,11 +717,21 @@ namespace Anonymity {
     int count = GetShuffleSink().Count();
     for(int idx = 0; idx < count; idx++) {
       QPair<QSharedPointer<ISender>, QByteArray> pair(GetShuffleSink().At(idx));
+      QDataStream stream(pair.second);
 
-      QSharedPointer<const PublicKey> key(new PublicKey(_state->params, pair.second));
+      QByteArray blogdrop_pk, sig_pk;
+      stream >> blogdrop_pk >> sig_pk;
+
+      QSharedPointer<const PublicKey> key(new PublicKey(_state->params, blogdrop_pk));
+      QSharedPointer<AsymmetricKey> sig_key(
+          CryptoFactory::GetInstance().GetLibrary()->LoadPublicKeyFromByteArray(sig_pk));
 
       if(!key->IsValid()) {
-        throw QRunTimeError("Invalid key in shuffle.");
+        throw QRunTimeError("Invalid BlogDrop key in shuffle.");
+      }
+
+      if(!sig_key->IsValid()) {
+        throw QRunTimeError("Invalid signing key in shuffle.");
       }
 
       if(_state->shuffle_data == pair.second) {
@@ -726,7 +739,7 @@ namespace Anonymity {
       }
 
       _state->slot_pks.append(key);
-
+      _state->slot_sig_keys.append(sig_key);
     }
 
     if(_state->slot_pks.count() != _state->n_clients) {
@@ -955,10 +968,21 @@ namespace Anonymity {
     const int max_elms = 1024*64;
 
     const int len_length = 4;
+    const int sig_len = _state->anonymous_sig_key->GetSignatureLength();
+    
+    int header_length = len_length;
+    // If we're not verifying proofs, plaintext must be signed
+    if(!VerifyAllProofs) {
+      header_length += sig_len;
+    }
 
     // The maximum length is (255 * bytes_per_element) - 1 byte for length
     _state->blogdrop_author->GetParameters()->SetNElements(max_elms);
-    const int max_len = _state->blogdrop_author->MaxPlaintextLength() - len_length;
+    const int max_len = _state->blogdrop_author->MaxPlaintextLength() - header_length;
+
+    if(max_len < 0)
+      qFatal("Invalid parameters: Max length is less than zero");
+
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
 
     QPair<QByteArray, bool> pair = GetData(max_len);
@@ -974,8 +998,8 @@ namespace Anonymity {
     // First byte is number of elements
     int i;
 
-    // Msg + 1 byte for length
-    const int next_plaintext_len = _state->next_plaintext.count() + len_length;
+    // Msg + headers
+    const int next_plaintext_len = _state->next_plaintext.count() + header_length;
     for(i=1; i<max_elms; i++) {
       _state->blogdrop_author->GetParameters()->SetNElements(i);
       if(next_plaintext_len <= _state->blogdrop_author->MaxPlaintextLength()) 
@@ -983,7 +1007,6 @@ namespace Anonymity {
     }
 
     _state->blogdrop_author->GetParameters()->SetNElements(nelms_orig);
-
 
     // Slots stay open for 5 rounds
     const int threshold = 5;
@@ -997,12 +1020,19 @@ namespace Anonymity {
       slotlen = i;
     }
 
-    
-    QByteArray lenbytes(4, '\0');
+    QByteArray lenbytes(len_length, '\0');
     Utils::Serialization::WriteInt(slotlen, lenbytes, 0);
     Q_ASSERT(lenbytes.count() == 4);
-    QByteArray out = lenbytes + this_plaintext;
 
+    QByteArray out;
+    const QByteArray to_sign = lenbytes + this_plaintext;
+    if(VerifyAllProofs) {
+      out = to_sign;
+    } else {
+      // Sign the length and plaintext message fields
+      const QByteArray sigbytes = _state->anonymous_sig_key->Sign(to_sign);
+      out = sigbytes + to_sign;
+    }
 
     qDebug() << "out" << out.count() << "max" << _state->blogdrop_author->MaxPlaintextLength();
     Q_ASSERT(out.count() <= _state->blogdrop_author->MaxPlaintextLength());
@@ -1122,7 +1152,7 @@ namespace Anonymity {
         if(SlotIsOpen(slot_idx)) {
           by_slot[slot_idx].append(ctexts[slot_idx]);
         } else {
-          qDebug() << "Not adding client ciphertext to closed slot" << slot_idx;
+          //qDebug() << "Not adding client ciphertext to closed slot" << slot_idx;
         }
       }
 
@@ -1146,11 +1176,12 @@ namespace Anonymity {
       if(SlotIsOpen(slot_idx)) {
         Q_ASSERT(by_slot[slot_idx].count() == _state->n_clients);
 
-        _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx], client_pks);
+        //qDebug() << "Creating server ciphertext for slot" << slot_idx;
+        _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx], 
+            client_pks, VerifyAllProofs);
         c = _server_state->blogdrop_servers[slot_idx]->CloseBin();
-        qDebug() << "Creating server ciphertext for slot" << slot_idx;
       } else {
-        qDebug() << "Not creating server ciphertext for closed slot" << slot_idx;
+        //qDebug() << "Not creating server ciphertext for closed slot" << slot_idx;
       }
 
       server_ctexts.append(c);
@@ -1205,7 +1236,7 @@ namespace Anonymity {
               qFatal("Server submitted invalid ciphertext");
           }
       } else {
-        qDebug() << "Not adding server ciphertext to closed slot" << slot_idx;
+        //qDebug() << "Not adding server ciphertext to closed slot" << slot_idx;
       }
     }
 
@@ -1218,23 +1249,35 @@ namespace Anonymity {
           qFatal("Could not decode plaintext message. Maybe bad anon author?");
         }
 
+        if(!VerifyAllProofs) {
+          const int siglen = _state->slot_sig_keys[slot_idx]->GetSignatureLength();
+          const QByteArray msg = plain.mid(siglen);
+          if(!_state->slot_sig_keys[slot_idx]->Verify(msg, plain.left(siglen))) {
+            QSet<int> bad_clients = _server_state->blogdrop_servers[slot_idx]->FindBadClients();
+            if(bad_clients.count()) qWarning() << "Found bad clients:" << bad_clients;
+            Stop("Verification of message failed!");
+            return QByteArray();
+          }
+          plain = msg;
+        }
+
         // 4 bytes in an int
         const int slot_length = Utils::Serialization::ReadInt(plain, 0);
 
         if(!slot_length) {
-          qDebug() << "Closing slot" << slot_idx;
+          //qDebug() << "Closing slot" << slot_idx;
           _state->slots_open[slot_idx] = false;
         } else {
-          qDebug() << "Next nelms:" << slot_length;
+          //qDebug() << "Next nelms:" << slot_length;
           _state->slots_open[slot_idx] = true;
           _server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length);
         }
       } else {
-        qDebug() << "Not decoding message for closed slot" << slot_idx;
+        //qDebug() << "Not decoding message for closed slot" << slot_idx;
       }
 
       plaintexts.append(plain);
-      qDebug() << "Decoding message" << plain.toHex();
+      //qDebug() << "Decoding message" << plain.toHex();
     }
 
     QDataStream pstream(&(_state->cleartext), QIODevice::WriteOnly);

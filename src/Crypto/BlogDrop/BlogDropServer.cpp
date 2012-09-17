@@ -27,35 +27,51 @@ namespace BlogDrop {
   }
 
   bool BlogDropServer::AddClientCiphertext(QByteArray in, 
-      QSharedPointer<const PublicKey> pub) 
+      QSharedPointer<const PublicKey> pub, bool verify_proofs)
   {
     QSharedPointer<ClientCiphertext> c = CiphertextFactory::CreateClientCiphertext(_params, 
             _server_pk_set, _author_pub, in);
 
-    bool valid = c->VerifyProof(_phase, pub);
-    if(valid) {
+
+    bool valid;
+    if(verify_proofs) {
+      valid = c->VerifyProof(_phase, pub);
+      if(valid) {
+        _client_ciphertexts.append(c);
+        _client_pubs.append(pub);
+      }
+    } else {
       _client_ciphertexts.append(c);
       _client_pubs.append(pub);
+      valid = true;
     }
 
     return valid;
   }
 
   bool BlogDropServer::AddClientCiphertexts(const QList<QByteArray> &in, 
-      const QList<QSharedPointer<const PublicKey> > &pubs) 
+      const QList<QSharedPointer<const PublicKey> > &pubs, bool verify_proofs) 
   {
     if(!in.count()) qWarning() << "Added empty client ciphertext list";
 
     QList<QSharedPointer<const PublicKey> > pubs_out;
     QList<QSharedPointer<const ClientCiphertext> > c_out;
-    ClientCiphertext::VerifyProofs(_params, _server_pk_set, _author_pub, 
-          _phase, pubs, in,
-          c_out, pubs_out);
 
-    _client_ciphertexts += c_out;
-    _client_pubs += pubs_out;
+    bool valid;
+    if(verify_proofs) {
+      ClientCiphertext::VerifyProofs(_params, _server_pk_set, _author_pub, 
+            _phase, pubs, in,
+            c_out, pubs_out);
+      _client_ciphertexts += c_out;
+      _client_pubs += pubs_out;
+      valid = (c_out.count() == in.count());
+    } else {
+      for(int i=0; i<in.count(); i++) {
+        AddClientCiphertext(in[i], pubs[i], false);
+      }
+    }
 
-    return (c_out.count() == in.count());
+    return valid;
   }
 
   QByteArray BlogDropServer::CloseBin() 
@@ -113,6 +129,17 @@ namespace BlogDrop {
     }
 
     return m.Decode(out);
+  }
+
+  QSet<int> BlogDropServer::FindBadClients()
+  {
+    QSet<int> bad;
+    for(int client_idx=0; client_idx<_client_ciphertexts.count(); client_idx++) {
+      if(!_client_ciphertexts[client_idx]->VerifyProof(_phase, _client_pubs[client_idx]))
+        bad.insert(client_idx);
+    }
+
+    return bad;
   }
 
 }

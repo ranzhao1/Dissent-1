@@ -46,8 +46,10 @@ namespace BlogDrop {
        * Add a client ciphertext. 
        * @param serialized ciphertext to add
        * @param pub client public key
+       * @param verify_proofs if true, verify proofs as they're added
        */
-      bool AddClientCiphertext(QByteArray in, QSharedPointer<const PublicKey> pub);
+      bool AddClientCiphertext(QByteArray in, QSharedPointer<const PublicKey> pub,
+          bool verify_proofs);
 
       /**
        * Add a list of client ciphertexts. Silently discards invalid
@@ -55,9 +57,11 @@ namespace BlogDrop {
        * the proof verification process.
        * @param in the list of ciphertexts to add
        * @param pubs in the list of client public keys
+       * @param verify_proofs if true, verify proofs as they're added
        */
       bool AddClientCiphertexts(const QList<QByteArray> &in, 
-          const QList<QSharedPointer<const PublicKey> > &pubs);
+          const QList<QSharedPointer<const PublicKey> > &pubs,
+          bool verify_proofs);
 
       /**
        * Reveal server ciphertext corresponding to added client
@@ -101,6 +105,12 @@ namespace BlogDrop {
       inline QSharedPointer<const PublicKey> GetPublicKey() const {
         return QSharedPointer<const PublicKey>(new PublicKey(_server_priv));
       }
+
+      /**
+       * Look through bin for invalid ciphertexts
+       * TODO use threading to speed this up
+       */
+      QSet<int> FindBadClients();
 
       inline QSharedPointer<Parameters> GetParameters() const { return _params; }
 

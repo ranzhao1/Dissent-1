@@ -4,6 +4,7 @@
 #include <QBitArray>
 #include <QMetaEnum>
 
+#include "Crypto/CryptoFactory.hpp"
 #include "Crypto/BlogDrop/BlogDropAuthor.hpp"
 #include "Crypto/BlogDrop/BlogDropClient.hpp"
 #include "Crypto/BlogDrop/BlogDropServer.hpp"
@@ -28,8 +29,21 @@ namespace Anonymity {
     Q_ENUMS(MessageType);
 
     public:
+
+      /**
+       * If true, every server verifies all proofs before 
+       * revealing the plaintext. Otherwise, servers
+       * reveal the plaintext, and look at the proofs
+       * only if something went wrong.
+       *
+       * NOTE: This option is only valid for Hashing
+       * and Pairing variants (NOT ElGamal)
+       */
+      static const bool VerifyAllProofs = false;
+
       friend class RoundStateMachine<BlogDropRound>;
 
+      typedef Crypto::CryptoFactory CryptoFactory;
       typedef Crypto::BlogDrop::BlogDropAuthor BlogDropAuthor;
       typedef Crypto::BlogDrop::BlogDropClient BlogDropClient;
       typedef Crypto::BlogDrop::BlogDropServer BlogDropServer;
@@ -188,6 +202,7 @@ namespace Anonymity {
             client_pk(new PublicKey(client_sk)),
             anonymous_sk(new PrivateKey(params)),
             anonymous_pk(new PublicKey(anonymous_sk)),
+            anonymous_sig_key(CryptoFactory::GetInstance().GetLibrary()->CreatePrivateKey()),
             phases_since_transmission(0),
             always_open(0) {}
 
@@ -220,7 +235,9 @@ namespace Anonymity {
           /* Anon author PKs */
           const QSharedPointer<const PrivateKey> anonymous_sk;
           const QSharedPointer<const PublicKey> anonymous_pk;
+          const QSharedPointer<AsymmetricKey> anonymous_sig_key;
           QList<QSharedPointer<const PublicKey> > slot_pks;
+          QList<QSharedPointer<AsymmetricKey> > slot_sig_keys;
 
           /* Blogdrop ciphertext generators */
           QSharedPointer<BlogDropAuthor> blogdrop_author;
@@ -466,7 +483,7 @@ namespace Anonymity {
       QSharedPointer<Connections::Network> network,
       Messaging::GetDataCallback &get_data)
   {
-    QSharedPointer<B> round(new B(Crypto::BlogDrop::Parameters::IntegerElGamalTesting(), 
+    QSharedPointer<B> round(new B(Crypto::BlogDrop::Parameters::IntegerHashingTesting(), 
           group, ident, round_id, network, get_data));
     round->SetSharedPointer(round);
     return round;
