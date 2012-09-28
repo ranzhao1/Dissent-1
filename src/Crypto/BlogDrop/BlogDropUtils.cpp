@@ -111,6 +111,7 @@ namespace BlogDrop {
       if(params->GetMessageGroup()->IsGenerator(gen)) break;
     }
 
+    // Occurs with probability (1/2)^250
     if(i > 250) qFatal("Failed to find generator");
 
     return gen;
