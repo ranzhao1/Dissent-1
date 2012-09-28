@@ -600,6 +600,8 @@ namespace Anonymity {
       // For now, we only allow clients to submit the same ciphertext
       // to a single server
       if((mykeys & theirkeys).count() != 0) {
+        qDebug() << mykeys;
+        qDebug() << theirkeys;
         throw QRunTimeError("Client submitted ciphertexts to multiple servers");
       }
 
@@ -949,10 +951,15 @@ namespace Anonymity {
 
   void BlogDropRound::SubmitClientCiphertext()
   {
-    QFuture<QByteArray> future = QtConcurrent::run(this, &BlogDropRound::GenerateClientCiphertext);
-    QByteArray mycipher = future.result();
-    //QByteArray mycipher = GenerateClientCiphertext();
+    BlogDropPrivate::GenerateClientCiphertext *gen =
+      new BlogDropPrivate::GenerateClientCiphertext(this);
+    QObject::connect(gen, SIGNAL(Finished(QByteArray)),
+        this, SLOT(GenerateClientCiphertextDone(QByteArray)));
+    QThreadPool::globalInstance()->start(gen);
+  }
 
+  void BlogDropRound::GenerateClientCiphertextDone(QByteArray mycipher)
+  {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << CLIENT_CIPHERTEXT << GetRoundId() << _state_machine.GetPhase()
@@ -1039,40 +1046,6 @@ namespace Anonymity {
     return out;
   }
 
-  QByteArray BlogDropRound::GenerateClientCiphertext()
-  {
-    QList<QByteArray> ctexts;
-
-    QByteArray c;
-    for(int slot_idx=0; slot_idx < _state->n_clients; slot_idx++) {
-      qDebug() << "Generating for slot" << slot_idx;
-      if(SlotIsOpen(slot_idx)) {
-
-        if(slot_idx == _state->my_idx) {
-          QByteArray m = ComputeClientPlaintext();
-          
-          if(!_state->blogdrop_author->GenerateAuthorCiphertext(c, m)) 
-            qFatal("Could not generate author ciphertext");
-
-        } else {
-          c = _state->blogdrop_clients[slot_idx]->GenerateCoverCiphertext();
-        }
-      } else {
-        qDebug() << "Client skipping closed slot" << slot_idx;
-        c = QByteArray();
-      }
-
-      ctexts.append(c);
-    }
-
-    QByteArray out;
-    QDataStream stream(&out, QIODevice::WriteOnly);
-    stream << ctexts;
-
-    /* Return a serialized list of serialized ciphertexts */
-    return out;
-  }
-
   void BlogDropRound::SetOnlineClients()
   {
     _server_state->allowed_clients.clear();
@@ -1107,10 +1080,14 @@ namespace Anonymity {
 
   void BlogDropRound::SubmitClientList()
   {
-    QFuture<QByteArray> future = QtConcurrent::run(this, &BlogDropRound::GenerateClientCiphertext);
-    QByteArray mycipher = future.result();
-    //QByteArray mycipher = GenerateClientCiphertext();
+    BlogDropPrivate::GenerateClientCiphertext *gen =
+      new BlogDropPrivate::GenerateClientCiphertext(this);
+    QObject::connect(gen, SIGNAL(Finished(QByteArray)),
+        this, SLOT(GenerateClientCiphertextDoneServer(QByteArray)));
+    QThreadPool::globalInstance()->start(gen);
+  }
 
+  void BlogDropRound::GenerateClientCiphertextDoneServer(QByteArray mycipher) {
     // Add my own ciphertext to the set
     _server_state->client_ciphertexts[GetLocalId()] = mycipher;
 
@@ -1122,83 +1099,17 @@ namespace Anonymity {
     VerifiableBroadcastToServers(payload);
   }
 
-  void BlogDropRound::GenerateServerCiphertext()
-  {
-    QList<QList<QByteArray> > by_slot;
-    QList<QSharedPointer<const PublicKey> > client_pks;
-
-    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      by_slot.append(QList<QByteArray>());
-    }
-
-    qDebug() << ToString() << "generating ciphertext for" <<
-      _server_state->client_ciphertexts.count() << "out of" << GetGroup().Count();
-
-    // For each user
-    foreach(const Id& id, _server_state->client_ciphertexts.keys()) {
-
-      QList<QByteArray> ctexts;
-      QDataStream stream(_server_state->client_ciphertexts[id]);
-      stream >> ctexts;
-
-      if(ctexts.count() != _state->n_clients) {
-        qFatal("Ciphertext vector has invalid length");
-      }
-
-      Q_ASSERT(_state->client_pks.contains(id));
-
-      // For each slot
-      for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        if(SlotIsOpen(slot_idx)) {
-          by_slot[slot_idx].append(ctexts[slot_idx]);
-        } else {
-          //qDebug() << "Not adding client ciphertext to closed slot" << slot_idx;
-        }
-      }
-
-      client_pks.append(_state->master_client_pks[id]);
-      Q_ASSERT(!_state->master_client_pks[id].isNull());
-    }
-
-    Q_ASSERT(client_pks.count() == _state->n_clients);
-
-    /*
-    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      if(!SlotIsOpen(slot_idx)) {
-        Q_ASSERT(!by_slot[slot_idx].count());
-      }
-    }
-    */
-
-    QList<QByteArray> server_ctexts;
-    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      QByteArray c;
-      if(SlotIsOpen(slot_idx)) {
-        Q_ASSERT(by_slot[slot_idx].count() == _state->n_clients);
-
-        //qDebug() << "Creating server ciphertext for slot" << slot_idx;
-        _server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx], 
-            client_pks, VerifyAllProofs);
-        c = _server_state->blogdrop_servers[slot_idx]->CloseBin();
-      } else {
-        //qDebug() << "Not creating server ciphertext for closed slot" << slot_idx;
-      }
-
-      server_ctexts.append(c);
-    }
-
-    Q_ASSERT(server_ctexts.count() == _state->n_clients);
-
-    QDataStream stream(&(_server_state->my_ciphertext), QIODevice::WriteOnly);
-    stream << server_ctexts;
-  }
-
   void BlogDropRound::SubmitServerCiphertext()
   {
-    QFuture<void> future = QtConcurrent::run(this, &BlogDropRound::GenerateServerCiphertext);
-    future.waitForFinished();
-    //GenerateServerCiphertext();
+    BlogDropPrivate::GenerateServerCiphertext *gen =
+      new BlogDropPrivate::GenerateServerCiphertext(this);
+    QObject::connect(gen, SIGNAL(Finished()),
+        this, SLOT(GenerateServerCiphertextDone()));
+    QThreadPool::globalInstance()->start(gen);
+  }
 
+  void BlogDropRound::GenerateServerCiphertextDone() 
+  {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << SERVER_CIPHERTEXT << GetRoundId() <<
@@ -1207,92 +1118,17 @@ namespace Anonymity {
     VerifiableBroadcastToServers(payload);
   }
 
-  QByteArray BlogDropRound::GenerateServerValidation()
-  {
-    QList<QList<QByteArray> > by_slot;
-    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      by_slot.append(QList<QByteArray>());
-    }
-
-    for(int server_idx=0; server_idx<GetGroup().GetSubgroup().Count(); server_idx++) {
-      QList<QByteArray> server_list;
-      QDataStream stream(_server_state->server_ciphertexts[server_idx]);
-      stream >> server_list;
-
-      if(server_list.count() != _state->n_clients) {
-        qFatal("Server submitted ciphertext list of wrong length");
-      }
-
-      for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-        by_slot[slot_idx].append(server_list[slot_idx]);
-      }
-    }
-
-    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      if(SlotIsOpen(slot_idx)) {
-        if(!_server_state->blogdrop_servers[slot_idx]->AddServerCiphertexts(
-                by_slot[slot_idx],
-                _state->master_server_pks_list)) {
-              qFatal("Server submitted invalid ciphertext");
-          }
-      } else {
-        //qDebug() << "Not adding server ciphertext to closed slot" << slot_idx;
-      }
-    }
-
-    QList<QByteArray> plaintexts;
-    for(int slot_idx=0; slot_idx<_state->n_clients; slot_idx++) {
-      QByteArray plain;
-
-      if(SlotIsOpen(slot_idx)) {
-        if(!_server_state->blogdrop_servers[slot_idx]->RevealPlaintext(plain)) {
-          qFatal("Could not decode plaintext message. Maybe bad anon author?");
-        }
-
-        if(!VerifyAllProofs) {
-          const int siglen = _state->slot_sig_keys[slot_idx]->GetSignatureLength();
-          const QByteArray msg = plain.mid(siglen);
-          if(!_state->slot_sig_keys[slot_idx]->Verify(msg, plain.left(siglen))) {
-            QSet<int> bad_clients = _server_state->blogdrop_servers[slot_idx]->FindBadClients();
-            if(bad_clients.count()) qWarning() << "Found bad clients:" << bad_clients;
-            Stop("Verification of message failed!");
-            return QByteArray();
-          }
-          plain = msg;
-        }
-
-        // 4 bytes in an int
-        const int slot_length = Utils::Serialization::ReadInt(plain, 0);
-
-        if(!slot_length) {
-          //qDebug() << "Closing slot" << slot_idx;
-          _state->slots_open[slot_idx] = false;
-        } else {
-          //qDebug() << "Next nelms:" << slot_length;
-          _state->slots_open[slot_idx] = true;
-          _server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length);
-        }
-      } else {
-        //qDebug() << "Not decoding message for closed slot" << slot_idx;
-      }
-
-      plaintexts.append(plain);
-      //qDebug() << "Decoding message" << plain.toHex();
-    }
-
-    QDataStream pstream(&(_state->cleartext), QIODevice::WriteOnly);
-    pstream << plaintexts;
-
-    return GetPrivateIdentity().GetSigningKey()->Sign(_state->cleartext);
-  }
-
   void BlogDropRound::SubmitValidation()
   {
-    QFuture<QByteArray> future = QtConcurrent::run(this, 
-        &BlogDropRound::GenerateServerValidation);
-    QByteArray signature = future.result();
-    //QByteArray signature = GenerateServerValidation();
+    BlogDropPrivate::GenerateServerValidation *gen =
+      new BlogDropPrivate::GenerateServerValidation(this);
+    QObject::connect(gen, SIGNAL(Finished(QByteArray)),
+        this, SLOT(GenerateServerValidationDone(QByteArray)));
+    QThreadPool::globalInstance()->start(gen);
+  }
 
+  void BlogDropRound::GenerateServerValidationDone(QByteArray signature)
+  {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream << SERVER_VALIDATION << GetRoundId() <<
@@ -1352,6 +1188,193 @@ namespace Anonymity {
 //    qDebug() << "SlotIsOpen always" << _state->always_open;
     return (_state->slots_open[slot_idx] || slot_idx == _state->always_open);
   }
+
+namespace BlogDropPrivate {
+
+  void GenerateClientCiphertext::run() 
+  {
+    QList<QByteArray> ctexts;
+
+    QByteArray c;
+    for(int slot_idx=0; slot_idx < _round->_state->n_clients; slot_idx++) {
+      qDebug() << "Generating for slot" << slot_idx;
+      if(_round->SlotIsOpen(slot_idx)) {
+
+        if(slot_idx == _round->_state->my_idx) {
+          QByteArray m = _round->ComputeClientPlaintext();
+          
+          if(!_round->_state->blogdrop_author->GenerateAuthorCiphertext(c, m)) 
+            qFatal("Could not generate author ciphertext");
+
+        } else {
+          c = _round->_state->blogdrop_clients[slot_idx]->GenerateCoverCiphertext();
+        }
+      } else {
+        qDebug() << "Client skipping closed slot" << slot_idx;
+        c = QByteArray();
+      }
+
+      ctexts.append(c);
+    }
+
+    QByteArray out;
+    QDataStream stream(&out, QIODevice::WriteOnly);
+    stream << ctexts;
+
+    /* Return a serialized list of serialized ciphertexts */
+    emit Finished(out);
+  }
+
+  void GenerateServerCiphertext::run() 
+  {
+    QList<QList<QByteArray> > by_slot;
+    QList<QSharedPointer<const Crypto::BlogDrop::PublicKey> > client_pks;
+
+    for(int slot_idx=0; slot_idx<_round->_state->n_clients; slot_idx++) {
+      by_slot.append(QList<QByteArray>());
+    }
+
+    qDebug() << _round->ToString() << "generating ciphertext for" <<
+      _round->_server_state->client_ciphertexts.count() << "out of" << _round->GetGroup().Count();
+
+    // For each user
+    foreach(const Connections::Id& id, _round->_server_state->client_ciphertexts.keys()) {
+
+      QList<QByteArray> ctexts;
+      QDataStream stream(_round->_server_state->client_ciphertexts[id]);
+      stream >> ctexts;
+
+      if(ctexts.count() != _round->_state->n_clients) {
+        qWarning() << "Ciphertext vector has invalid length";
+        emit Finished();
+        return;
+      }
+
+      if(!_round->_state->client_pks.contains(id)) {
+        qWarning() << "Missing client pk";
+        emit Finished();
+        return;
+      }
+
+      // For each slot
+      for(int slot_idx=0; slot_idx<_round->_state->n_clients; slot_idx++) {
+        if(_round->SlotIsOpen(slot_idx)) {
+          by_slot[slot_idx].append(ctexts[slot_idx]);
+        } else {
+          //qDebug() << "Not adding client ciphertext to closed slot" << slot_idx;
+        }
+      }
+
+      client_pks.append(_round->_state->master_client_pks[id]);
+      Q_ASSERT(!_round->_state->master_client_pks[id].isNull());
+    }
+
+    QList<QByteArray> server_ctexts;
+    for(int slot_idx=0; slot_idx<_round->_state->n_clients; slot_idx++) {
+      QByteArray c;
+      if(_round->SlotIsOpen(slot_idx)) {
+        Q_ASSERT(by_slot[slot_idx].count() == _round->_state->n_clients);
+
+        //qDebug() << "Creating server ciphertext for slot" << slot_idx;
+        _round->_server_state->blogdrop_servers[slot_idx]->AddClientCiphertexts(by_slot[slot_idx], 
+            client_pks, _round->VerifyAllProofs);
+        c = _round->_server_state->blogdrop_servers[slot_idx]->CloseBin();
+      } 
+
+      server_ctexts.append(c);
+    }
+
+    Q_ASSERT(server_ctexts.count() == _round->_state->n_clients);
+
+    QDataStream stream(&(_round->_server_state->my_ciphertext), QIODevice::WriteOnly);
+    stream << server_ctexts;
+
+    emit Finished();
+  }
+
+  void GenerateServerValidation::run() 
+  {
+    QList<QList<QByteArray> > by_slot;
+    for(int slot_idx=0; slot_idx<_round->_state->n_clients; slot_idx++) {
+      by_slot.append(QList<QByteArray>());
+    }
+
+    for(int server_idx=0; server_idx<_round->GetGroup().GetSubgroup().Count(); server_idx++) {
+      QList<QByteArray> server_list;
+      QDataStream stream(_round->_server_state->server_ciphertexts[server_idx]);
+      stream >> server_list;
+
+      if(server_list.count() != _round->_state->n_clients) {
+        _round->Stop("Server submitted ciphertext list of wrong length");
+        return;
+      }
+
+      for(int slot_idx=0; slot_idx<_round->_state->n_clients; slot_idx++) {
+        by_slot[slot_idx].append(server_list[slot_idx]);
+      }
+    }
+
+    for(int slot_idx=0; slot_idx<_round->_state->n_clients; slot_idx++) {
+      if(_round->SlotIsOpen(slot_idx)) {
+        if(!_round->_server_state->blogdrop_servers[slot_idx]->AddServerCiphertexts(
+                by_slot[slot_idx],
+                _round->_state->master_server_pks_list)) {
+              _round->Stop("Server submitted invalid ciphertext");
+              return;
+          }
+      } else {
+        //qDebug() << "Not adding server ciphertext to closed slot" << slot_idx;
+      }
+    }
+
+    QList<QByteArray> plaintexts;
+    for(int slot_idx=0; slot_idx<_round->_state->n_clients; slot_idx++) {
+      QByteArray plain;
+
+      if(_round->SlotIsOpen(slot_idx)) {
+        if(!_round->_server_state->blogdrop_servers[slot_idx]->RevealPlaintext(plain)) {
+          qWarning() << "Could not decode plaintext message. Maybe bad anon author?";
+          continue;
+        }
+
+        if(!_round->VerifyAllProofs) {
+          const int siglen = _round->_state->slot_sig_keys[slot_idx]->GetSignatureLength();
+          const QByteArray msg = plain.mid(siglen);
+          if(!_round->_state->slot_sig_keys[slot_idx]->Verify(msg, plain.left(siglen))) {
+            QSet<int> bad_clients = _round->_server_state->blogdrop_servers[slot_idx]->FindBadClients();
+            if(bad_clients.count()) qWarning() << "Found bad clients:" << bad_clients;
+            _round->Stop("Found bad clients!");
+            emit Finished(QByteArray());
+            return;
+          }
+          plain = msg;
+        }
+
+        // 4 bytes in an int
+        const int slot_length = Utils::Serialization::ReadInt(plain, 0);
+
+        if(!slot_length) {
+          //qDebug() << "Closing slot" << slot_idx;
+          _round->_state->slots_open[slot_idx] = false;
+        } else {
+          //qDebug() << "Next nelms:" << slot_length;
+          _round->_state->slots_open[slot_idx] = true;
+          _round->_server_state->blogdrop_servers[slot_idx]->GetParameters()->SetNElements(slot_length);
+        }
+      } else {
+        //qDebug() << "Not decoding message for closed slot" << slot_idx;
+      }
+
+      plaintexts.append(plain);
+      //qDebug() << "Decoding message" << plain.toHex();
+    }
+
+    QDataStream pstream(&(_round->_state->cleartext), QIODevice::WriteOnly);
+    pstream << plaintexts;
+
+    emit Finished(_round->GetPrivateIdentity().GetSigningKey()->Sign(_round->_state->cleartext));
+  }
+}
 
 }
 }

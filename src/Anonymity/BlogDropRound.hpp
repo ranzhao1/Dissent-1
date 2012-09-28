@@ -22,6 +22,12 @@ namespace Utils {
 }
 
 namespace Anonymity {
+namespace BlogDropPrivate {
+  class GenerateClientCiphertext;
+  class GenerateServerCiphertext;
+  class GenerateServerValidation;
+}
+
   class BlogDropRound : public BaseBulkRound
   {
     Q_OBJECT
@@ -191,6 +197,10 @@ namespace Anonymity {
       void VerifiableBroadcastToClients(const QByteArray &data);
 
     private:
+      friend class BlogDropPrivate::GenerateClientCiphertext;
+      friend class BlogDropPrivate::GenerateServerCiphertext;
+      friend class BlogDropPrivate::GenerateServerValidation;
+
       /**
        * Holds the internal state for this round
        */
@@ -423,10 +433,7 @@ namespace Anonymity {
       void SetOnlineClients();
       void SubmitClientList();
       void SubmitServerCiphertext();
-      void GenerateServerCiphertext();
       QByteArray ComputeClientPlaintext();
-      QByteArray GenerateClientCiphertext();
-      QByteArray GenerateServerValidation();
       void SubmitValidation();
       void PushCleartext();
 
@@ -440,6 +447,13 @@ namespace Anonymity {
       QSharedPointer<State> _state;
       RoundStateMachine<BlogDropRound> _state_machine;
       bool _stop_next;
+
+    private slots:
+      void GenerateClientCiphertextDone(QByteArray mycipher);
+      void GenerateClientCiphertextDoneServer(QByteArray mycipher);
+      void GenerateServerCiphertextDone();
+      void GenerateServerValidationDone(QByteArray signature);
+
   };
 
   template <typename B> QSharedPointer<Round> TCreateBlogDropRound_ElGamal(
@@ -488,6 +502,56 @@ namespace Anonymity {
     round->SetSharedPointer(round);
     return round;
   }
+
+namespace BlogDropPrivate {
+  class GenerateClientCiphertext : public QObject, public QRunnable {
+    Q_OBJECT
+
+    public:
+      GenerateClientCiphertext(BlogDropRound *round) : _round(round) { }
+
+      virtual ~GenerateClientCiphertext() { }
+      virtual void run();
+
+    signals:
+      void Finished(QByteArray);
+
+    private:
+      BlogDropRound *_round;
+  };
+
+  class GenerateServerCiphertext : public QObject, public QRunnable {
+    Q_OBJECT
+
+    public:
+      GenerateServerCiphertext(BlogDropRound *round) : _round(round) { }
+
+      virtual ~GenerateServerCiphertext() { }
+      virtual void run();
+
+    signals:
+      void Finished();
+
+    private:
+      BlogDropRound *_round;
+  };
+
+  class GenerateServerValidation : public QObject, public QRunnable {
+    Q_OBJECT
+
+    public:
+      GenerateServerValidation(BlogDropRound *round) : _round(round) { }
+
+      virtual ~GenerateServerValidation() { }
+      virtual void run();
+
+    signals:
+      void Finished(QByteArray);
+
+    private:
+      BlogDropRound *_round;
+  };
+}
 }
 }
 
