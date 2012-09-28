@@ -37,7 +37,7 @@ namespace BlogDrop {
 
     // 2 challenges, k public keys, k elements, k+1 responses
     if(list.count() != (2 + _n_elms + _n_elms + (1+_n_elms))) {
-      qWarning() << "Failed to unserialize";
+      qDebug() << "Failed to unserialize";
       return; 
     }
 
@@ -66,7 +66,18 @@ namespace BlogDrop {
       const QSharedPointer<const PrivateKey> author_priv, 
       const Plaintext &m)
   {
+    if(_elements.count() != _n_elms) {
+      qDebug() << "Elements list has invalid length";
+      return;
+    }
+
     QList<Element> ms = m.GetElements();
+
+    if(ms.count() != _n_elms) {
+      qDebug() << "Plaintext list has invalid length";
+      return;
+    }
+
     for(int i=0; i<_n_elms; i++) {
       _elements[i] = _params->GetMessageGroup()->Multiply(_elements[i], ms[i]);
     }
@@ -163,10 +174,6 @@ namespace BlogDrop {
       v_idx++;
     }
 
-    Q_ASSERT(v_idx == (_n_elms));
-    Q_ASSERT(ts.count() == (1+(2*_n_elms)));
-    Q_ASSERT(vs.count() == _n_elms);
-
     // h = H(gs, ys, ts)
     // chal_1 = w
     _challenge_1 = w;
@@ -184,19 +191,19 @@ namespace BlogDrop {
   bool ElGamalClientCiphertext::VerifyProof(int /*phase*/, const QSharedPointer<const PublicKey>) const
   {
     if(_elements.count() != _n_elms) {
-      qWarning() << "Got proof with incorrect number of elements (" << _elements.count() << ")";
+      qDebug() << "Got proof with incorrect number of elements (" << _elements.count() << ")";
       return false;
     }
 
     if(_responses.count() != (1+_n_elms)) {
-      qWarning() << "Got proof with incorrect number of responses (" << _responses.count() << ")";
+      qDebug() << "Got proof with incorrect number of responses (" << _responses.count() << ")";
       return false;
     }
 
     for(int i=0; i<_n_elms; i++) { 
       if(!(_params->GetKeyGroup()->IsElement(_one_time_pubs[i]->GetElement()) &&
             _params->GetMessageGroup()->IsElement(_elements[i]))) {
-        qWarning() << "Got proof with invalid group element";
+        qDebug() << "Got proof with invalid group element";
         return false;
       }
     }
@@ -303,9 +310,6 @@ namespace BlogDrop {
     hash->Restart();
     hash->Update(params->GetByteArray());
 
-    Q_ASSERT(gs.count() == ys.count());
-    Q_ASSERT(gs.count() == ts.count());
-
     for(int i=0; i<gs.count(); i++) {
       QSharedPointer<const Crypto::AbstractGroup::AbstractGroup> group = 
         ((!i) ? params->GetKeyGroup() : params->GetMessageGroup());
@@ -315,9 +319,7 @@ namespace BlogDrop {
       hash->Update(group->ElementToByteArray(ts[i]));
     }
     Integer a = Integer(hash->ComputeHash());
-    Q_ASSERT(a.GetByteArray().count());
     Integer b = a % params->GetGroupOrder();
-    Q_ASSERT(b.GetByteArray().count());
 
     return Integer(hash->ComputeHash()) % params->GetGroupOrder();
   }

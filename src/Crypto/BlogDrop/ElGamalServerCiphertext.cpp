@@ -13,7 +13,8 @@ namespace BlogDrop {
     _client_pks(client_pks)
   {
     if(_client_pks.count() != (_params->GetNElements())) {
-      qFatal("Invalid pk list size");
+      qDebug("Invalid pk list size");
+      return;
     }
   }
 
@@ -25,7 +26,8 @@ namespace BlogDrop {
     _client_pks(client_pks)
   {
     if(_client_pks.count() != (_params->GetNElements())) {
-      qFatal("Invalid pk list size");
+      qDebug("Invalid pk list size");
+      return;
     }
 
     QList<QByteArray> list;
@@ -34,7 +36,7 @@ namespace BlogDrop {
 
     // challenge, response, and k elements
     if(list.count() != (2 + _params->GetNElements())) {
-      qWarning() << "Failed to unserialize";
+      qDebug() << "Failed to unserialize";
       return; 
     }
 
@@ -61,6 +63,11 @@ namespace BlogDrop {
     // v in [0,q) 
     Integer v = _params->GetKeyGroup()->RandomExponent();
 
+    if(_client_pks.count() != _n_elms) {
+      qDebug() << "Client PK list has incorrect length";
+      return;
+    }
+
     QList<Element> gs;
 
     // g0 = DH generator
@@ -69,7 +76,6 @@ namespace BlogDrop {
       // g(i) = product of client PKs i
       gs.append(_client_pks[i]->GetElement());
     }
-
 
     QList<Element> ts;
 
@@ -109,6 +115,16 @@ namespace BlogDrop {
 
     if(!(_params->GetKeyGroup()->IsElement(pub->GetElement()))) { 
       qDebug() << "Proof contains illegal group elements";
+      return false;
+    }
+
+    if(_client_pks.count() != _n_elms) {
+      qDebug() << "Ciphertext has wrong number of PK elements";
+      return false;
+    }
+
+    if(_elements.count() != _n_elms) {
+      qDebug() << "Ciphertext has wrong number of ciphertext elements";
       return false;
     }
 
@@ -161,6 +177,11 @@ namespace BlogDrop {
 
   QByteArray ElGamalServerCiphertext::GetByteArray() const 
   {
+    if(_elements.count() != _params->GetNElements()) {
+      qDebug() << "Ciphertext has wrong number of group elements";
+      return QByteArray();
+    }
+
     QList<QByteArray> list;
 
     list.append(_challenge.GetByteArray());
