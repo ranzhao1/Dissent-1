@@ -79,6 +79,17 @@
 #include "Crypto/Serialization.hpp"
 #include "Crypto/ThreadedOnionEncryptor.hpp"
 
+#include "Crypto/AbstractGroup/AbstractGroup.hpp"
+#include "Crypto/AbstractGroup/ByteElementData.hpp"
+#include "Crypto/AbstractGroup/ByteGroup.hpp"
+#include "Crypto/AbstractGroup/CppECElementData.hpp"
+#include "Crypto/AbstractGroup/CppECGroup.hpp"
+#include "Crypto/AbstractGroup/ECParams.hpp"
+#include "Crypto/AbstractGroup/ElementData.hpp"
+#include "Crypto/AbstractGroup/Element.hpp"
+#include "Crypto/AbstractGroup/IntegerElementData.hpp"
+#include "Crypto/AbstractGroup/IntegerGroup.hpp"
+
 #include "Identity/Authentication/IAuthenticate.hpp"
 #include "Identity/Authentication/IAuthenticator.hpp"
 #include "Identity/Authentication/LRSAuthenticate.hpp"
@@ -185,6 +196,7 @@ using namespace Dissent::Applications;
 using namespace Dissent::ClientServer;
 using namespace Dissent::Connections;
 using namespace Dissent::Crypto;
+using namespace Dissent::Crypto::AbstractGroup;
 using namespace Dissent::Identity::Authentication;
 using namespace Dissent::Identity;
 using namespace Dissent::Messaging;

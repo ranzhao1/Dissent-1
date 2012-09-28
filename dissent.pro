@@ -92,6 +92,16 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/OnionEncryptor.hpp \
            src/Crypto/ThreadedOnionEncryptor.hpp \
            src/Crypto/Serialization.hpp \
+           src/Crypto/AbstractGroup/AbstractGroup.hpp \
+           src/Crypto/AbstractGroup/ByteElementData.hpp \
+           src/Crypto/AbstractGroup/ByteGroup.hpp \
+           src/Crypto/AbstractGroup/CppECElementData.hpp \
+           src/Crypto/AbstractGroup/CppECGroup.hpp \
+           src/Crypto/AbstractGroup/ECParams.hpp \
+           src/Crypto/AbstractGroup/ElementData.hpp \
+           src/Crypto/AbstractGroup/Element.hpp \
+           src/Crypto/AbstractGroup/IntegerElementData.hpp \
+           src/Crypto/AbstractGroup/IntegerGroup.hpp \
            src/Identity/Authentication/IAuthenticate.hpp \
            src/Identity/Authentication/IAuthenticator.hpp \
            src/Identity/Authentication/LRSAuthenticate.hpp \
@@ -247,6 +257,10 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/NullPrivateKey.cpp \
            src/Crypto/OnionEncryptor.cpp \
            src/Crypto/ThreadedOnionEncryptor.cpp \
+           src/Crypto/AbstractGroup/ByteGroup.cpp \
+           src/Crypto/AbstractGroup/CppECGroup.cpp \
+           src/Crypto/AbstractGroup/ECParams.cpp \
+           src/Crypto/AbstractGroup/IntegerGroup.cpp \
            src/Identity/Group.cpp \
            src/Identity/Authentication/LRSAuthenticate.cpp \
            src/Identity/Authentication/LRSAuthenticator.cpp \
