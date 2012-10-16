@@ -53,6 +53,9 @@ SOURCES += ext/googletest/src/gtest-all.cc \
            src/Tests/AuthenticateTest.cpp \
            src/Tests/Base64.cpp \
            src/Tests/BasicGossipTest.cpp \
+           src/Tests/BlogDropProof.cpp \
+           src/Tests/BlogDropTest.cpp \
+           src/Tests/BlogDropUtilsTest.cpp \
            src/Tests/BulkRoundTest.cpp \
            src/Tests/ByteGroupTest.cpp \
            src/Tests/ConnectionTest.cpp \

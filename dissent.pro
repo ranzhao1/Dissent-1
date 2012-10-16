@@ -102,6 +102,26 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Crypto/AbstractGroup/Element.hpp \
            src/Crypto/AbstractGroup/IntegerElementData.hpp \
            src/Crypto/AbstractGroup/IntegerGroup.hpp \
+           src/Crypto/BlogDrop/BlogDropAuthor.hpp \
+           src/Crypto/BlogDrop/BlogDropClient.hpp \
+           src/Crypto/BlogDrop/BlogDropServer.hpp \
+           src/Crypto/BlogDrop/BlogDropUtils.hpp \
+           src/Crypto/BlogDrop/ChangingGenClientCiphertext.hpp \
+           src/Crypto/BlogDrop/ChangingGenServerCiphertext.hpp \
+           src/Crypto/BlogDrop/CiphertextFactory.hpp \
+           src/Crypto/BlogDrop/ClientCiphertext.hpp \
+           src/Crypto/BlogDrop/ElGamalClientCiphertext.hpp \
+           src/Crypto/BlogDrop/ElGamalServerCiphertext.hpp \
+           src/Crypto/BlogDrop/HashingGenClientCiphertext.hpp \
+           src/Crypto/BlogDrop/HashingGenServerCiphertext.hpp \
+           src/Crypto/BlogDrop/Parameters.hpp \
+           src/Crypto/BlogDrop/Plaintext.hpp \
+           src/Crypto/BlogDrop/PrivateKey.hpp \
+           src/Crypto/BlogDrop/PublicKey.hpp \
+           src/Crypto/BlogDrop/PublicKeySet.hpp \
+           src/Crypto/BlogDrop/ServerCiphertext.hpp \
+           src/Crypto/BlogDrop/XorClientCiphertext.hpp \
+           src/Crypto/BlogDrop/XorServerCiphertext.hpp \
            src/Identity/Authentication/IAuthenticate.hpp \
            src/Identity/Authentication/IAuthenticator.hpp \
            src/Identity/Authentication/LRSAuthenticate.hpp \
@@ -261,6 +281,24 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Crypto/AbstractGroup/CppECGroup.cpp \
            src/Crypto/AbstractGroup/ECParams.cpp \
            src/Crypto/AbstractGroup/IntegerGroup.cpp \
+           src/Crypto/BlogDrop/BlogDropAuthor.cpp \
+           src/Crypto/BlogDrop/BlogDropClient.cpp \
+           src/Crypto/BlogDrop/BlogDropServer.cpp \
+           src/Crypto/BlogDrop/BlogDropUtils.cpp \
+           src/Crypto/BlogDrop/ChangingGenClientCiphertext.cpp \
+           src/Crypto/BlogDrop/ChangingGenServerCiphertext.cpp \
+           src/Crypto/BlogDrop/CiphertextFactory.cpp \
+           src/Crypto/BlogDrop/ClientCiphertext.cpp \
+           src/Crypto/BlogDrop/ElGamalClientCiphertext.cpp \
+           src/Crypto/BlogDrop/ElGamalServerCiphertext.cpp \
+           src/Crypto/BlogDrop/HashingGenClientCiphertext.cpp \
+           src/Crypto/BlogDrop/HashingGenServerCiphertext.cpp \
+           src/Crypto/BlogDrop/Parameters.cpp \
+           src/Crypto/BlogDrop/Plaintext.cpp \
+           src/Crypto/BlogDrop/PrivateKey.cpp \
+           src/Crypto/BlogDrop/PublicKey.cpp \
+           src/Crypto/BlogDrop/PublicKeySet.cpp \
+           src/Crypto/BlogDrop/ServerCiphertext.cpp \
            src/Identity/Group.cpp \
            src/Identity/Authentication/LRSAuthenticate.cpp \
            src/Identity/Authentication/LRSAuthenticator.cpp \
