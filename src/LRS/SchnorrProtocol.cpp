@@ -78,6 +78,8 @@ namespace LRS {
     p.commit = ElementToVariant(t);
 
     // When we're fake proving, we have no commit secret and no witness
+    p.challenge = c;
+    p.response = IntegerToVariant(r);
     p.commit_secret = QVariant();
     p.witness = QVariant();
   }

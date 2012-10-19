@@ -87,7 +87,7 @@ namespace Tests {
     AuthFailChallenge(nclient.GetLocalId(), &nauthe, &autho);
   }
 
-  TEST(LRSAuth, Base)
+  TEST(Auth, LRSBase)
   {
     QSharedPointer<CppDsaPrivateKey> base_key(new CppDsaPrivateKey());
     Integer generator = base_key->GetGenerator();

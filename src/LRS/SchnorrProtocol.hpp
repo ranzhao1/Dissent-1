@@ -27,17 +27,17 @@ namespace LRS {
        */
       virtual ~SchnorrProtocol();
 
-      virtual void GenerateWitness(SigmaProof &p) = 0; 
+      virtual void GenerateWitness(SigmaProof &p); 
 
-      virtual void GenerateCommit(SigmaProof &p) = 0;
+      virtual void GenerateCommit(SigmaProof &p);
 
-      virtual void GenerateChallenge(SigmaProof &p) = 0;
+      virtual void GenerateChallenge(SigmaProof &p);
 
-      virtual void Prove(SigmaProof &p) = 0;
+      virtual void Prove(SigmaProof &p);
 
-      virtual void FakeProve(SigmaProof &p) = 0;
+      virtual void FakeProve(SigmaProof &p);
 
-      virtual bool Verify(SigmaProof &p) = 0;
+      virtual bool Verify(SigmaProof &p);
 
     private:
 

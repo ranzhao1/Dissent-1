@@ -135,6 +135,9 @@
 #include "Identity/PrivateIdentity.hpp"
 #include "Identity/PublicIdentity.hpp"
 
+#include "LRS/SchnorrProtocol.hpp"
+#include "LRS/SigmaProtocol.hpp"
+
 #include "Messaging/BufferSink.hpp"
 #include "Messaging/DummySink.hpp"
 #include "Messaging/Filter.hpp"
@@ -231,6 +234,7 @@ using namespace Dissent::Crypto::AbstractGroup;
 using namespace Dissent::Crypto::BlogDrop;
 using namespace Dissent::Identity::Authentication;
 using namespace Dissent::Identity;
+using namespace Dissent::LRS;
 using namespace Dissent::Messaging;
 using namespace Dissent::Overlay;
 using namespace Dissent::Transports;
