@@ -13,3 +13,4 @@ libdissent.so*
 /bench
 bench.log
 keygen
+lrs
