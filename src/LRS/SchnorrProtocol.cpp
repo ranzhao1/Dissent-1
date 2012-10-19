@@ -109,16 +109,6 @@ namespace LRS {
     return _group->IsIdentity(out);
   };
 
-  QVariant SchnorrProtocol::IntegerToVariant(Integer i)
-  {
-    return QVariant(i.GetByteArray());
-  }
-
-  Integer SchnorrProtocol::VariantToInteger(QVariant v)
-  {
-    return Integer(v.toByteArray());
-  }
-
   QVariant SchnorrProtocol::ElementToVariant(Element e)
   {
     return QVariant(_group->ElementToByteArray(e));

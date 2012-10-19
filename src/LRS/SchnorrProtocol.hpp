@@ -41,12 +41,10 @@ namespace LRS {
 
     private:
 
-      QSharedPointer<AbstractGroup> _group;
-
-      QVariant IntegerToVariant(Integer i);
-      Integer VariantToInteger(QVariant v);
       QVariant ElementToVariant(Element e);
       Element VariantToElement(QVariant v);
+
+      QSharedPointer<AbstractGroup> _group;
 
   };
 

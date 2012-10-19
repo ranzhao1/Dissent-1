@@ -48,6 +48,12 @@ namespace LRS {
 
       virtual bool Verify(SigmaProof &p) = 0;
 
+    protected:
+
+      QVariant IntegerToVariant(Integer i);
+      
+      Integer VariantToInteger(QVariant v);
+
     private:
 
   };
