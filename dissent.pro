@@ -170,7 +170,7 @@ HEADERS += ext/joyent-http-parser/http_parser.h \
            src/Identity/PublicIdentity.hpp \
            src/LRS/SchnorrProtocol.hpp \
            src/LRS/SigmaProtocol.hpp \
-           src/LRS/GQProtocol.hpp \
+# src/LRS/GQProtocol.hpp \
            src/Messaging/BufferSink.hpp \
            src/Messaging/DummySink.hpp \
            src/Messaging/Filter.hpp \
@@ -357,7 +357,7 @@ SOURCES += ext/joyent-http-parser/http_parser.c \
            src/Identity/Authentication/PreExchangedKeyAuthenticator.cpp \
            src/LRS/SchnorrProtocol.cpp \
            src/LRS/SigmaProtocol.cpp \
-           src/LRS/GQProtocol.cpp \
+# src/LRS/GQProtocol.cpp \
            src/Messaging/RpcHandler.cpp \
            src/Messaging/SignalSink.cpp \
            src/Overlay/BaseOverlay.cpp \
