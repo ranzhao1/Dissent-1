@@ -49,12 +49,12 @@ namespace Tests {
 
   TEST_P(LRSProofTest, SchnorrRing)
   {
-    for(int i=0; i<500; i++) {
-      int count = 1;//Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-      int sender = 0;//Random::GetInstance().GetInt(0, count);
+    for(int repeat=0; repeat<100; repeat++) {
+      int count = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
+      int sender = Random::GetInstance().GetInt(0, count);
    
       QList<SchnorrProof> list;
-      QList<QByteArray> commits;
+      QList<QByteArray> challenges;
       for(int j=0; j<count; j++) {
         list.append(SchnorrProof(GetParam()));
         list[j].GenerateWitness();
@@ -64,18 +64,21 @@ namespace Tests {
           list[j].FakeProve();
         }
 
-        commits.append(list[i].GetCommit());
+        challenges.append(list[j].GetChallenge().GetByteArray());
       }
 
-      QByteArray challenge = SigmaProof::CreateChallenge(commits);
-      const int commit_len = challenge.count();
+      QByteArray challenge = SigmaProof::CreateChallenge(challenges);
+
+      const int chal_len = challenge.count();
 
       // XOR all challenges together
       QByteArray final = challenge;
       for(int j=0; j<count; j++) {
-        QByteArray right = commits[j].right(commit_len);
-        qDebug() << "final" << final.count() << "right" << right.count();
-        final = Xor(final, right); 
+        if(j != sender) {
+          QByteArray right = challenges[j].right(chal_len);
+          qDebug() << "final" << final.count() << "right" << right.count();
+          final = Xor(final, right); 
+        }
       }
 
       // The final challenge is given to the true prover
@@ -85,9 +88,9 @@ namespace Tests {
         EXPECT_TRUE(list[j].Verify());
       }
 
-      QByteArray verif_final(commit_len, '\0');
+      QByteArray verif_final(chal_len, '\0');
       for(int j=0; j<count; j++) {
-        verif_final = Xor(verif_final, list[j].GetCommit().right(commit_len));
+        verif_final = Xor(verif_final, list[j].GetChallenge().GetByteArray().right(chal_len));
       }
 
       EXPECT_EQ(challenge, verif_final);

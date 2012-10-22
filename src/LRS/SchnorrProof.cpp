@@ -63,7 +63,6 @@ namespace LRS {
     // Replace the rightmost bytes of e with the challenge
     const QByteArray final = e_bytes.left(e_bytes.count() - challenge.count()) + challenge;
 
-    qDebug() << "orig" << e_orig_len << "final" << final.count();
     Q_ASSERT(e_orig_len == final.count());
 
     return Prove(Integer("0x" + final));  
