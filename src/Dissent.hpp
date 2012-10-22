@@ -135,8 +135,8 @@
 #include "Identity/PrivateIdentity.hpp"
 #include "Identity/PublicIdentity.hpp"
 
-#include "LRS/SchnorrProtocol.hpp"
-#include "LRS/SigmaProtocol.hpp"
+#include "LRS/SchnorrProof.hpp"
+#include "LRS/SigmaProof.hpp"
 
 #include "Messaging/BufferSink.hpp"
 #include "Messaging/DummySink.hpp"

@@ -1,24 +1,22 @@
 
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
+#include "Dissent.hpp"
 
-#include <QByteArray>
-#include <QTextStream>
+int main(int /*argc*/, char** /*argv[]*/) {
+  QTextStream out(stdout, QIODevice::WriteOnly);
 
-int main(int argc, char* argv[]) {
-  QTextStream err(stderr, QIODevice::WriteOnly);
+  QSharedPointer<AbstractGroup::AbstractGroup> group = CppECGroup::GetGroup(ECParams::NIST_P256);
 
-  if(argc != 2) {
-    err << "Usage: " << argv[0] << " pbits\n";
-    return 1;
+  SchnorrProof sp(group);
+
+  sp.FakeProve();
+
+  bool valid = sp.Verify();
+
+  if(valid) {
+    out << "Proof ok" << endl;
+  } else {
+    out << "Proof failed" << endl;
   }
-
-  // Get one witness
-
-  // Run the protocol
-
-  // Verify the proof
 
   return 0;
 }
