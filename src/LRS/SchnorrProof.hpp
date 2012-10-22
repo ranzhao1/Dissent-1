@@ -22,12 +22,20 @@ namespace LRS {
        */
       SchnorrProof(QSharedPointer<AbstractGroup> g);
 
+      SchnorrProof(QSharedPointer<AbstractGroup> g, 
+          QByteArray witness, 
+          QByteArray witness_image);
+
+      SchnorrProof(QSharedPointer<AbstractGroup> g, 
+          QByteArray witness_image,
+          QByteArray commit, 
+          QByteArray challenge, 
+          QByteArray response);
+
       /**
        * Destructor
        */
       virtual ~SchnorrProof();
-
-      virtual void GenerateWitness(); 
 
       virtual void GenerateCommit();
 
@@ -43,8 +51,11 @@ namespace LRS {
 
       inline void SetWitness(Integer w) { _witness = w; }
 
+      virtual QByteArray GetWitnessImage() const { return _group->ElementToByteArray(_witness_image); }
       virtual QByteArray GetCommit() const { return _group->ElementToByteArray(_commit); }
       virtual inline Integer GetChallenge() const { return _challenge; }
+
+      virtual QByteArray GetResponse() const { return _response.GetByteArray(); }
 
     private:
 

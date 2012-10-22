@@ -10,19 +10,35 @@ namespace LRS {
 
   SchnorrProof::SchnorrProof(QSharedPointer<AbstractGroup> g) :
     SigmaProof(),
-    _group(g)
+    _group(g),
+    _witness(_group->RandomExponent()),
+    _witness_image(_group->Exponentiate(_group->GetGenerator(), _witness))
+  {
+  }
+
+  SchnorrProof::SchnorrProof(QSharedPointer<AbstractGroup> g, 
+          QByteArray witness, 
+          QByteArray witness_image) :
+    _group(g),
+    _witness(witness),
+    _witness_image(_group->ElementFromByteArray(witness_image))
+  {}
+
+  SchnorrProof::SchnorrProof(QSharedPointer<AbstractGroup> g, 
+      QByteArray witness_image,
+      QByteArray commit, 
+      QByteArray challenge, 
+      QByteArray response) :
+    SigmaProof(),
+    _group(g),
+    _witness_image(_group->ElementFromByteArray(witness_image)),
+    _commit(_group->ElementFromByteArray(commit)),
+    _challenge(challenge),
+    _response(response)
   {
   }
 
   SchnorrProof::~SchnorrProof() {};
-
-  void SchnorrProof::GenerateWitness()
-  {
-    // x = random integer
-    // e = g^x
-    _witness = _group->RandomExponent();
-    _witness_image = _group->Exponentiate(_group->GetGenerator(), _witness);
-  };
 
   void SchnorrProof::GenerateCommit()
   {

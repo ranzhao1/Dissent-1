@@ -135,6 +135,7 @@
 #include "Identity/PrivateIdentity.hpp"
 #include "Identity/PublicIdentity.hpp"
 
+#include "LRS/RingSignature.hpp"
 #include "LRS/SchnorrProof.hpp"
 #include "LRS/SigmaProof.hpp"
 

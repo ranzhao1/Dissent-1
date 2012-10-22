@@ -12,7 +12,6 @@ namespace Tests {
     SchnorrProof proto(GetParam());
 
     for(int i=0; i<500; i++) {
-      proto.GenerateWitness();
       proto.GenerateCommit();
       proto.GenerateChallenge();
       proto.Prove();
@@ -26,8 +25,6 @@ namespace Tests {
     SchnorrProof proto(GetParam());
 
     for(int i=0; i<500; i++) {
-      proto.GenerateWitness();
-
       proto.SetWitness(0); 
 
       proto.FakeProve();
@@ -35,65 +32,27 @@ namespace Tests {
     }
   }
 
-  QByteArray Xor(const QByteArray &a, const QByteArray &b)
-  {
-    Q_ASSERT(a.count() == b.count());
-    QByteArray out(a.count(), '\0');
- 
-    for(int i=0; i<a.count(); i++) {
-      out[i] = a[i] ^ b[i];
-    }
-
-    return out;
-  }
-
   TEST_P(LRSProofTest, SchnorrRing)
   {
-    for(int repeat=0; repeat<100; repeat++) {
+    Library *lib = CryptoFactory::GetInstance().GetLibrary();
+    QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
+
+    for(int repeat=0; repeat<50; repeat++) {
       int count = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-      int sender = Random::GetInstance().GetInt(0, count);
+      //int sender = Random::GetInstance().GetInt(0, count);
    
-      QList<SchnorrProof> list;
-      QList<QByteArray> challenges;
+      QList<QSharedPointer<SigmaProof> > list;
       for(int j=0; j<count; j++) {
-        list.append(SchnorrProof(GetParam()));
-        list[j].GenerateWitness();
-        if(j == sender) {
-          list[j].GenerateCommit();
-        } else {
-          list[j].FakeProve();
-        }
-
-        challenges.append(list[j].GetChallenge().GetByteArray());
+        list.append(QSharedPointer<SigmaProof>(new SchnorrProof(GetParam())));
       }
 
-      QByteArray challenge = SigmaProof::CreateChallenge(challenges);
+      QByteArray msg(1024, '\0');
+      rand->GenerateBlock(msg);
 
-      const int chal_len = challenge.count();
+      RingSignature ring(GetParam(), QSharedPointer<SigmaProof>(new SchnorrProof(GetParam())), list);
 
-      // XOR all challenges together
-      QByteArray final = challenge;
-      for(int j=0; j<count; j++) {
-        if(j != sender) {
-          QByteArray right = challenges[j].right(chal_len);
-          qDebug() << "final" << final.count() << "right" << right.count();
-          final = Xor(final, right); 
-        }
-      }
-
-      // The final challenge is given to the true prover
-      list[sender].Prove(final);
-
-      for(int j=0; j<count; j++) {
-        EXPECT_TRUE(list[j].Verify());
-      }
-
-      QByteArray verif_final(chal_len, '\0');
-      for(int j=0; j<count; j++) {
-        verif_final = Xor(verif_final, list[j].GetChallenge().GetByteArray().right(chal_len));
-      }
-
-      EXPECT_EQ(challenge, verif_final);
+      QByteArray sig = ring.Sign(msg);
+      EXPECT_TRUE(ring.Verify(msg, sig));
     }
   }
 

@@ -18,17 +18,5 @@ namespace LRS {
     return Integer(v.toByteArray());
   }
 
-  QByteArray SigmaProof::CreateChallenge(QList<QByteArray> commits)
-  {
-    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
-    hash->Restart();
-
-    for(int i=0; i<commits.count(); i++) {
-      hash->Update(commits[i]);
-    }
-
-    return hash->ComputeHash();
-  }
-
 }
 }

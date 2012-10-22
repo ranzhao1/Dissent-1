@@ -16,6 +16,13 @@ namespace LRS {
 
       /**
        * Constructor
+       *
+       * The default constructor should
+       * generate a random witness and witness
+       * image for the relation represented by this
+       * Sigma protocol. For example, if we're using
+       * proof-of-knowledge for discrete log,
+       * generate a pair (x, g^x) for a random x.
        */
       SigmaProof() {}
 
@@ -23,15 +30,6 @@ namespace LRS {
        * Destructor
        */
       virtual ~SigmaProof() {}
-
-      /**
-       * Generate a random witness and witness
-       * image for the relation represented by this
-       * Sigma protocol. For example, if we're using
-       * proof-of-knowledge for discrete log,
-       * generate a pair (x, g^x) for a random x.
-       */
-      virtual void GenerateWitness() = 0; 
 
       /**
        * Generate the commitment for the start of
@@ -56,6 +54,12 @@ namespace LRS {
        * up to the maximum length.
        */
       virtual void Prove(QByteArray challenge) = 0;
+
+      /**
+       * Prove using the specified integer as a challenge.
+       * The integer value is used _unmodified_, unlike
+       * the above version of Prove().
+       */
       virtual void Prove(Integer challenge) = 0;
 
       /**
@@ -69,10 +73,29 @@ namespace LRS {
        */
       virtual bool Verify() const = 0;
 
+      /**
+       * Get the image of the witness for this proof of knowledge.
+       * For example, if this is a proof of knowledge of discrete
+       * log, return g^x
+       */
+      virtual QByteArray GetWitnessImage() const = 0;
+
+      /**
+       * Get a serialized representation of the commit
+       * for this Sigma proof
+       */
       virtual QByteArray GetCommit() const = 0;
+
+      /**
+       * Get the challenge integer for this proof
+       */
       virtual Integer GetChallenge() const = 0;
 
-      static QByteArray CreateChallenge(QList<QByteArray> commits);
+      /**
+       * Get a serialized representation of the response
+       * for this Sigma proof
+       */
+      virtual QByteArray GetResponse() const = 0;
 
     protected:
 
