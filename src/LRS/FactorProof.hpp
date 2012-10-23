@@ -19,7 +19,7 @@ namespace LRS {
       /**
        * The prover can cheat with probability 2^{-parameter}
        */
-      static const int SoundnessParameter = 80;
+      static const int SoundnessParameter = 96;
 
       /**
        * For now, we only can prove factorization of integers

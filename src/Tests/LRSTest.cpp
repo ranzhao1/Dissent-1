@@ -127,6 +127,38 @@ namespace Tests {
     }
   }
 
+  TEST(LRSProofTest, MixedRing)
+  {
+    Library *lib = CryptoFactory::GetInstance().GetLibrary();
+    QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
+
+    for(int repeat=0; repeat<5; repeat++) {
+      int count = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
+      int author_idx = Random::GetInstance().GetInt(0, count);
+   
+      QList<QSharedPointer<SigmaProof> > list;
+      for(int j=0; j<count; j++) {
+        // Mix Schnorr and Factor proofs
+        list.append(
+          Random::GetInstance().GetInt(0, 2) ? 
+          QSharedPointer<SigmaProof>(new FactorProof()) : 
+          QSharedPointer<SigmaProof>(new SchnorrProof()));
+      }
+
+      QByteArray msg(1024, '\0');
+      rand->GenerateBlock(msg);
+
+      RingSignature ring(list, author_idx);
+
+      QByteArray sig = ring.Sign(msg);
+      EXPECT_TRUE(ring.Verify(msg, sig));
+
+      // Tweak one byte of the message
+      msg[3] = !msg[3];
+      EXPECT_FALSE(ring.Verify(msg, sig));
+    }
+  }
+
 }
 }
 

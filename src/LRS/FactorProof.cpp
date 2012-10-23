@@ -49,7 +49,7 @@ namespace LRS {
     _commit.clear();
     for(int i=0; i<pubs.count(); i++) {
       _commit.append(pubs[i].Pow(_commit_secret, _witness_image));
-      qDebug() << "commit[" << i << "]" << _commit[i].GetByteArray().toHex();
+      //qDebug() << "commit[" << i << "]" << _commit[i].GetByteArray().toHex();
     }
   };
 
@@ -150,7 +150,7 @@ namespace LRS {
 
       if(result != _commit[i]) {
         qWarning() << "Mismatched commit value caused failed proof";
-        qDebug() << result.GetByteArray().toHex() << pubs[i].GetByteArray().toHex();
+        //qDebug() << result.GetByteArray().toHex() << pubs[i].GetByteArray().toHex();
         return false;
       }
     }
@@ -196,7 +196,7 @@ namespace LRS {
       rnd->GenerateBlock(block);
       out.append(Integer(block));
 
-      qDebug() << "pub["<<i<<"]"<<out[i].GetByteArray().toHex();
+      //qDebug() << "pub["<<i<<"]"<<out[i].GetByteArray().toHex();
     }
 
     return out;
