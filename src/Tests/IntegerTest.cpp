@@ -112,10 +112,34 @@ namespace Tests {
 
   TEST(Integer, CppPow)
   {
-    Integer base(10);
-    Integer exp(100);
-    EXPECT_EQ(exp, base.Pow(Integer(10), Integer(101)));
-    EXPECT_EQ(Integer(0), base.Pow(Integer(10), Integer(100)));
+    for(int i=0; i<50; i++) {
+      Integer p = Integer::GetRandomInteger(1024, true);
+
+      Integer a = Integer::GetRandomInteger(0, p);
+      Integer e1 = Integer::GetRandomInteger(0, p-1);
+      Integer e2 = Integer::GetRandomInteger(0, p-1);
+
+      EXPECT_EQ(a.Pow(e1, p).Pow(e2, p), a.Pow(e2, p).Pow(e1, p));
+
+      Integer v = a.Pow(e1, p);
+      EXPECT_EQ(v.MultiplyMod(v, p), a.Pow(e1 + e1, p));
+    }
+  }
+
+  TEST(Integer, CppPowNegative)
+  {
+    for(int i=0; i<50; i++) {
+      Integer p = Integer::GetRandomInteger(1024, true);
+
+      Integer a = Integer::GetRandomInteger(0, p);
+      Integer e1 = Integer::GetRandomInteger(0, p-1);
+      Integer e2 = Integer::GetRandomInteger(0, p-1) - p;
+
+      EXPECT_EQ(a.Pow(e1, p).Pow(e2, p), a.Pow(e2, p).Pow(e1, p));
+
+      Integer v = a.Pow(e1, p);
+      EXPECT_EQ(v.MultiplyMod(v, p), a.Pow(e1 + e1, p));
+    }
   }
 
   TEST(Integer, CppModInverse)
