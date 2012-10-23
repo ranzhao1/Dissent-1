@@ -49,7 +49,7 @@ namespace LRS {
     _commit.clear();
     for(int i=0; i<pubs.count(); i++) {
       _commit.append(pubs[i].Pow(_commit_secret, _witness_image));
-      //qDebug() << "commit[" << i << "]" << _commit[i].GetByteArray().toHex();
+      qDebug() << "commit[" << i << "]" << _commit[i].GetByteArray().toHex();
     }
   };
 
@@ -60,17 +60,15 @@ namespace LRS {
 
   void FactorProof::Prove(QByteArray challenge)
   {
-    _orig_challenge = Integer(challenge);
+    if(Integer(challenge) >= BiggestChallenge()) {
+      qFatal("Challenge too big");
+    } 
 
-    if(_orig_challenge >= BiggestChallenge()) {
-      _challenge = _orig_challenge % BiggestChallenge();
-    } else {
-      const Integer e = Integer::GetRandomInteger(0, BiggestChallenge(), false);
-      const QByteArray e_bytes = e.GetByteArray();
+    const Integer e = Integer::GetRandomInteger(0, BiggestChallenge(), false);
+    const QByteArray e_bytes = e.GetByteArray();
 
-      // Replace the rightmost bytes of e with the challenge
-      _challenge = Integer(e_bytes.left(e_bytes.count() - challenge.count()) + challenge);
-    }
+    // Replace the rightmost bytes of e with the challenge
+    _challenge = Integer(e_bytes.left(e_bytes.count() - challenge.count()) + challenge);
 
     Prove();
   }
@@ -95,7 +93,6 @@ namespace LRS {
     rnd->GenerateBlock(bytes); 
 
     // pick c, r at random
-    _orig_challenge = Integer(bytes);
     _challenge = Integer::GetRandomInteger(0, BiggestChallenge(), false);
     _response = Integer::GetRandomInteger(0, DefaultModulusBits-2, false);
 
@@ -153,7 +150,7 @@ namespace LRS {
 
       if(result != _commit[i]) {
         qWarning() << "Mismatched commit value caused failed proof";
-        //qDebug() << result.GetByteArray().toHex() << pubs[i].GetByteArray().toHex();
+        qDebug() << result.GetByteArray().toHex() << pubs[i].GetByteArray().toHex();
         return false;
       }
     }
@@ -199,7 +196,7 @@ namespace LRS {
       rnd->GenerateBlock(block);
       out.append(Integer(block));
 
-      //qDebug() << "pub["<<i<<"]"<<out[i].GetByteArray().toHex();
+      qDebug() << "pub["<<i<<"]"<<out[i].GetByteArray().toHex();
     }
 
     return out;

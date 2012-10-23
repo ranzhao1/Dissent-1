@@ -72,10 +72,15 @@ namespace LRS {
     Q_ASSERT(e_orig_len == final.count());
 
     _challenge = Integer(final);  
+    Prove();
   }
 
   void SchnorrProof::Prove()
   {
+    Q_ASSERT(_witness > 0);
+    Q_ASSERT(_commit_secret > 0);
+    Q_ASSERT(_challenge > 0);
+
     // r = v - cx
     _response = (_commit_secret - (_witness.MultiplyMod(_challenge, _group->GetOrder()))) % _group->GetOrder();
   }
@@ -113,16 +118,14 @@ namespace LRS {
     // should equal g^{-v} * g{v} == g^0 == 1
     out = _group->Multiply(out, _commit);
 
-    // check hash
-    Integer test;
-
-    bool valid = _group->IsIdentity(out);
     // if verify_challenge is set, make sure that challenge is
     // a hash of the commit 
-    if(verify_challenge) 
-      valid = valid && (_challenge == CommitHash());
+    if(verify_challenge && _challenge != CommitHash()) {
+      qDebug() << "Challenge mismatch";
+      return false;
+    }
 
-    return valid;
+    return _group->IsIdentity(out);
   };
 
   Integer SchnorrProof::CommitHash() const 

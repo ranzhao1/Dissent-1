@@ -18,6 +18,9 @@ namespace Tests {
       proto.Prove();
 
       EXPECT_TRUE(proto.Verify());
+
+      proto.Prove(QByteArray("short"));
+      EXPECT_TRUE(proto.Verify(false));
     }
   }
 
@@ -39,7 +42,7 @@ namespace Tests {
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
 
-    for(int repeat=0; repeat<50; repeat++) {
+    for(int repeat=0; repeat<1; repeat++) {
       int count = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
       int author_idx = Random::GetInstance().GetInt(0, count);
    
@@ -75,9 +78,12 @@ namespace Tests {
     for(int i=0; i<20; i++) {
       proof.GenerateCommit();
       proof.GenerateChallenge();
-      proof.Prove();
 
+      proof.Prove();
       EXPECT_TRUE(proof.Verify());
+
+      proof.Prove(QByteArray("short"));
+      EXPECT_TRUE(proof.Verify(false));
     }
   }
 
@@ -98,7 +104,7 @@ namespace Tests {
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
     QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
 
-    for(int repeat=0; repeat<50; repeat++) {
+    for(int repeat=0; repeat<5; repeat++) {
       int count = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
       int author_idx = Random::GetInstance().GetInt(0, count);
    

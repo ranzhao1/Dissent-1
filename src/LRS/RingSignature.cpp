@@ -16,7 +16,7 @@ namespace LRS {
     _proofs(proofs),
     _real_idx(real_idx)
   {
-    Q_ASSERT(real_idx > 0 && real_idx < proofs.count());
+    Q_ASSERT(real_idx >= 0 && real_idx < proofs.count());
   }
 
   RingSignature::~RingSignature() {}
@@ -46,6 +46,8 @@ namespace LRS {
     QByteArray challenge = CreateChallenge(msg, commits);
     const int chal_len = challenge.count();
 
+    qDebug() << "Master c" << challenge.toHex();
+
     // XOR all challenges together
     QByteArray final = challenge;
     for(int i=0; i<count; i++) {
@@ -54,14 +56,16 @@ namespace LRS {
       qDebug() << "chal" << i << challenges[i].toHex();
       final = Xor(final, right); 
     }
+    qDebug() << "Final c" << final.toHex();
 
     // The final challenge is given to the true prover
-    _proofs[_real_idx]->Prove(final);
 
     // The final proof is then
     // commits:   t1, t2, ..., tN
     // challenge: c
     // responses: r1, r2, ..., rN
+
+    _proofs[_real_idx]->Prove(final);
 
     QList<QList<QByteArray> > sig_pieces;
 
@@ -162,6 +166,7 @@ namespace LRS {
     // Check that hash matches XOR
     if(challenge == test) return true;
     else {
+      qDebug() << "orig" << challenge.toHex() << "found" << test.toHex();
       qDebug() << "Challenge does not match up";
       return false;
     }
@@ -182,7 +187,8 @@ namespace LRS {
       hash->Update(commits[i]);
     }
 
-    return hash->ComputeHash();
+    // We use 80-bit challenges
+    return hash->ComputeHash().left(10);
   }
 
   QByteArray RingSignature::Xor(const QByteArray &a, const QByteArray &b) const

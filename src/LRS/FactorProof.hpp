@@ -111,7 +111,7 @@ namespace LRS {
       /**
        * Get the challenge integer for this proof
        */
-      virtual inline Integer GetChallenge() const { return _orig_challenge; }
+      virtual inline Integer GetChallenge() const { return _challenge; }
 
       /**
        * Get a serialized representation of the response
@@ -132,7 +132,6 @@ namespace LRS {
       Integer _commit_secret;
 
       Integer _challenge;
-      Integer _orig_challenge;
 
       Integer _response;
   };
