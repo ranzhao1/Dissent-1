@@ -1,33 +1,46 @@
-#ifndef DISSENT_LRS_SCHNORR_PROOF_H_GUARD
-#define DISSENT_LRS_SCHNORR_PROOF_H_GUARD
-
-#include "Crypto/AbstractGroup/AbstractGroup.hpp"
-#include "Crypto/AbstractGroup/Element.hpp"
+#ifndef DISSENT_LRS_FACTOR_PROOF_H_GUARD
+#define DISSENT_LRS_FACTOR_PROOF_H_GUARD
 
 #include "SigmaProof.hpp"
 
 namespace Dissent {
 namespace LRS {
 
-  typedef Dissent::Crypto::AbstractGroup::Element Element;
-
-  class SchnorrProof : public SigmaProof {
+  /**
+   * Protocol derived from:
+   *   "Short Proofs of Knowledge for Factoring"
+   *   Guillaume Poupard and Jacques Stern (PKC 2000)
+   *   http://www.di.ens.fr/~stern/data/St84.pdf
+   */
+  class FactorProof : public SigmaProof {
 
     public:
 
-      typedef Dissent::Crypto::AbstractGroup::AbstractGroup AbstractGroup;
+      /**
+       * The prover can cheat with probability 2^{-parameter}
+       */
+      static const int SoundnessParameter = 80;
+
+      /**
+       * For now, we only can prove factorization of integers
+       * of this number of bits
+       */
+      static const int DefaultModulusBits = 2048;
+
+      /**
+       * This is the constant K in the paper
+       */
+      static const int ParallelRounds = 16;
 
       /**
        * Constructor
        */
-      SchnorrProof(QSharedPointer<AbstractGroup> g);
+      FactorProof();
 
-      SchnorrProof(QSharedPointer<AbstractGroup> g, 
-          QByteArray witness, 
+      FactorProof(QByteArray witness, 
           QByteArray witness_image);
 
-      SchnorrProof(QSharedPointer<AbstractGroup> g, 
-          QByteArray witness_image,
+      FactorProof(QByteArray witness_image,
           QByteArray commit, 
           QByteArray challenge, 
           QByteArray response);
@@ -35,7 +48,7 @@ namespace LRS {
       /**
        * Destructor
        */
-      virtual ~SchnorrProof();
+      virtual ~FactorProof();
 
       /**
        * Generate the commitment for the start of
@@ -115,17 +128,15 @@ namespace LRS {
 
     private:
 
-      Integer CommitHash() const;
+      QList<Integer> GetPublicIntegers() const;
 
-      QSharedPointer<AbstractGroup> _group;
+      Integer _witness; // witness == the factor p (or q) of n
+      Integer _witness_image; // witness_image == n = p*q
 
-      Integer _witness;
-      Element _witness_image;
-      Element _commit;
+      QList<Integer> _commit;
       Integer _commit_secret;
       Integer _challenge;
       Integer _response;
-
   };
 
 }

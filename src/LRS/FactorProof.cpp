@@ -1,5 +1,5 @@
 
-#include "SchnorrProof.hpp"
+#include "FactorProof.hpp"
 #include "Crypto/CryptoFactory.hpp"
 
 using Dissent::Crypto::Hash;
@@ -8,57 +8,59 @@ using Dissent::Crypto::CryptoFactory;
 namespace Dissent {
 namespace LRS {
 
-  SchnorrProof::SchnorrProof(QSharedPointer<AbstractGroup> g) :
+  FactorProof::FactorProof() :
     SigmaProof(),
-    _group(g),
-    _witness(_group->RandomExponent()),
-    _witness_image(_group->Exponentiate(_group->GetGenerator(), _witness))
+    _witness(Integer::GetRandomInteger(DefaultModulusBits/2, true)),
+    _witness_image(_witness * Integer::GetRandomInteger(DefaultModulusBits/2, true))
   {
   }
 
-  SchnorrProof::SchnorrProof(QSharedPointer<AbstractGroup> g, 
-          QByteArray witness, 
+  FactorProof::FactorProof(QByteArray witness, 
           QByteArray witness_image) :
-    _group(g),
     _witness(witness),
-    _witness_image(_group->ElementFromByteArray(witness_image))
+    _witness_image(witness_image)
   {}
 
-  SchnorrProof::SchnorrProof(QSharedPointer<AbstractGroup> g, 
-      QByteArray witness_image,
+  FactorProof::FactorProof(QByteArray witness_image,
       QByteArray commit, 
       QByteArray challenge, 
       QByteArray response) :
     SigmaProof(),
-    _group(g),
-    _witness_image(_group->ElementFromByteArray(witness_image)),
-    _commit(_group->ElementFromByteArray(commit)),
+    _witness_image(witness_image),
+    _commit(commit),
     _challenge(challenge),
     _response(response)
   {
   }
 
-  SchnorrProof::~SchnorrProof() {};
+  FactorProof::~FactorProof() {};
 
-  void SchnorrProof::GenerateCommit()
+  void FactorProof::GenerateCommit()
   {
-    // v = random integer
-    // t = g^v
-    _commit_secret = _group->RandomExponent();
+    // pick random exponent r in [0, 2^log{n})
+    _commit_secret = Integer::GetRandomInteger(0, DefaultModulusBits-1, false);
+
+    // pick K random z_i values and
+    // compute x_i = z_i^r mod n
+    for(int i=0; i<ParallelRounds; i++) {
+      _commit.append(Integer::GetRandomInteger(1, _witness_image-1).Pow();
+    }
+
+
     _commit = _group->Exponentiate(_group->GetGenerator(), _commit_secret);
   };
 
-  void SchnorrProof::GenerateChallenge()
+  void FactorProof::GenerateChallenge()
   {
     _challenge = CommitHash();
   }
 
-  void SchnorrProof::Prove()
+  void FactorProof::Prove()
   {
     Prove(_challenge);
   }
 
-  void SchnorrProof::Prove(QByteArray challenge)
+  void FactorProof::Prove(QByteArray challenge)
   {
     const Integer e = _group->RandomExponent();
     const QByteArray e_bytes = e.GetByteArray();
@@ -75,7 +77,7 @@ namespace LRS {
     return Prove(Integer("0x" + final));  
   }
 
-  void SchnorrProof::Prove(Integer challenge)
+  void FactorProof::Prove(Integer challenge)
   {
     _challenge = challenge;
 
@@ -83,7 +85,7 @@ namespace LRS {
     _response = (_commit_secret - (_witness.MultiplyMod(challenge, _group->GetOrder()))) % _group->GetOrder();
   }
 
-  void SchnorrProof::FakeProve()
+  void FactorProof::FakeProve()
   {
     // pick c, r at random
     _challenge = _group->RandomExponent();
@@ -99,7 +101,7 @@ namespace LRS {
     _witness = 0;
   }
 
-  bool SchnorrProof::Verify(bool verify_challenge) const 
+  bool FactorProof::Verify(bool verify_challenge) const 
   {
     // (g^x)^c
     Element tmp = _group->Exponentiate(_witness_image, _challenge);
@@ -128,7 +130,17 @@ namespace LRS {
     return valid;
   };
 
-  Integer SchnorrProof::CommitHash() const 
+  QVariant FactorProof::ElementToVariant(Element e) const
+  {
+    return QVariant(_group->ElementToByteArray(e));
+  }
+
+  Element FactorProof::VariantToElement(QVariant v) const
+  {
+    return _group->ElementFromByteArray(v.toByteArray());
+  }
+
+  Integer FactorProof::CommitHash() const 
   {
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     hash->Restart();
@@ -139,11 +151,15 @@ namespace LRS {
     hash->Update(_group->ElementToByteArray(_witness_image));
     hash->Update(_group->ElementToByteArray(_commit));
 
-    qDebug() << "g" << _group->ElementToByteArray(_group->GetGenerator()).toHex();
-    qDebug() << "wi" << _group->ElementToByteArray(_witness_image).toHex();
-    qDebug() << "commit" << _group->ElementToByteArray(_commit).toHex();
-
     return Integer(hash->ComputeHash()) % _group->GetOrder();
   }
+
+  QList<Integer> FactorProof::GetPublicIntegers() const
+  {
+    QList<Integer> out;
+
+    return out;
+  }
+
 }
 }

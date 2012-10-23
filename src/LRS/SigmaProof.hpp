@@ -70,6 +70,11 @@ namespace LRS {
 
       /**
        * Verify the (commit, challenge, response) tuple
+       * @param verify_challenge check that the challenge is
+       *        a hash of the proof parameters and the commitment.
+       *        This should be "true" to verify a signle non-interactive
+       *        proof, but should be "false" when the proof is used
+       *        as part of a larger ring signature scheme.
        */
       virtual bool Verify(bool verify_challenge = true) const = 0;
 

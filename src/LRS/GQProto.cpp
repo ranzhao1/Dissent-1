@@ -3,7 +3,7 @@
 #include <cryptopp/osrng.h>
 #include <cryptopp/rsa.h>
 
-#include "GQProtocol.hpp"
+#include "FactorProof.hpp"
 #include "Crypto/CppIntegerData.hpp"
 #include "Crypto/CryptoFactory.hpp"
 
@@ -18,13 +18,13 @@ namespace LRS {
    * Implementation of the Guillou-Quisquater identification protocol
    */
 
-  GQProtocol::GQProtocol()
+  FactorProof::FactorProof()
   {
   }
 
-  GQProtocol::~GQProtocol() {};
+  FactorProof::~FactorProof() {};
 
-  void GQProtocol::GenerateWitness(SigmaProof &p)
+  void FactorProof::GenerateWitness(SigmaProof &p)
   {
     CryptoPP::AutoSeededX917RNG<CryptoPP::AES()> rng;
     CryptoPP::InvertibleRSAFunction priv;
@@ -52,7 +52,7 @@ namespace LRS {
     p.witness_image = QVariant(public_l);
   };
 
-  void GQProtocol::GenerateCommit(SigmaProof &p) 
+  void FactorProof::GenerateCommit(SigmaProof &p) 
   {
     // get pair (n, e)
     QList<QVariant> public_l(p.witness_image.toList());
@@ -71,7 +71,7 @@ namespace LRS {
     p.commit_secret = IntegerToVariant(v);
   };
 
-  void GQProtocol::GenerateChallenge(SigmaProof &p) 
+  void FactorProof::GenerateChallenge(SigmaProof &p) 
   {
     Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     hash->Restart();
@@ -92,7 +92,7 @@ namespace LRS {
     p.challenge = Integer(hash->ComputeHash()) % _group->GetOrder();
   }
 
-  void GQProtocol::Prove(SigmaProof &p) 
+  void FactorProof::Prove(SigmaProof &p) 
   {
     // witness is (x, d)
     QPair<QByteArray, QByteArray> secret_pair(p.witness.toPair());
@@ -108,7 +108,7 @@ namespace LRS {
     p.response = VariantToInteger(p.commit).MultiplyMod(out, n);
   }
 
-  void GQProtocol::FakeProve(SigmaProof &p)
+  void FactorProof::FakeProve(SigmaProof &p)
   {
     QPair<QByteArray, QByteArray> public_pair(p.witness_image.toPair());
     const Integer n(public_pair.first);
@@ -137,7 +137,7 @@ namespace LRS {
     p.challenge = c;
   }
 
-  bool GQProtocol::Verify(SigmaProof &p) 
+  bool FactorProof::Verify(SigmaProof &p) 
   {
     return false;
   }
