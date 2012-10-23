@@ -62,11 +62,9 @@ namespace LRS {
     Prove(_challenge);
   }
 
-  void FactorProof::Prove(QByteArray)
+  void FactorProof::Prove(QByteArray challenge)
   {
-    qFatal("Not implemented");
-    /*
-    const Integer e = _group->RandomExponent();
+    const Integer e = Integer::GetRandomInteger(0, BiggestChallenge(), false);
     const QByteArray e_bytes = e.GetByteArray();
     const int e_orig_len = e_bytes.count();
 
@@ -79,7 +77,6 @@ namespace LRS {
     Q_ASSERT(e_orig_len == final.count());
 
     return Prove(Integer("0x" + final));  
-    */
   }
 
   void FactorProof::Prove(Integer challenge)
@@ -91,36 +88,37 @@ namespace LRS {
     const Integer q = n / p; // n = p*q
     const Integer phi_n = (p - 1) * (q - 1);
 
-    /*
-    Q_ASSERT(n == (p*q));
-    Q_ASSERT(n > phi_n);
-    Q_ASSERT(_challenge > 0);
-    Q_ASSERT(_challenge < q);
-    */
-
     // response = commit_secret + ((n - phi(n)) * challenge)
     _response = (_commit_secret + ((n - phi_n) * _challenge));
-
-    Q_ASSERT(_response > 0);
   }
 
   void FactorProof::FakeProve()
   {
-    qFatal("Not implemented");
-    /*
     // pick c, r at random
-    _challenge = _group->RandomExponent();
-    _response = _group->RandomExponent();
+    _challenge = Integer::GetRandomInteger(0, BiggestChallenge(), false);
+    _response = Integer::GetRandomInteger(0, DefaultModulusBits-2, false);
 
-    _commit = _group->Exponentiate(_witness_image, _challenge);
-    const Element tmp = _group->Exponentiate(_group->GetGenerator(), _response);
-    // commit = (g^r) * (g^x)^c
-    _commit = _group->Multiply(tmp, _commit);
+    const QList<Integer> pubs = GetPublicIntegers();
+    _commit.clear();
+
+    // exp = y - n*chal
+    Integer exponent = _response - (_witness_image * _challenge);
+
+    for(int i=0; i<ParallelRounds; i++) {
+      Integer result;
+
+      if(exponent >= 0) {
+        result = pubs[i].Pow(exponent, _witness_image);
+      } else {
+        result = pubs[i].Pow(Integer(-1)* exponent, _witness_image).ModInverse(_witness_image);
+      }
+
+      _commit.append(result);
+    }
 
     // When we're fake proving, we have no commit secret and no witness
     _commit_secret = 0;
     _witness = 0;
-    */
   }
 
   bool FactorProof::Verify(bool verify_challenge) const 
@@ -181,7 +179,12 @@ namespace LRS {
     }
 
     // Value of hash mod 2^80
-    return Integer(hash->ComputeHash()) % Integer(2).Pow(SoundnessParameter, _witness_image);
+    return Integer(hash->ComputeHash()) % BiggestChallenge();
+  }
+
+  Integer FactorProof::BiggestChallenge() const 
+  {
+    return Integer(2).Pow(SoundnessParameter, _witness_image);
   }
 
   QList<Integer> FactorProof::GetPublicIntegers() const

@@ -75,6 +75,44 @@ namespace Tests {
     }
   }
 
+  TEST(LRSProofTest, FactorProveFake)
+  {
+    FactorProof proto;
+
+    for(int i=0; i<20; i++) {
+      proto.SetWitness(0); 
+
+      proto.FakeProve();
+      EXPECT_TRUE(proto.Verify(false));
+    }
+  }
+
+  /*
+  TEST(LRSProofTest, FactorRing)
+  {
+    Library *lib = CryptoFactory::GetInstance().GetLibrary();
+    QScopedPointer<Dissent::Utils::Random> rand(lib->GetRandomNumberGenerator());
+
+    for(int repeat=0; repeat<50; repeat++) {
+      int count = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
+      //int sender = Random::GetInstance().GetInt(0, count);
+   
+      QList<QSharedPointer<SigmaProof> > list;
+      for(int j=0; j<count; j++) {
+        list.append(QSharedPointer<SigmaProof>(new FactorProof()));
+      }
+
+      QByteArray msg(1024, '\0');
+      rand->GenerateBlock(msg);
+
+      RingSignature ring(GetParam(), QSharedPointer<SigmaProof>(new FactorProof()), list);
+
+      QByteArray sig = ring.Sign(msg);
+      EXPECT_TRUE(ring.Verify(msg, sig));
+    }
+  }
+  */
+
 }
 }
 

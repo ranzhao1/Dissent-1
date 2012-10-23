@@ -130,6 +130,7 @@ namespace LRS {
 
       Integer CommitHash() const;
       QList<Integer> GetPublicIntegers() const;
+      Integer BiggestChallenge() const;
 
       Integer _witness; // witness == the factor p (or q) of n
       Integer _witness_image; // witness_image == n = p*q
