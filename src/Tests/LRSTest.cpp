@@ -63,6 +63,18 @@ namespace Tests {
         OpenECGroup::GetGroup(ECParams::NIST_P192),
         BotanECGroup::GetGroup(ECParams::NIST_P192)));
 
+  TEST(LRSProofTest, FactorProve)
+  {
+    FactorProof proof;
+    for(int i=0; i<20; i++) {
+      proof.GenerateCommit();
+      proof.GenerateChallenge();
+      proof.Prove();
+
+      EXPECT_TRUE(proof.Verify());
+    }
+  }
+
 }
 }
 

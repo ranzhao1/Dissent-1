@@ -107,13 +107,13 @@ namespace LRS {
        * For example, if this is a proof of knowledge of discrete
        * log, return g^x
        */
-      virtual QByteArray GetWitnessImage() const { return _group->ElementToByteArray(_witness_image); }
+      virtual QByteArray GetWitnessImage() const { return _witness_image.GetByteArray(); }
 
       /**
        * Get a serialized representation of the commit
        * for this Sigma proof
        */
-      virtual QByteArray GetCommit() const { return _group->ElementToByteArray(_commit); }
+      virtual QByteArray GetCommit() const;
 
       /**
        * Get the challenge integer for this proof
@@ -128,6 +128,7 @@ namespace LRS {
 
     private:
 
+      Integer CommitHash() const;
       QList<Integer> GetPublicIntegers() const;
 
       Integer _witness; // witness == the factor p (or q) of n
