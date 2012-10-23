@@ -50,21 +50,12 @@ namespace LRS {
 
   void SchnorrProof::GenerateChallenge()
   {
-    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
-    hash->Restart();
-
-    // Hash group definition 
-    hash->Update(_group->GetByteArray());
-    hash->Update(_group->ElementToByteArray(_group->GetGenerator()));
-    hash->Update(_group->ElementToByteArray(_witness_image));
-    hash->Update(_group->ElementToByteArray(_commit));
-
-    _challenge = Integer(hash->ComputeHash()) % _group->GetOrder();
+    _challenge = CommitHash();
   }
 
   void SchnorrProof::Prove()
   {
-    Prove(_group->RandomExponent());
+    Prove(_challenge);
   }
 
   void SchnorrProof::Prove(QByteArray challenge)
@@ -108,7 +99,7 @@ namespace LRS {
     _witness = 0;
   }
 
-  bool SchnorrProof::Verify() const 
+  bool SchnorrProof::Verify(bool verify_challenge) const 
   {
     // (g^x)^c
     Element tmp = _group->Exponentiate(_witness_image, _challenge);
@@ -124,7 +115,17 @@ namespace LRS {
 
     // should equal g^{-v} * g{v} == g^0 == 1
     out = _group->Multiply(out, _commit);
-    return _group->IsIdentity(out);
+
+    // check hash
+    Integer test;
+
+    bool valid = _group->IsIdentity(out);
+    // if verify_challenge is set, make sure that challenge is
+    // a hash of the commit 
+    if(verify_challenge) 
+      valid = valid && (_challenge == CommitHash());
+
+    return valid;
   };
 
   QVariant SchnorrProof::ElementToVariant(Element e) const
@@ -135,6 +136,24 @@ namespace LRS {
   Element SchnorrProof::VariantToElement(QVariant v) const
   {
     return _group->ElementFromByteArray(v.toByteArray());
+  }
+
+  Integer SchnorrProof::CommitHash() const 
+  {
+    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
+    hash->Restart();
+
+    // Hash group definition 
+    hash->Update(_group->GetByteArray());
+    hash->Update(_group->ElementToByteArray(_group->GetGenerator()));
+    hash->Update(_group->ElementToByteArray(_witness_image));
+    hash->Update(_group->ElementToByteArray(_commit));
+
+    qDebug() << "g" << _group->ElementToByteArray(_group->GetGenerator()).toHex();
+    qDebug() << "wi" << _group->ElementToByteArray(_witness_image).toHex();
+    qDebug() << "commit" << _group->ElementToByteArray(_commit).toHex();
+
+    return Integer(hash->ComputeHash()) % _group->GetOrder();
   }
 }
 }

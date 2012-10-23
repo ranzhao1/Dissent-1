@@ -28,7 +28,7 @@ namespace Tests {
       proto.SetWitness(0); 
 
       proto.FakeProve();
-      EXPECT_TRUE(proto.Verify());
+      EXPECT_TRUE(proto.Verify(false));
     }
   }
 

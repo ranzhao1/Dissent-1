@@ -47,7 +47,7 @@ namespace LRS {
 
       virtual void FakeProve();
 
-      virtual bool Verify() const;
+      virtual bool Verify(bool verify_challenge=true) const;
 
       inline void SetWitness(Integer w) { _witness = w; }
 
@@ -56,6 +56,8 @@ namespace LRS {
       virtual inline Integer GetChallenge() const { return _challenge; }
 
       virtual QByteArray GetResponse() const { return _response.GetByteArray(); }
+
+      Integer CommitHash() const;
 
     private:
 

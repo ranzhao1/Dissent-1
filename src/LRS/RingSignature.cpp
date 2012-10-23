@@ -123,7 +123,7 @@ namespace LRS {
             commits[i], 
             challenges[i], 
             responses[i]));
-      if(!p->Verify()) {
+      if(!p->Verify(false)) {
         qDebug() << "Proof" << i << "was invalid";
         return false;
       }

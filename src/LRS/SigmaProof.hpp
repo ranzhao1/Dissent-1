@@ -71,7 +71,7 @@ namespace LRS {
       /**
        * Verify the (commit, challenge, response) tuple
        */
-      virtual bool Verify() const = 0;
+      virtual bool Verify(bool verify_challenge = true) const = 0;
 
       /**
        * Get the image of the witness for this proof of knowledge.
