@@ -75,13 +75,6 @@ namespace LRS {
       virtual void Prove(QByteArray challenge);
 
       /**
-       * Prove using the specified integer as a challenge.
-       * The integer value is used _unmodified_, unlike
-       * the above version of Prove().
-       */
-      virtual void Prove(Integer challenge);
-
-      /**
        * Create a (commit, challenge, response) tuple
        * that is valid
        */
@@ -118,7 +111,7 @@ namespace LRS {
       /**
        * Get the challenge integer for this proof
        */
-      virtual inline Integer GetChallenge() const { return _challenge; }
+      virtual inline Integer GetChallenge() const { return _orig_challenge; }
 
       /**
        * Get a serialized representation of the response
@@ -137,7 +130,10 @@ namespace LRS {
 
       QList<Integer> _commit;
       Integer _commit_secret;
+
       Integer _challenge;
+      Integer _orig_challenge;
+
       Integer _response;
   };
 

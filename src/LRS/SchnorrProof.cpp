@@ -1,36 +1,40 @@
 
-#include "SchnorrProof.hpp"
+#include "Crypto/AbstractGroup/CppECGroup.hpp"
+#include "Crypto/AbstractGroup/ECParams.hpp"
 #include "Crypto/CryptoFactory.hpp"
 
+#include "SchnorrProof.hpp"
+
+using Dissent::Crypto::AbstractGroup::CppECGroup;
+using Dissent::Crypto::AbstractGroup::ECParams;
 using Dissent::Crypto::Hash;
 using Dissent::Crypto::CryptoFactory;
 
 namespace Dissent {
 namespace LRS {
 
-  SchnorrProof::SchnorrProof(QSharedPointer<AbstractGroup> g) :
-    SigmaProof(),
-    _group(g),
+  SchnorrProof::SchnorrProof() :
+    SigmaProof(ProofType_SchnorrProof),
+    _group(CppECGroup::GetGroup(ECParams::NIST_P192)),
     _witness(_group->RandomExponent()),
     _witness_image(_group->Exponentiate(_group->GetGenerator(), _witness))
   {
   }
 
-  SchnorrProof::SchnorrProof(QSharedPointer<AbstractGroup> g, 
-          QByteArray witness, 
+  SchnorrProof::SchnorrProof(QByteArray witness, 
           QByteArray witness_image) :
-    _group(g),
+    SigmaProof(ProofType_SchnorrProof),
+    _group(CppECGroup::GetGroup(ECParams::NIST_P192)),
     _witness(witness),
     _witness_image(_group->ElementFromByteArray(witness_image))
   {}
 
-  SchnorrProof::SchnorrProof(QSharedPointer<AbstractGroup> g, 
-      QByteArray witness_image,
+  SchnorrProof::SchnorrProof(QByteArray witness_image,
       QByteArray commit, 
       QByteArray challenge, 
       QByteArray response) :
-    SigmaProof(),
-    _group(g),
+    SigmaProof(ProofType_SchnorrProof),
+    _group(CppECGroup::GetGroup(ECParams::NIST_P192)),
     _witness_image(_group->ElementFromByteArray(witness_image)),
     _commit(_group->ElementFromByteArray(commit)),
     _challenge(challenge),
@@ -53,11 +57,6 @@ namespace LRS {
     _challenge = CommitHash();
   }
 
-  void SchnorrProof::Prove()
-  {
-    Prove(_challenge);
-  }
-
   void SchnorrProof::Prove(QByteArray challenge)
   {
     const Integer e = _group->RandomExponent();
@@ -72,15 +71,13 @@ namespace LRS {
 
     Q_ASSERT(e_orig_len == final.count());
 
-    return Prove(Integer("0x" + final));  
+    _challenge = Integer(final);  
   }
 
-  void SchnorrProof::Prove(Integer challenge)
+  void SchnorrProof::Prove()
   {
-    _challenge = challenge;
-
     // r = v - cx
-    _response = (_commit_secret - (_witness.MultiplyMod(challenge, _group->GetOrder()))) % _group->GetOrder();
+    _response = (_commit_secret - (_witness.MultiplyMod(_challenge, _group->GetOrder()))) % _group->GetOrder();
   }
 
   void SchnorrProof::FakeProve()

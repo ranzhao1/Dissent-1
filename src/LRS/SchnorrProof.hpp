@@ -20,14 +20,12 @@ namespace LRS {
       /**
        * Constructor
        */
-      SchnorrProof(QSharedPointer<AbstractGroup> g);
+      SchnorrProof();
 
-      SchnorrProof(QSharedPointer<AbstractGroup> g, 
-          QByteArray witness, 
+      SchnorrProof(QByteArray witness, 
           QByteArray witness_image);
 
-      SchnorrProof(QSharedPointer<AbstractGroup> g, 
-          QByteArray witness_image,
+      SchnorrProof(QByteArray witness_image,
           QByteArray commit, 
           QByteArray challenge, 
           QByteArray response);
@@ -60,13 +58,6 @@ namespace LRS {
        * up to the maximum length.
        */
       virtual void Prove(QByteArray challenge);
-
-      /**
-       * Prove using the specified integer as a challenge.
-       * The integer value is used _unmodified_, unlike
-       * the above version of Prove().
-       */
-      virtual void Prove(Integer challenge);
 
       /**
        * Create a (commit, challenge, response) tuple

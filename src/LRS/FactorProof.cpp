@@ -10,7 +10,7 @@ namespace Dissent {
 namespace LRS {
 
   FactorProof::FactorProof() :
-    SigmaProof(),
+    SigmaProof(ProofType_FactorProof),
     _witness(Integer::GetRandomInteger(DefaultModulusBits/2, true)),
     _witness_image(_witness * Integer::GetRandomInteger(DefaultModulusBits/2, true))
   {
@@ -18,6 +18,7 @@ namespace LRS {
 
   FactorProof::FactorProof(QByteArray witness, 
           QByteArray witness_image) :
+    SigmaProof(ProofType_FactorProof),
     _witness(witness),
     _witness_image(witness_image)
   {}
@@ -26,7 +27,7 @@ namespace LRS {
       QByteArray commit, 
       QByteArray challenge, 
       QByteArray response) :
-    SigmaProof(),
+    SigmaProof(ProofType_FactorProof),
     _witness_image(witness_image),
     _challenge(challenge),
     _response(response)
@@ -48,7 +49,7 @@ namespace LRS {
     _commit.clear();
     for(int i=0; i<pubs.count(); i++) {
       _commit.append(pubs[i].Pow(_commit_secret, _witness_image));
-      qDebug() << "commit[" << i << "]" << _commit[i].GetByteArray().toHex();
+      //qDebug() << "commit[" << i << "]" << _commit[i].GetByteArray().toHex();
     }
   };
 
@@ -57,32 +58,25 @@ namespace LRS {
     _challenge = CommitHash();
   }
 
-  void FactorProof::Prove()
-  {
-    Prove(_challenge);
-  }
-
   void FactorProof::Prove(QByteArray challenge)
   {
-    const Integer e = Integer::GetRandomInteger(0, BiggestChallenge(), false);
-    const QByteArray e_bytes = e.GetByteArray();
-    const int e_orig_len = e_bytes.count();
+    _orig_challenge = Integer(challenge);
 
-    if(e_bytes.count() <= challenge.count())
-      qFatal("Challenge is bigger than group order");
+    if(_orig_challenge >= BiggestChallenge()) {
+      _challenge = _orig_challenge % BiggestChallenge();
+    } else {
+      const Integer e = Integer::GetRandomInteger(0, BiggestChallenge(), false);
+      const QByteArray e_bytes = e.GetByteArray();
 
-    // Replace the rightmost bytes of e with the challenge
-    const QByteArray final = e_bytes.left(e_bytes.count() - challenge.count()) + challenge;
+      // Replace the rightmost bytes of e with the challenge
+      _challenge = Integer(e_bytes.left(e_bytes.count() - challenge.count()) + challenge);
+    }
 
-    Q_ASSERT(e_orig_len == final.count());
-
-    return Prove(Integer("0x" + final));  
+    Prove();
   }
 
-  void FactorProof::Prove(Integer challenge)
+  void FactorProof::Prove()
   {
-    _challenge = challenge;
-
     const Integer n = _witness_image;
     const Integer p = _witness;
     const Integer q = n / p; // n = p*q
@@ -94,7 +88,14 @@ namespace LRS {
 
   void FactorProof::FakeProve()
   {
+    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
+    Random *rnd = CryptoFactory::GetInstance().GetLibrary()->GetRandomNumberGenerator();
+
+    QByteArray bytes(hash->GetDigestSize(), '\0');
+    rnd->GenerateBlock(bytes); 
+
     // pick c, r at random
+    _orig_challenge = Integer(bytes);
     _challenge = Integer::GetRandomInteger(0, BiggestChallenge(), false);
     _response = Integer::GetRandomInteger(0, DefaultModulusBits-2, false);
 
@@ -152,7 +153,7 @@ namespace LRS {
 
       if(result != _commit[i]) {
         qWarning() << "Mismatched commit value caused failed proof";
-        qDebug() << result.GetByteArray().toHex() << pubs[i].GetByteArray().toHex();
+        //qDebug() << result.GetByteArray().toHex() << pubs[i].GetByteArray().toHex();
         return false;
       }
     }
@@ -198,7 +199,7 @@ namespace LRS {
       rnd->GenerateBlock(block);
       out.append(Integer(block));
 
-      qDebug() << "pub["<<i<<"]"<<out[i].GetByteArray().toHex();
+      //qDebug() << "pub["<<i<<"]"<<out[i].GetByteArray().toHex();
     }
 
     return out;

@@ -14,6 +14,11 @@ namespace LRS {
 
     public:
 
+      typedef enum {
+        ProofType_FactorProof,
+        ProofType_SchnorrProof
+      } ProofType;
+
       /**
        * Constructor
        *
@@ -24,7 +29,9 @@ namespace LRS {
        * proof-of-knowledge for discrete log,
        * generate a pair (x, g^x) for a random x.
        */
-      SigmaProof() {}
+      SigmaProof(ProofType type) :
+        _type(type)
+      {}
 
       /**
        * Destructor
@@ -54,13 +61,6 @@ namespace LRS {
        * up to the maximum length.
        */
       virtual void Prove(QByteArray challenge) = 0;
-
-      /**
-       * Prove using the specified integer as a challenge.
-       * The integer value is used _unmodified_, unlike
-       * the above version of Prove().
-       */
-      virtual void Prove(Integer challenge) = 0;
 
       /**
        * Create a (commit, challenge, response) tuple
@@ -102,6 +102,11 @@ namespace LRS {
        */
       virtual QByteArray GetResponse() const = 0;
 
+      /**
+       * Get type of proof
+       */
+      inline ProofType GetProofType() const { return _type; }
+
     protected:
 
       QVariant IntegerToVariant(Integer i) const;
@@ -109,6 +114,8 @@ namespace LRS {
       Integer VariantToInteger(QVariant v) const;
 
     private:
+
+      ProofType _type;
 
   };
 

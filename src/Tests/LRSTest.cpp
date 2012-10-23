@@ -9,7 +9,8 @@ namespace Tests {
 
   TEST_P(LRSProofTest, SchnorrProve)
   {
-    SchnorrProof proto(GetParam());
+    //SchnorrProof proto(GetParam());
+    SchnorrProof proto;
 
     for(int i=0; i<500; i++) {
       proto.GenerateCommit();
@@ -22,7 +23,8 @@ namespace Tests {
 
   TEST_P(LRSProofTest, SchnorrProveFake)
   {
-    SchnorrProof proto(GetParam());
+    //SchnorrProof proto(GetParam());
+    SchnorrProof proto;
 
     for(int i=0; i<500; i++) {
       proto.SetWitness(0); 
@@ -39,20 +41,24 @@ namespace Tests {
 
     for(int repeat=0; repeat<50; repeat++) {
       int count = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-      //int sender = Random::GetInstance().GetInt(0, count);
+      int author_idx = Random::GetInstance().GetInt(0, count);
    
       QList<QSharedPointer<SigmaProof> > list;
       for(int j=0; j<count; j++) {
-        list.append(QSharedPointer<SigmaProof>(new SchnorrProof(GetParam())));
+        list.append(QSharedPointer<SigmaProof>(new SchnorrProof()));
       }
 
       QByteArray msg(1024, '\0');
       rand->GenerateBlock(msg);
 
-      RingSignature ring(GetParam(), QSharedPointer<SigmaProof>(new SchnorrProof(GetParam())), list);
+      RingSignature ring(list, author_idx);
 
       QByteArray sig = ring.Sign(msg);
       EXPECT_TRUE(ring.Verify(msg, sig));
+
+      // Tweak one byte of the message
+      msg[3] = !msg[3];
+      EXPECT_FALSE(ring.Verify(msg, sig));
     }
   }
 
@@ -87,7 +93,6 @@ namespace Tests {
     }
   }
 
-  /*
   TEST(LRSProofTest, FactorRing)
   {
     Library *lib = CryptoFactory::GetInstance().GetLibrary();
@@ -95,7 +100,7 @@ namespace Tests {
 
     for(int repeat=0; repeat<50; repeat++) {
       int count = Random::GetInstance().GetInt(TEST_RANGE_MIN, TEST_RANGE_MAX);
-      //int sender = Random::GetInstance().GetInt(0, count);
+      int author_idx = Random::GetInstance().GetInt(0, count);
    
       QList<QSharedPointer<SigmaProof> > list;
       for(int j=0; j<count; j++) {
@@ -105,13 +110,16 @@ namespace Tests {
       QByteArray msg(1024, '\0');
       rand->GenerateBlock(msg);
 
-      RingSignature ring(GetParam(), QSharedPointer<SigmaProof>(new FactorProof()), list);
+      RingSignature ring(list, author_idx);
 
       QByteArray sig = ring.Sign(msg);
       EXPECT_TRUE(ring.Verify(msg, sig));
+
+      // Tweak one byte of the message
+      msg[3] = !msg[3];
+      EXPECT_FALSE(ring.Verify(msg, sig));
     }
   }
-  */
 
 }
 }

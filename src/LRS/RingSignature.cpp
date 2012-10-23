@@ -1,6 +1,7 @@
 #include "Crypto/CryptoFactory.hpp"
 #include "Crypto/Hash.hpp"
 
+#include "FactorProof.hpp"
 #include "SchnorrProof.hpp"
 #include "RingSignature.hpp"
 
@@ -10,35 +11,36 @@ using Dissent::Crypto::CryptoFactory;
 namespace Dissent {
 namespace LRS {
 
-  RingSignature::RingSignature(QSharedPointer<AbstractGroup> group,
-          QSharedPointer<SigmaProof> real, 
-          QList<QSharedPointer<SigmaProof> > fakes) :
-    _group(group),
-    _real_proof(real),
-    _fake_proofs(fakes)
+  RingSignature::RingSignature(QList<QSharedPointer<SigmaProof> > proofs, 
+      int real_idx) :
+    _proofs(proofs),
+    _real_idx(real_idx)
   {
+    Q_ASSERT(real_idx > 0 && real_idx < proofs.count());
   }
 
   RingSignature::~RingSignature() {}
 
   QByteArray RingSignature::Sign(const QByteArray msg) 
   {
-    const int count = _fake_proofs.count();
+    const int count = _proofs.count();
     QList<QByteArray> commits;
     QList<QByteArray> challenges;
 
-    _real_proof->GenerateCommit();
-    commits.append(_real_proof->GetCommit());
-
     for(int i=0; i<count; i++) {
-      _fake_proofs[i]->FakeProve();
-      commits.append(_fake_proofs[i]->GetCommit());
-      challenges.append(_fake_proofs[i]->GetChallenge().GetByteArray());
+      if(i == _real_idx) {
+        _proofs[i]->GenerateCommit();
+      } else {
+        _proofs[i]->FakeProve();
+      }
+
+      commits.append(_proofs[i]->GetCommit());
+      challenges.append(_proofs[i]->GetChallenge().GetByteArray());
     }
 
-    _witness_images.append(_real_proof->GetWitnessImage());
     for(int i=0; i<count; i++) {
-      _witness_images.append(_fake_proofs[i]->GetWitnessImage());
+      _witness_images.append(_proofs[i]->GetWitnessImage());
+      _proof_types.append(_proofs[i]->GetProofType());
     }
 
     QByteArray challenge = CreateChallenge(msg, commits);
@@ -47,12 +49,14 @@ namespace LRS {
     // XOR all challenges together
     QByteArray final = challenge;
     for(int i=0; i<count; i++) {
+      if(i == _real_idx) continue;
       QByteArray right = challenges[i].right(chal_len);
+      qDebug() << "chal" << i << challenges[i].toHex();
       final = Xor(final, right); 
     }
 
     // The final challenge is given to the true prover
-    _real_proof->Prove(final);
+    _proofs[_real_idx]->Prove(final);
 
     // The final proof is then
     // commits:   t1, t2, ..., tN
@@ -64,16 +68,14 @@ namespace LRS {
     sig_pieces.append(commits);
 
     QList<QByteArray> challenge_list;
-    challenge_list.append(_real_proof->GetChallenge().GetByteArray());
     for(int i=0; i<count; i++) {
-      challenge_list.append(_fake_proofs[i]->GetChallenge().GetByteArray());
+      challenge_list.append(_proofs[i]->GetChallenge().GetByteArray());
     }
     sig_pieces.append(challenge_list);
 
     QList<QByteArray> responses;
-    responses.append(_real_proof->GetResponse());
     for(int i=0; i<count; i++) {
-      responses.append(_fake_proofs[i]->GetResponse());
+      responses.append(_proofs[i]->GetResponse());
     }
     sig_pieces.append(responses);
 
@@ -118,11 +120,28 @@ namespace LRS {
 
     // unserialize the protocols
     for(int i=0; i<commits.count(); i++) {
-      QSharedPointer<SigmaProof> p(new SchnorrProof(_group, 
-            _witness_images[i],
-            commits[i], 
-            challenges[i], 
-            responses[i]));
+      QSharedPointer<SigmaProof> p;
+
+      switch(_proof_types[i]) {
+
+        case SigmaProof::ProofType_FactorProof:
+          p = QSharedPointer<SigmaProof>(new FactorProof(_witness_images[i],
+                commits[i], 
+                challenges[i], 
+                responses[i]));
+          break;
+
+        case SigmaProof::ProofType_SchnorrProof:
+          p = QSharedPointer<SigmaProof>(new SchnorrProof(_witness_images[i],
+                commits[i], 
+                challenges[i], 
+                responses[i]));
+          break;
+
+
+        default:
+          qFatal("Unknown proof type");
+      }
       if(!p->Verify(false)) {
         qDebug() << "Proof" << i << "was invalid";
         return false;
@@ -141,7 +160,11 @@ namespace LRS {
     }
 
     // Check that hash matches XOR
-    return (challenge == test);
+    if(challenge == test) return true;
+    else {
+      qDebug() << "Challenge does not match up";
+      return false;
+    }
   }
 
   QByteArray RingSignature::CreateChallenge(const QByteArray &msg, const QList<QByteArray> &commits) const
