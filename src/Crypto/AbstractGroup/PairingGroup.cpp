@@ -185,9 +185,10 @@ namespace AbstractGroup {
 
     Q_ASSERT(_pairing->isPairingPresent());
 
-  };
+  }
 
   PairingGroup::PairingGroup(const PairingGroup &other) :
+    AbstractGroup(other),
     _param_str(other._param_str),
     _pairing(new Pairing(_param_str.constData(), _param_str.count())),
     _order(other._order),

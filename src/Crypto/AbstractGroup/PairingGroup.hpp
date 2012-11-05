@@ -181,6 +181,8 @@ namespace AbstractGroup {
         return (_field.GetByteArray().count() * 8);
       }
 
+      virtual Element ElementFromHash(const char* data)=0;
+
     protected:
       // Protected constructor
       PairingGroup(GroupSize size);

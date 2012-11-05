@@ -3,6 +3,7 @@
 
 #include "PairingG1Group.hpp"
 #include "PairingElementData.hpp"
+#include "Crypto/CryptoFactory.hpp"
 
 namespace Dissent {
 namespace Crypto {
@@ -102,7 +103,7 @@ namespace AbstractGroup {
     return Element(new PairingElementData<G1>(a));
   }
 
-  bool PairingG1Group::IsIdentity(const Element &a) const 
+  bool PairingG1Group::IsIdentity(const Element &a) const
   {
     //GetElement(a).dump(stdout, "a", 10);
     return GetElement(a).isIdentity();
@@ -183,6 +184,14 @@ namespace AbstractGroup {
     mpz_clear(x);
     mpz_clear(y);
   }
+
+   Element PairingG1Group::ElementFromHash(const char* data)
+   {
+       Hash *hash=CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
+       QByteArray Hashdata=hash->ComputeHash(QByteArray(data));
+       G1 ElementHash(this->GetPairing(),Hashdata.data(),sizeof(Hashdata.data()));
+       return Element(new PairingElementData<G1>(ElementHash));
+   }
 }
 }
 }

@@ -125,7 +125,7 @@ namespace AbstractGroup {
       /**
        * Return true if is element of group -- unsupported
        */
-      virtual inline bool IsGenerator(const Element &a) const { 
+      virtual inline bool IsGenerator(const Element &a) const {
         return IsElement(a) && !IsIdentity(a); 
       }
 
@@ -137,6 +137,7 @@ namespace AbstractGroup {
         return QString("PairingG1Group");
       }
 
+       virtual Element ElementFromHash(const char* data);
 
     private:
 
