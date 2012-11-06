@@ -30,6 +30,10 @@ namespace Crypto{
          */
         explicit IBEPrivateKey(const QString &filename);
 
+        /**
+         *Read the IBEPrivate Key from memeory
+         */
+        explicit IBEPrivateKey(const QByteArray &data);
 //        /**
 //         *Read the IBEPrivate Key from ByteArray
 //         */

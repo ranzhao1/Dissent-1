@@ -18,11 +18,22 @@
 namespace Dissent{
 namespace Crypto{
 
+IBEPublicKey::IBEPublicKey(const QByteArray &data)
+{
+    SystemParam Param;
+    QByteArray tempPublicKey;
+    char* UserID;
+    QDataStream stream(data);
+    stream>>tempPublicKey>>Param>>UserID;
+    _sysparam=Param;
+    _publickey=_sysparam.GetGroup1()->ElementFromByteArray(tempPublicKey);
+    ID=QString(UserID);
+}
 
 IBEPublicKey::IBEPublicKey(const char* ID,SystemParam Sysparam)
 {
-     Element Qid=Sysparam.getGroup1()->ElementFromHash(ID);
-     qDebug()<<"(IBEPublicKey)The public key is "<<Sysparam.getGroup1()->ElementToByteArray(Qid).toHex().constData()<<endl;
+     Element Qid=Sysparam.GetGroup1()->ElementFromHash(ID);
+     qDebug()<<"(IBEPublicKey)The public key is "<<Sysparam.GetGroup1()->ElementToByteArray(Qid).toHex().constData()<<endl;
 
      this->_publickey=Qid;
      this->_sysparam=Sysparam;
@@ -44,7 +55,7 @@ QByteArray IBEPublicKey:: GetByteArray() const
 
 QByteArray IBEPublicKey::Encrypt(const QByteArray &data) const
 {
-    Element generator=this->_sysparam.getGroup1()->GetGenerator();
+    Element generator=this->_sysparam.GetGroup1()->GetGenerator();
     char sigma[SIZE];
     char V[SIZE];
     char W[SIZE];
@@ -57,15 +68,15 @@ QByteArray IBEPublicKey::Encrypt(const QByteArray &data) const
 
 
     //Get Integer r
-    Integer r=Utils::IBEUtils::HashToZr(this->_sysparam.getGroup1()->GetOrder(),hashSigma);
+    Integer r=Utils::IBEUtils::HashToZr(this->_sysparam.GetGroup1()->GetOrder(),hashSigma);
 
     //Get Element of rP
-    Element U=this->_sysparam.getGroup1()->Exponentiate(generator,r);
+    Element U=this->_sysparam.GetGroup1()->Exponentiate(generator,r);
     //qDebug()<<"r is"<< r.GetByteArray().toHex().constData();
     //Calculte (gid)^r
-    Element Gid=this->_sysparam.getGroupT()->ApplyPairing(this->_publickey,this->_sysparam.getPpub());
-    Element Gidr=this->_sysparam.getGroupT()->Exponentiate(Gid,r);
-    QByteArray PreGidr=this->_sysparam.getGroupT()->ElementToByteArray(Gidr);
+    Element Gid=this->_sysparam.GetGroupT()->ApplyPairing(this->_publickey,this->_sysparam.GetPpub());
+    Element Gidr=this->_sysparam.GetGroupT()->Exponentiate(Gid,r);
+    QByteArray PreGidr=this->_sysparam.GetGroupT()->ElementToByteArray(Gidr);
 
     Hash *hash=CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     //Got H2(Gidr)
@@ -74,21 +85,30 @@ QByteArray IBEPublicKey::Encrypt(const QByteArray &data) const
    //Got H4(sigma)
     QByteArray HashSigma=hash->ComputeHash(QByteArray(sigma));
 
+    QByteArray Vsend=Utils::IBEUtils::calculateXor(QByteArray(sigma),HashGidr);
+    QByteArray Wsend=Utils::IBEUtils::calculateXor(data,HashSigma);
 
-    Utils::IBEUtils::Xor(SIZE,sigma,HashGidr.toHex().constData(),V);
-    Utils::IBEUtils::Xor(SIZE,data.constData(),HashSigma.toHex().constData(),W);
+  //  Utils::IBEUtils::Xor(SIZE,sigma,HashGidr.toHex().constData(),V);
+  //  Utils::IBEUtils::Xor(SIZE,data.constData(),HashSigma.toHex().constData(),W);
 
 
-    QByteArray Usend=this->_sysparam.getGroup1()->ElementToByteArray(U).toHex();
-    QByteArray Vsend=QByteArray(V).append("\n");
-    QByteArray Wsend=QByteArray(W).append("\n");
+    QByteArray Usend=this->_sysparam.GetGroup1()->ElementToByteArray(U).toHex();
 
-    return Usend.append("\n").append(Vsend).append(Wsend);
+
+    QByteArray DataToSend;
+    QDataStream stream(&DataToSend,QIODevice::WriteOnly);
+
+    stream<<Usend<<Vsend<<Wsend;
+    qDebug()<<"Usend "<<Usend.constData()<<endl;
+    qDebug()<<"Vsend "<<Vsend.toHex().constData()<<endl;
+    qDebug()<<"Wsend "<<Wsend.toHex().constData()<<endl;
+
+    return DataToSend;
 }
 
 QDataStream &operator<<(QDataStream &out, const IBEPublicKey &PublicKey)
 {
-    out <<PublicKey.GetParam().getGroup1()->ElementToByteArray(PublicKey.GetPublicKeyElement()).constData()
+    out <<PublicKey.GetParam().GetGroup1()->ElementToByteArray(PublicKey.GetPublicKeyElement())
         <<PublicKey.GetParam()<<PublicKey.GetUserId().data();
     return out;
 }
@@ -96,12 +116,15 @@ QDataStream &operator<<(QDataStream &out, const IBEPublicKey &PublicKey)
 QDataStream &operator>>(QDataStream &in, IBEPublicKey &PublicKey)
 {
     SystemParam Param;
-    char* tempPublicKey;
+    QByteArray tempPublicKey;
     char* UserID;
     in >> tempPublicKey >>Param>>UserID;
-    PublicKey.SetSysParam(Param);
-    PublicKey.SetPublicKey(PublicKey.GetParam().getGroup1()->ElementFromByteArray(QByteArray(tempPublicKey)));
-    PublicKey.SetID(QString(UserID));
+
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream<<tempPublicKey<<Param<<UserID;
+
+    PublicKey=IBEPublicKey(data);
     return in;
 }
 

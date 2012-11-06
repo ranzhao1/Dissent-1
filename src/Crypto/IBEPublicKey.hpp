@@ -24,6 +24,12 @@ namespace Crypto{
              */
             explicit IBEPublicKey(const char* ID,SystemParam Sysparam);
 
+            /**
+             *Read IBE public keyfrom memory
+             *@param data memory to store the public key
+             */
+            explicit IBEPublicKey(const QByteArray&data);
+
             explicit IBEPublicKey(){}
 
             /**

@@ -12,8 +12,7 @@ namespace Utils{
 
     class IBEUtils{
     public:
-        static int htoi(char a);
-        static void Xor(int size,const char* a,const char* b, char* xor_result);
+        static QByteArray calculateXor(const QByteArray& data, const QByteArray& key);
         static  Integer HashToZr(Integer GroupOrder,QByteArray &data);
         static void Randn(char *sigma);
 

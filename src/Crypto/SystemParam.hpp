@@ -59,26 +59,25 @@ namespace Crypto{
          *Set up the Ppub for system parameter
          *@param MasterKey PKG server Master Key to set the Ppub
          */
-        void setPpub(Integer MasterKey);
+        void SetPpub(Integer MasterKey);
 
         /**
          *Get group1 pointer
          */
-        QSharedPointer<PairingG1Group> getGroup1() const;
+        QSharedPointer<PairingG1Group> GetGroup1() const;
 
         /**
          *Get grouptT pointer
          */
-        QSharedPointer<PairingGTGroup> getGroupT() const;
+        QSharedPointer<PairingGTGroup> GetGroupT() const;
 
         /**
          * Get the Ppub paramter of the system paramter
          */
-        Element getPpub() const;
+        Element GetPpub() const;
 
-        QByteArray GetByteArray() const;
 
-        PairingGroup::GroupSize getSize() const{return _s;}
+        PairingGroup::GroupSize GetSize() const{return _s;}
 
 
         void CopyPpub(Element NewPpub) {p_pub=NewPpub;}

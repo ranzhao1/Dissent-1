@@ -29,37 +29,37 @@ PkgServer:: PkgServer(const QString &filename)
 
 
     if(Param=="TESTING_128"){
-        this->s=PairingGroup::TESTING_128;
+        this->_s=PairingGroup::TESTING_128;
 
     }else if(Param=="TESTING_256"){
 
-        this->s=PairingGroup::TESTING_256;
+        this->_s=PairingGroup::TESTING_256;
 
     }else if(Param=="PRODUCTION_512"){
-         this->s=PairingGroup::PRODUCTION_512;
+         this->_s=PairingGroup::PRODUCTION_512;
 
     }else if(Param=="PRODUCTION_768"){
 
-        this->s=PairingGroup::PRODUCTION_768;
+        this->_s=PairingGroup::PRODUCTION_768;
     }else if(Param=="PRODUCTION_1024"){
 
-        this->s=PairingGroup::PRODUCTION_1024;
+        this->_s=PairingGroup::PRODUCTION_1024;
     }else if(Param=="PRODUCTION_1280"){
 
-         this->s=PairingGroup::PRODUCTION_1280;
+         this->_s=PairingGroup::PRODUCTION_1280;
     }else if(Param=="PRODUCTION_1536"){
 
-        this->s=PairingGroup::PRODUCTION_1536;
+        this->_s=PairingGroup::PRODUCTION_1536;
     }else{
         qFatal("Unknown parameter type");
     }
 
-    this->_sysparam.SetGroupSize(this->s);
-    //Set the Group1 of system parameter
-    this->_sysparam.SetGroup1();
-    this->_sysparam.SetGroupT();
-    this->SetMasterKey();
-    this->_sysparam.setPpub(MasterKey);
+
+    _sysparam.SetGroupSize(_s);
+    _sysparam.SetGroup1();
+    _sysparam.SetGroupT();
+    SetMasterKey();
+    _sysparam.SetPpub(_masterkey);
 
 }
 
@@ -72,27 +72,35 @@ PkgServer::~PkgServer()
 
 IBEPrivateKey PkgServer::GetPrivateKey(const char* ID) const
 {
-    IBEPrivateKey PrivateKey=IBEPrivateKey();
-    PrivateKey.SetSysParam(this->getParam());
-    Element Qid=this->_sysparam.getGroup1()->ElementFromHash(ID);
-    PrivateKey.SetPrivateKey(_sysparam.getGroup1()->Exponentiate(Qid,this->MasterKey));
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    Element Qid=_sysparam.GetGroup1()->ElementFromHash(ID);
+    qDebug()<<"Group Order is "<<_sysparam.GetGroup1()->GetOrder().ToString()<<endl;
+    qDebug()<<"Qid is "<<strlen(_sysparam.GetGroup1()->ElementToByteArray(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey)).constData())<<endl;
+    stream<<_sysparam.GetGroup1()->ElementToByteArray(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey))
+            <<_sysparam;
+//    IBEPrivateKey PrivateKey=IBEPrivateKey();
+//    PrivateKey.SetSysParam(getParam());
+//    Element Qid=_sysparam.GetGroup1()->ElementFromHash(ID);
+//    PrivateKey.SetPrivateKey(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey));
+    IBEPrivateKey PrivateKey=IBEPrivateKey(data);
     return PrivateKey;
 }
 
 
 SystemParam PkgServer::getParam() const
 {
-    return this->_sysparam;
+    return _sysparam;
 }
 
 void PkgServer::setParam(const SystemParam &Param)
 {
-    this->_sysparam=Param;
+    _sysparam=Param;
 }
 
 void PkgServer::SetMasterKey()
 {
-    this->MasterKey=this->_sysparam.getGroup1()->RandomExponent();
+    _masterkey=_sysparam.GetGroup1()->RandomExponent();
 }
 
 

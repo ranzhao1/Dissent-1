@@ -5,48 +5,21 @@
 namespace Dissent{
 namespace Utils{
 
-    int IBEUtils:: htoi(char a)
-    {
-       int i;
-       if (a >= 'A' && a <= 'F')
-       {
-          i = a - 'A' + 10;
-       }else if(a>='a'&&a<='f')
-       {
+QByteArray  IBEUtils::calculateXor(const QByteArray& data, const QByteArray& key)
+{
+ if(key.isEmpty())
+   return data;
 
-           i=a-'a'+10;
-       }else{
-          i = a - '0';
-       }
+ QByteArray result;
+ for(int i = 0 , j = 0; i < data.length(); ++i , ++j)
+ {
+   if(j == key.length())
+     j = 0;// repeat the key if key.length() < data.length()
+   result.append(data.at(i) ^ key.at(j));
+ }
+ return result;
+}
 
-       return i;
-     }
-
-
-    void IBEUtils:: Xor(int size,const char* a,const char* b,char* xor_result)
-    {
-
-      //  qDebug()<<"a is"<<a;
-       // qDebug()<<"b is"<<b;
-       int i;
-       int j;
-       int z;
-       int m;
-       char result[10];
-
-       for(m=0;m<40;m++){
-           memset(result, 0, sizeof(char)*10);
-           i = htoi(a[m]);
-           j = htoi(b[m]);
-           z = i ^ j;
-           sprintf(result, "%x", z);
-          // qDebug()<<"xor result z"<<result<<endl;
-           strcat(xor_result, result);
-       }
-       // qDebug()<<xor_result;
-
-
-    }
 
     Integer IBEUtils::HashToZr(Integer GroupOrder,QByteArray &data)
     {

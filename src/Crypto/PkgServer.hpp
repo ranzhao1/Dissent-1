@@ -59,8 +59,8 @@ namespace Crypto{
      private:
 
         SystemParam _sysparam;
-        PairingGroup::GroupSize s;
-        Integer MasterKey;
+        PairingGroup::GroupSize _s;
+        Integer _masterkey;
 
     };
 

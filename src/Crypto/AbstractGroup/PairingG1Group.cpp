@@ -189,7 +189,7 @@ namespace AbstractGroup {
    {
        Hash *hash=CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
        QByteArray Hashdata=hash->ComputeHash(QByteArray(data));
-       G1 ElementHash(this->GetPairing(),Hashdata.data(),sizeof(Hashdata.data()));
+       G1 ElementHash(this->GetPairing(),Hashdata.data(),sizeof(Hashdata));
        return Element(new PairingElementData<G1>(ElementHash));
    }
 }
