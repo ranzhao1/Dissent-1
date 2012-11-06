@@ -37,28 +37,26 @@ int main()
 //        file.close();
 //    }
 
-  qDebug()<<"before system parameter serilization!"<<endl;
 //#########################TEST system parameter serilization#############
 //     QByteArray byteArray;
 //     SystemParam example;
 //     QDataStream stream(&byteArray, QIODevice::WriteOnly);
 //     stream << Pkg.getParam();
 
-//      QDataStream stream1(&byteArray, QIODevice::ReadOnly);
+//      QDataStream stream1(byteArray);
 //      stream1>>example;
 
 
      IBEPublicKey PublicKey(ID,Pkg.getParam());
-    //Get the PrivateKey from the PkgServer based on user ID
+//    //Get the PrivateKey from the PkgServer based on user ID
     qDebug()<<"Get the PrivateKey from Pkg Server..."<<endl;
     IBEPrivateKey PrivateKey=Pkg.GetPrivateKey(ID);
-//    qDebug()<<"After GetPrivateKey"<<endl;
 //    //###################TEST Private Key serilization###############
 //    QByteArray Barray;
 //    QDataStream stream2(&Barray,QIODevice::WriteOnly);
 //    stream2<<PrivateKey;
 //    IBEPrivateKey exampleKey;
-//     QDataStream stream3(&Barray,QIODevice::ReadOnly);
+//     QDataStream stream3(Barray);
 //     stream3>>exampleKey;
 //qDebug()<<"After Private Key serilization"<<endl;
 //     //##############TEST Public Key serilization######################
