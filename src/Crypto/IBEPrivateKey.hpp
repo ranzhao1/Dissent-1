@@ -16,39 +16,32 @@ using namespace Dissent::Crypto::AbstractGroup;
 namespace Dissent{
 namespace Crypto{
 
+    /**
+     *Implementation of IBE Private Key
+     */
     class IBEPrivateKey : public AsymmetricKey{
 
     public:
 
-        /**
-         *Default constructor of IBE Private Key
-         */
-        explicit IBEPrivateKey(){}
 
         /**
          *Read the IBEPrivate Key from file
+         *@param file anme the file soring the key
          */
         explicit IBEPrivateKey(const QString &filename);
 
         /**
-         *Read the IBEPrivate Key from memeory
+         *Loads a key from memory
+         *@param data byte array holding the key
          */
         explicit IBEPrivateKey(const QByteArray &data);
-//        /**
-//         *Read the IBEPrivate Key from ByteArray
-//         */
-//        explicit IBEPrivateKey(const QByteArray &data);
 
         /**
-         *Pkg set the private key
-         *@param key the private key
+         *Copy private key
+         *@param PrivateKey
+         *@param Param system parameter
          */
-        void SetPrivateKey(const Element &key);
-
-        /**
-         *Set the system parameter
-         */
-         void SetSysParam(SystemParam Sysparam);
+        explicit IBEPrivateKey(const QByteArray PrivateKey,const SystemParam Param);
 
          /**
          *Deconstructor
@@ -103,12 +96,27 @@ namespace Crypto{
          SystemParam GetParam() const {return _sysparam;}
 
     private:
+         /**
+          *Loads a key from the provided byte array
+          *@param data key byte array
+          */
+         bool InitFromByteArray(const QByteArray &data);
+
+         /**
+          *Initialize the private key
+          *@param PrivateKey
+          *@param Param system parameter
+          */
+         bool InitPrivatekey(const QByteArray PrivateKey,const SystemParam Param);
          Element _privatekey;
          SystemParam _sysparam;
 
 
     };
 
+    /**
+     *Overload operator<< and >> for serialization
+     */
     QDataStream &operator<<(QDataStream &out, const IBEPrivateKey &PrivateKey);
     QDataStream &operator>>(QDataStream &in, IBEPrivateKey &PrivateKey);
 

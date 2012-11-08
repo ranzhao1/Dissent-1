@@ -185,10 +185,10 @@ namespace AbstractGroup {
     mpz_clear(y);
   }
 
-   Element PairingG1Group::ElementFromHash(const char* data)
+   Element PairingG1Group::ElementFromHash(const QString data)
    {
        Hash *hash=CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
-       QByteArray Hashdata=hash->ComputeHash(QByteArray(data));
+       QByteArray Hashdata=hash->ComputeHash(data.toUtf8());
        G1 ElementHash(this->GetPairing(),Hashdata.data(),sizeof Hashdata );
        return Element(new PairingElementData<G1>(ElementHash));
    }

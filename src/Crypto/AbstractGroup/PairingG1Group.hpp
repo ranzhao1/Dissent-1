@@ -137,7 +137,7 @@ namespace AbstractGroup {
         return QString("PairingG1Group");
       }
 
-       virtual Element ElementFromHash(const char* data);
+       virtual Element ElementFromHash(const QString data);
 
     private:
 

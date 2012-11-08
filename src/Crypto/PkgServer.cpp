@@ -14,16 +14,16 @@ namespace Crypto{
 
 PkgServer:: PkgServer(const QString &filename)
 {
-    //Initialize the system parameter from File
     QByteArray data;
     QFile file(filename);
    // QDir::setCurrent("/");
-   // qDebug()<< QDir::currentPath()<< endl;
+    qDebug()<< QDir::currentPath()<< endl;
     if(!file.open(QIODevice::ReadOnly)) {
       qWarning() << "Error (" << file.error() << ") reading file: " << filename;
     }
 
     data = file.readAll();
+    file.close();
     QString Param=QString(data.constData());
     qDebug()<<Param;
 
@@ -54,12 +54,31 @@ PkgServer:: PkgServer(const QString &filename)
         qFatal("Unknown parameter type");
     }
 
+    /**
+     *Can not use system parameter constructor here:
+     *Because we should firstly generate the Group1
+     *and GroupT of system parameter, then use
+     *Group1 to generate the Master key of Pkg,
+     *eventually using the Master key to generate
+     *Ppub of system parameter, there are cross over
+     *process between system parameter and pkg class
+     *so we can not use system constructor at the begining.
+     */
 
     _sysparam.SetGroupSize(_s);
     _sysparam.SetGroup1();
     _sysparam.SetGroupT();
-    SetMasterKey();
+    _masterkey=_sysparam.GetGroup1()->RandomExponent();
     _sysparam.SetPpub(_masterkey);
+
+
+    QFile Secondfile("System_Parameter.txt");
+    if(!Secondfile.open(QIODevice::WriteOnly)) {
+      qWarning() << "Error reading file"<<endl;
+    }
+    QDataStream stream(&Secondfile);
+    stream<<_sysparam;
+    Secondfile.close();
 
 }
 
@@ -70,30 +89,27 @@ PkgServer::~PkgServer()
 }
 
 
-IBEPrivateKey PkgServer::GetPrivateKey(const char* ID) const
+IBEPrivateKey PkgServer::GetPrivateKey(const QString ID) const
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
     Element Qid=_sysparam.GetGroup1()->ElementFromHash(ID);
-    qDebug()<<"Group Order is "<<_sysparam.GetGroup1()->GetOrder().ToString()<<endl;
-    qDebug()<<"Qid is "<<strlen(_sysparam.GetGroup1()->ElementToByteArray(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey)).constData())<<endl;
+//    qDebug()<<"Group Order is "<<_sysparam.GetGroup1()->GetOrder().ToString()<<endl;
+//    qDebug()<<"Qid is "<<strlen(_sysparam.GetGroup1()->ElementToByteArray(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey)).constData())<<endl;
     stream<<_sysparam.GetGroup1()->ElementToByteArray(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey))
             <<_sysparam;
-//    IBEPrivateKey PrivateKey=IBEPrivateKey();
-//    PrivateKey.SetSysParam(getParam());
-//    Element Qid=_sysparam.GetGroup1()->ElementFromHash(ID);
-//    PrivateKey.SetPrivateKey(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey));
+
     IBEPrivateKey PrivateKey=IBEPrivateKey(data);
     return PrivateKey;
 }
 
 
-SystemParam PkgServer::getParam() const
+SystemParam PkgServer::GetParam() const
 {
     return _sysparam;
 }
 
-void PkgServer::setParam(const SystemParam &Param)
+void PkgServer::SetParam(const SystemParam &Param)
 {
     _sysparam=Param;
 }

@@ -1,7 +1,7 @@
 #ifndef DISSENT_CRYPTO_ABSTRACT_GROUP_PAIRING_ELEMENT_DATA_H_GUARD
 #define DISSENT_CRYPTO_ABSTRACT_GROUP_PAIRING_ELEMENT_DATA_H_GUARD
 
-#include <PBC.h>
+#include "PBC.h"
 #include <QByteArray>
 #include <QSharedPointer>
 #include "ElementData.hpp"

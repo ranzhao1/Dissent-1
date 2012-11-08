@@ -13,7 +13,9 @@ using namespace Dissent::Crypto::AbstractGroup;
 namespace Dissent{
 namespace Crypto{
 
-
+        /**
+         * Implementation of IBE Pkg
+         */
     class PkgServer{
 
     public:
@@ -33,18 +35,18 @@ namespace Crypto{
          *Get the PrivateKey from PKG Server
          *@param ID user Identification
          */
-        IBEPrivateKey GetPrivateKey(const char* ID) const;
+        IBEPrivateKey GetPrivateKey(const QString ID) const;
 
         /**
          *Get the system parameter of PKG Server
          */
-        SystemParam getParam() const;
+        SystemParam GetParam() const;
 
         /**
          *Set the system parameter fo PKG Server
          *@param Param the PKG Server system parameter
          */
-        void setParam(const SystemParam &Param);
+        void SetParam(const SystemParam &Param);
 
         /**
          *Set the Master Key for the PKG server

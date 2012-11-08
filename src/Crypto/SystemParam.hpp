@@ -14,16 +14,20 @@ using namespace Dissent::Crypto::AbstractGroup;
 namespace Dissent{
 namespace Crypto{
 
-
+    /**
+     *Implementation of System Parameter
+     */
     class SystemParam{
 
     public:
 
-
+        /**
+         *Empty constructor use in key serialization function
+         */
         explicit SystemParam(){}
 
         /**
-         *Load the system parameter from a file
+         *Read the system parameter from a file
          *@param filename file stores the system parameter
          */
         explicit SystemParam(const QString &filename);
@@ -33,6 +37,11 @@ namespace Crypto{
          *@param data ByteArray data of system parameter
          */
         explicit SystemParam(const QByteArray &data);
+
+        /**
+         *Initialize by size and Ppub
+         */
+        explicit SystemParam(const int size,const QByteArray Ppub);
 
         /**
          *Deconstructor
@@ -76,13 +85,31 @@ namespace Crypto{
          */
         Element GetPpub() const;
 
-
+        /**
+         *Get the group size
+         */
         PairingGroup::GroupSize GetSize() const{return _s;}
 
-
+        /**
+         *Copy Ppub to this system parameter
+         *@param NewPpub copy it to this systme parameter
+         */
         void CopyPpub(Element NewPpub) {p_pub=NewPpub;}
 
     private:
+        /**
+         *Initialize the system parameter from memory
+         *@param data stores the system parameter
+         */
+        bool InitFromByteArray(const QByteArray &data);
+
+        /**
+         *Initialize the system parameter by size and Ppub
+         *@param size group size
+         *@param Ppub
+         */
+        bool InitSystemParameter(const int size,const QByteArray Ppub);
+
         QSharedPointer<PairingG1Group> _group1;
         QSharedPointer<PairingGTGroup> _group_t;
         PairingGroup::GroupSize _s;

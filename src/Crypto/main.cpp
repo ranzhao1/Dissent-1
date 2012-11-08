@@ -47,7 +47,7 @@ int main()
 //      stream1>>example;
 
 
-     IBEPublicKey PublicKey(ID,Pkg.getParam());
+     IBEPublicKey PublicKey(ID,Pkg.GetParam());
 //    //Get the PrivateKey from the PkgServer based on user ID
     qDebug()<<"Get the PrivateKey from Pkg Server..."<<endl;
     IBEPrivateKey PrivateKey=Pkg.GetPrivateKey(ID);

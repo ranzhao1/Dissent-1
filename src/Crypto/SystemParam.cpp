@@ -9,21 +9,48 @@ namespace Crypto{
 //Read SystemParam from a file
 SystemParam::SystemParam(const QString &filename)
 {
+    QByteArray data;
+    QFile file(filename);
+    if(!file.open(QIODevice::ReadOnly)) {
+      qWarning() << "Error (" << file.error() << ") reading file: " << filename;
+    }
 
+    data = file.readAll();
+   // qDebug()<<"The parameter txt is "<<data.toHex().constData();
+    file.close();
+    InitFromByteArray(data);
 }
 
 
 //Read system parameter from the ByteArrray data
 SystemParam::SystemParam(const QByteArray &data)
 {
+    InitFromByteArray(data);
+}
+
+SystemParam::SystemParam(const int size,const QByteArray Ppub)
+{
+    InitSystemParameter(size,Ppub);
+}
+
+bool SystemParam::InitFromByteArray(const QByteArray &data)
+{
     int size;
     QByteArray TempPpub;
     QDataStream stream(data);
     stream >> size >> TempPpub;
+    InitSystemParameter(size,TempPpub);
+    return true;
+
+}
+
+bool SystemParam::InitSystemParameter(const int size,const QByteArray Ppub)
+{
     _s=(PairingGroup::GroupSize)size;
-     _group1=PairingG1Group::GetGroup(_s);
+    _group1=PairingG1Group::GetGroup(_s);
     _group_t=PairingGTGroup::GetGroup(_s);
-    CopyPpub(GetGroup1()->ElementFromByteArray(TempPpub));
+    CopyPpub(GetGroup1()->ElementFromByteArray(Ppub));
+    return true;
 }
 
 void SystemParam::SetGroup1()
@@ -77,16 +104,8 @@ QDataStream &operator>>(QDataStream &in, SystemParam &Sysparam)
 {
     int size;
     QByteArray TempPpub;
-    in >> size >> TempPpub;
-
-    QByteArray data;
-    QDataStream stream(&data, QIODevice::WriteOnly);
-    stream<<size<<TempPpub;
-    Sysparam=SystemParam(data);
-//    Sysparam.SetGroupSize((PairingGroup::GroupSize)size);
-//    Sysparam.SetGroup1();
-//    Sysparam.SetGroupT();
-//    Sysparam.CopyPpub(Sysparam.GetGroup1()->ElementFromByteArray(QByteArray(TempPpub)));
+    in >>size >> TempPpub;
+    Sysparam=SystemParam(size,TempPpub);
     return in;
 }
 

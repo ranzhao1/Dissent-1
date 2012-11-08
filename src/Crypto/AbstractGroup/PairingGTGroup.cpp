@@ -336,10 +336,10 @@ namespace AbstractGroup {
     return e;
   }
 
-  Element PairingGTGroup::ElementFromHash(const char* data)
+  Element PairingGTGroup::ElementFromHash(const QString data)
   {
       Hash *hash=CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
-      QByteArray Hashdata=hash->ComputeHash(QByteArray(data));
+      QByteArray Hashdata=hash->ComputeHash(data.toUtf8());
       GT ElementHash(this->GetPairing(),Hashdata.data(),sizeof(Hashdata.data()));
       return Element(new PairingElementData<GT>(ElementHash));
   }

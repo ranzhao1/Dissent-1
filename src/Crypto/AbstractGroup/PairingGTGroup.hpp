@@ -135,7 +135,7 @@ namespace AbstractGroup {
         return QString("PairingGTGroup");
       }
 
-       virtual Element ElementFromHash(const char* data);
+       virtual Element ElementFromHash(const QString data);
 
     private:
 

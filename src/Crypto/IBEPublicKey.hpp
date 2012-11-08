@@ -14,23 +14,33 @@ using namespace Dissent::Crypto::AbstractGroup;
 namespace Dissent{
 namespace Crypto{
 
+        /**
+         *Implementation of IBE Publick Key
+         */
         class IBEPublicKey : public AsymmetricKey{
 
         public:
-            /**
-             *Constrct Publick Key based on user ID and system parameter
-             *@param ID user Identifiction
-             *@param Sysparam system parameter
-             */
-            explicit IBEPublicKey(const char* ID,SystemParam Sysparam);
 
             /**
-             *Read IBE public keyfrom memory
+             *loads IBE public keyfrom memory
              *@param data memory to store the public key
              */
             explicit IBEPublicKey(const QByteArray&data);
 
-            explicit IBEPublicKey(){}
+            /**
+             *Initilize Publick Key based on user ID and system parameter
+             *@param ID user Identifiction
+             *@param Sysparam system parameter
+             */
+            explicit IBEPublicKey(const QString ID, const SystemParam Sysparam);
+
+            /**
+             * Copy the Publick Key
+             *@param PublicKey
+             *@param Param system parameter
+             *@param UserID user Identification
+             */
+            explicit IBEPublicKey(const QByteArray PublicKey,const SystemParam Param,const QString UserID);
 
             /**
              *Get the User Identification
@@ -79,13 +89,28 @@ namespace Crypto{
             virtual bool IsValid() const { return true; }
             virtual int GetKeySize() const { return 0; }
 
-            void SetID(QString UserID){ID=UserID;}
+            /**
+             *Get the publickey element
+             */
             Element GetPublicKeyElement()const {return _publickey;}
+
+            /**
+             *Get system parameter of the public key
+             */
             SystemParam GetParam()const{return _sysparam;}
-            void SetPublicKey(Element publicKey){_publickey=publicKey;}
-            void SetSysParam(SystemParam &SysParam) {_sysparam=SysParam;}
+//            void SetID(QString UserID){ID=UserID;}
+//            void SetPublicKey(Element publicKey){_publickey=publicKey;}
+//            void SetSysParam(SystemParam &SysParam) {_sysparam=SysParam;}
 
         private:
+            /**
+             *Initialize the public key
+             *@param PublicKey
+             *@param Param system parameter
+             *@param UserID user Identification
+             */
+            bool InitPublickey(const QByteArray PublicKey,const SystemParam Param,const QString UserID);
+
             Element _publickey;
             SystemParam _sysparam;
             QString ID;
