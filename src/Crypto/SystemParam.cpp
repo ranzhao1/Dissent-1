@@ -40,30 +40,30 @@ bool SystemParam::InitFromByteArray(const QByteArray &data)
 
 bool SystemParam::InitSystemParameter(const int size,const QByteArray Ppub)
 {
-    _s=(PairingGroup::GroupSize)size;
-    _group1=PairingG1Group::GetGroup(_s);
-    _group_t=PairingGTGroup::GetGroup(_s);
+    _s = (PairingGroup::GroupSize)size;
+    _group1 = PairingG1Group::GetGroup(_s);
+    _group_t = PairingGTGroup::GetGroup(_s);
     CopyPpub(GetGroup1()->ElementFromByteArray(Ppub));
     return true;
 }
 
 void SystemParam::SetGroup1()
 {
-    _group1=PairingG1Group::GetGroup(_s);
+    _group1 = PairingG1Group::GetGroup(_s);
 
 }
 
 void SystemParam::SetGroupT()
 {
-    _group_t=PairingGTGroup::GetGroup(_s);
+    _group_t = PairingGTGroup::GetGroup(_s);
 
 }
 
 
 void SystemParam::SetPpub(Integer MasterKey)
 {
-   Element generator=_group1->GetGenerator();
-   p_pub=_group1->Exponentiate(generator,MasterKey);
+   Element generator = _group1->GetGenerator();
+   p_pub = _group1->Exponentiate(generator,MasterKey);
 }
 
 Element SystemParam::GetPpub() const
@@ -96,7 +96,7 @@ QDataStream &operator>>(QDataStream &in, SystemParam &Sysparam)
     int size;
     QByteArray TempPpub;
     in >>size >> TempPpub;
-    Sysparam=SystemParam(size,TempPpub);
+    Sysparam = SystemParam(size,TempPpub);
     return in;
 }
 

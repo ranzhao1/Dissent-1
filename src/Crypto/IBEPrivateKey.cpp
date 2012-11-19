@@ -38,8 +38,8 @@ bool IBEPrivateKey::InitFromByteArray(const QByteArray &data)
 
 bool IBEPrivateKey::InitPrivatekey(const QByteArray PrivateKey,const SystemParam Param)
 {
-    _sysparam=Param;
-    _privatekey=_sysparam.GetGroup1()->ElementFromByteArray(PrivateKey);
+    _sysparam = Param;
+    _privatekey = _sysparam.GetGroup1()->ElementFromByteArray(PrivateKey);
 }
 
 
@@ -55,7 +55,6 @@ QByteArray IBEPrivateKey::Decrypt(const QByteArray &data) const
     QByteArray Wreceive;
 
     stream>>Ureceive>>Vreceive>>Wreceive;
-    Ureceive=QByteArray::fromHex(Ureceive);
     QByteArray Sigma;
     QByteArray M;
 
@@ -67,24 +66,25 @@ QByteArray IBEPrivateKey::Decrypt(const QByteArray &data) const
 
     Element PairDidU=this->_sysparam.GetGroupT()->ApplyPairing(this->_privatekey,U);
     QByteArray GTDidU=this->_sysparam.GetGroupT()->ElementToByteArray(PairDidU);
-    Hash *hash=CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
+    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     //Get H2(e(dID,U))
-    QByteArray HashGTDidU=hash->ComputeHash(GTDidU);
+    QByteArray HashGTDidU = hash->ComputeHash(GTDidU);
 
-    Sigma=Utils::IBEUtils::calculateXor(Vreceive,HashGTDidU);
+    Sigma = Utils::IBEUtils::calculateXor(Vreceive,HashGTDidU);
     //H4(sigma)
-    QByteArray HashSigma=hash->ComputeHash(Sigma);
+    QByteArray HashSigma = hash->ComputeHash(Sigma);
      //Get Message M
-    M=Utils::IBEUtils::calculateXor(Wreceive,HashSigma);
-    QByteArray hashSigmaM=Sigma;
+    M = Utils::IBEUtils::calculateXor(Wreceive,HashSigma);
+    QByteArray hashSigmaM = Sigma;
     hashSigmaM.append(M);
 
-    Integer r=Utils::IBEUtils::HashToZr(this->_sysparam.GetGroup1()->GetOrder(),hashSigmaM);
-    Element generator=this->_sysparam.GetGroup1()->GetGenerator();
+    Integer r = Utils::IBEUtils::HashToZr(this->_sysparam.GetGroup1()->GetOrder(),hashSigmaM);
+    Element generator = this->_sysparam.GetGroup1()->GetGenerator();
 
-    if(U!=this->_sysparam.GetGroup1()->Exponentiate(generator,r)){
+    if(U!= this->_sysparam.GetGroup1()->Exponentiate(generator,r)){
        return QByteArray();
      }
+    free(hash);
      return M;
 }
 
@@ -109,7 +109,7 @@ QDataStream &operator>>(QDataStream &in, IBEPrivateKey &PrivateKey)
     QByteArray tempPrivateKey;
     in >> tempPrivateKey >>Param;
 
-    PrivateKey=IBEPrivateKey(tempPrivateKey,Param);
+    PrivateKey = IBEPrivateKey(tempPrivateKey,Param);
     return in;
 }
 

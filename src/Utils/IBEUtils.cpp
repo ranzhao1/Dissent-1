@@ -21,9 +21,10 @@ QByteArray  IBEUtils::calculateXor(const QByteArray& data, const QByteArray& key
 
 Integer IBEUtils::HashToZr(Integer GroupOrder,QByteArray &data)
 {
-    Hash *hash=CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
-    QByteArray DataHash=hash->ComputeHash(data);
-    Integer i=Integer(DataHash);
+    Hash *hash = CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
+    QByteArray DataHash = hash->ComputeHash(data);
+    Integer i = Integer(DataHash);
+    free(hash);
     return i%GroupOrder;
 }
 

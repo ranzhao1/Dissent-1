@@ -22,31 +22,31 @@ PkgServer:: PkgServer(const QString &filename)
 
     data = file.readAll();
     file.close();
-    QString Param=QString(data.constData());
+    QString Param = QString(data.constData());
     qDebug()<<Param;
 
     if(Param=="TESTING_128"){
-        this->_s=PairingGroup::TESTING_128;
+        this->_s = PairingGroup::TESTING_128;
 
     }else if(Param=="TESTING_256"){
 
-        this->_s=PairingGroup::TESTING_256;
+        this->_s = PairingGroup::TESTING_256;
 
     }else if(Param=="PRODUCTION_512"){
-         this->_s=PairingGroup::PRODUCTION_512;
+         this->_s = PairingGroup::PRODUCTION_512;
 
     }else if(Param=="PRODUCTION_768"){
 
-        this->_s=PairingGroup::PRODUCTION_768;
+        this->_s = PairingGroup::PRODUCTION_768;
     }else if(Param=="PRODUCTION_1024"){
 
-        this->_s=PairingGroup::PRODUCTION_1024;
+        this->_s = PairingGroup::PRODUCTION_1024;
     }else if(Param=="PRODUCTION_1280"){
 
-         this->_s=PairingGroup::PRODUCTION_1280;
+         this->_s = PairingGroup::PRODUCTION_1280;
     }else if(Param=="PRODUCTION_1536"){
 
-        this->_s=PairingGroup::PRODUCTION_1536;
+        this->_s = PairingGroup::PRODUCTION_1536;
     }else{
         qFatal("Unknown parameter type");
     }
@@ -65,7 +65,7 @@ PkgServer:: PkgServer(const QString &filename)
     _sysparam.SetGroupSize(_s);
     _sysparam.SetGroup1();
     _sysparam.SetGroupT();
-    _masterkey=_sysparam.GetGroup1()->RandomExponent();
+    _masterkey = _sysparam.GetGroup1()->RandomExponent();
     _sysparam.SetPpub(_masterkey);
 
     QFile Secondfile("System_Parameter.txt");
@@ -83,10 +83,10 @@ IBEPrivateKey PkgServer::GetPrivateKey(const QString ID) const
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    Element Qid=_sysparam.GetGroup1()->ElementFromHash(ID);
+    Element Qid = _sysparam.GetGroup1()->ElementFromHash(ID);
     stream<<_sysparam.GetGroup1()->ElementToByteArray(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey))
             <<_sysparam;
-    IBEPrivateKey PrivateKey=IBEPrivateKey(data);
+    IBEPrivateKey PrivateKey = IBEPrivateKey(data);
     return PrivateKey;
 }
 
@@ -97,12 +97,12 @@ SystemParam PkgServer::GetParam() const
 
 void PkgServer::SetParam(const SystemParam &Param)
 {
-    _sysparam=Param;
+    _sysparam = Param;
 }
 
 void PkgServer::SetMasterKey()
 {
-    _masterkey=_sysparam.GetGroup1()->RandomExponent();
+    _masterkey = _sysparam.GetGroup1()->RandomExponent();
 }
 
 }
