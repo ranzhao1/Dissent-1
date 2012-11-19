@@ -8,7 +8,6 @@
 #include "AbstractGroup/PairingG1Group.hpp"
 #include "AbstractGroup/PairingGTGroup.hpp"
 
-
 namespace Dissent{
 namespace Crypto{
 
@@ -16,17 +15,15 @@ PkgServer:: PkgServer(const QString &filename)
 {
     QByteArray data;
     QFile file(filename);
-   // QDir::setCurrent("/");
-    qDebug()<< QDir::currentPath()<< endl;
+
     if(!file.open(QIODevice::ReadOnly)) {
-      qWarning() << "Error (" << file.error() << ") reading file: " << filename;
+       qFatal("Error reading file");
     }
 
     data = file.readAll();
     file.close();
     QString Param=QString(data.constData());
     qDebug()<<Param;
-
 
     if(Param=="TESTING_128"){
         this->_s=PairingGroup::TESTING_128;
@@ -71,38 +68,27 @@ PkgServer:: PkgServer(const QString &filename)
     _masterkey=_sysparam.GetGroup1()->RandomExponent();
     _sysparam.SetPpub(_masterkey);
 
-
     QFile Secondfile("System_Parameter.txt");
     if(!Secondfile.open(QIODevice::WriteOnly)) {
-      qWarning() << "Error reading file"<<endl;
+      qFatal("Error reading file");
     }
     QDataStream stream(&Secondfile);
     stream<<_sysparam;
     Secondfile.close();
-
 }
 
-
-
-PkgServer::~PkgServer()
-{
-}
-
+PkgServer::~PkgServer(){}
 
 IBEPrivateKey PkgServer::GetPrivateKey(const QString ID) const
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
     Element Qid=_sysparam.GetGroup1()->ElementFromHash(ID);
-//    qDebug()<<"Group Order is "<<_sysparam.GetGroup1()->GetOrder().ToString()<<endl;
-//    qDebug()<<"Qid is "<<strlen(_sysparam.GetGroup1()->ElementToByteArray(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey)).constData())<<endl;
     stream<<_sysparam.GetGroup1()->ElementToByteArray(_sysparam.GetGroup1()->Exponentiate(Qid,_masterkey))
             <<_sysparam;
-
     IBEPrivateKey PrivateKey=IBEPrivateKey(data);
     return PrivateKey;
 }
-
 
 SystemParam PkgServer::GetParam() const
 {
@@ -118,7 +104,6 @@ void PkgServer::SetMasterKey()
 {
     _masterkey=_sysparam.GetGroup1()->RandomExponent();
 }
-
 
 }
 }

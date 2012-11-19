@@ -98,9 +98,6 @@ namespace Crypto{
              *Get system parameter of the public key
              */
             SystemParam GetParam()const{return _sysparam;}
-//            void SetID(QString UserID){ID=UserID;}
-//            void SetPublicKey(Element publicKey){_publickey=publicKey;}
-//            void SetSysParam(SystemParam &SysParam) {_sysparam=SysParam;}
 
         private:
             /**
@@ -110,7 +107,6 @@ namespace Crypto{
              *@param UserID user Identification
              */
             bool InitPublickey(const QByteArray PublicKey,const SystemParam Param,const QString UserID);
-
             Element _publickey;
             SystemParam _sysparam;
             QString ID;

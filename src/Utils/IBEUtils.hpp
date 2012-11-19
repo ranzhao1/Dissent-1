@@ -14,20 +14,8 @@ namespace Utils{
     public:
         static QByteArray calculateXor(const QByteArray& data, const QByteArray& key);
         static  Integer HashToZr(Integer GroupOrder,QByteArray &data);
-        static void Randn(char *sigma);
-
     };
-
-
-
 }
 }
-
-
-
-
-
-
-
 
 #endif // XOROPERATION_HPP

@@ -114,8 +114,6 @@ namespace Crypto{
         QSharedPointer<PairingGTGroup> _group_t;
         PairingGroup::GroupSize _s;
         Element p_pub;
-
-
     };
 
     QDataStream &operator<<(QDataStream &out, const SystemParam &Sysparam);

@@ -1,10 +1,7 @@
 #include "SystemParam.hpp"
 
-
-
 namespace Dissent{
 namespace Crypto{
-
 
 //Read SystemParam from a file
 SystemParam::SystemParam(const QString &filename)
@@ -12,15 +9,13 @@ SystemParam::SystemParam(const QString &filename)
     QByteArray data;
     QFile file(filename);
     if(!file.open(QIODevice::ReadOnly)) {
-      qWarning() << "Error (" << file.error() << ") reading file: " << filename;
+        qFatal("Error reading file");
     }
 
     data = file.readAll();
-   // qDebug()<<"The parameter txt is "<<data.toHex().constData();
     file.close();
     InitFromByteArray(data);
 }
-
 
 //Read system parameter from the ByteArrray data
 SystemParam::SystemParam(const QByteArray &data)
@@ -41,7 +36,6 @@ bool SystemParam::InitFromByteArray(const QByteArray &data)
     stream >> size >> TempPpub;
     InitSystemParameter(size,TempPpub);
     return true;
-
 }
 
 bool SystemParam::InitSystemParameter(const int size,const QByteArray Ppub)
@@ -88,10 +82,7 @@ QSharedPointer<PairingGTGroup> SystemParam:: GetGroupT() const
     return _group_t;
 }
 
-SystemParam:: ~SystemParam()
-{
-
-}
+SystemParam:: ~SystemParam(){}
 
 QDataStream &operator<<(QDataStream &out, const SystemParam &Sysparam)
 {
@@ -108,7 +99,6 @@ QDataStream &operator>>(QDataStream &in, SystemParam &Sysparam)
     Sysparam=SystemParam(size,TempPpub);
     return in;
 }
-
 
 }
 }

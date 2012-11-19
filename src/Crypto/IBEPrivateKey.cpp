@@ -10,13 +10,11 @@ IBEPrivateKey::IBEPrivateKey(const QString &filename)
 {
     QByteArray data;
     QFile file(filename);
-    if(!file.open(QIODevice::ReadOnly)) {
-      qWarning() << "Error (" << file.error() << ") reading file: " << filename;
+    if(file.open(QIODevice::ReadOnly)) {
+        data = file.readAll();
+        file.close();
+        InitFromByteArray(data);
     }
-
-    data = file.readAll();
-    file.close();
-    InitFromByteArray(data);
 }
 
 IBEPrivateKey::IBEPrivateKey(const QByteArray &data)
@@ -45,74 +43,50 @@ bool IBEPrivateKey::InitPrivatekey(const QByteArray PrivateKey,const SystemParam
 }
 
 
-IBEPrivateKey::~IBEPrivateKey()
-{
-
-}
-
-
+IBEPrivateKey::~IBEPrivateKey(){}
 
 QByteArray IBEPrivateKey::Decrypt(const QByteArray &data) const
 {
     QDataStream stream(data);
-
-
 
     //Receive the data and split it into three pieces
     QByteArray Ureceive;
     QByteArray Vreceive;
     QByteArray Wreceive;
 
-     stream>>Ureceive>>Vreceive>>Wreceive;
-
-//     qDebug()<<"Usend "<<Ureceive.constData()<<endl;
-//     qDebug()<<"Vsend "<<Vreceive.toHex().constData()<<endl;
-//     qDebug()<<"Wsend "<<Wreceive.toHex().constData()<<endl;
-
-     Ureceive=QByteArray::fromHex(Ureceive);
-
-
+    stream>>Ureceive>>Vreceive>>Wreceive;
+    Ureceive=QByteArray::fromHex(Ureceive);
     QByteArray Sigma;
     QByteArray M;
 
     Element U=this->_sysparam.GetGroup1()->ElementFromByteArray(Ureceive);
     //If U is not a element of Gourp1 then reject the ciphertext
     if(!this->_sysparam.GetGroup1()->IsElement(U)){
-        return NULL;
+        return QByteArray();
     }
 
     Element PairDidU=this->_sysparam.GetGroupT()->ApplyPairing(this->_privatekey,U);
-    //qDebug()<<"The privatekey element is "<<QByteArray((_sysparam.GetGroup1())->ElementToByteArray(this->_privatekey)).toHex().constData();
     QByteArray GTDidU=this->_sysparam.GetGroupT()->ElementToByteArray(PairDidU);
     Hash *hash=CryptoFactory::GetInstance().GetLibrary()->GetHashAlgorithm();
     //Get H2(e(dID,U))
     QByteArray HashGTDidU=hash->ComputeHash(GTDidU);
 
-
-     Sigma=Utils::IBEUtils::calculateXor(Vreceive,HashGTDidU);
-    //qDebug()<<"The sigma is "<<Sigma<<endl;
+    Sigma=Utils::IBEUtils::calculateXor(Vreceive,HashGTDidU);
     //H4(sigma)
     QByteArray HashSigma=hash->ComputeHash(Sigma);
-
-
      //Get Message M
-     M=Utils::IBEUtils::calculateXor(Wreceive,HashSigma);
+    M=Utils::IBEUtils::calculateXor(Wreceive,HashSigma);
+    QByteArray hashSigmaM=Sigma;
+    hashSigmaM.append(M);
 
+    Integer r=Utils::IBEUtils::HashToZr(this->_sysparam.GetGroup1()->GetOrder(),hashSigmaM);
+    Element generator=this->_sysparam.GetGroup1()->GetGenerator();
 
-
-     QByteArray hashSigmaM=Sigma;
-     hashSigmaM.append(M);
-
-     Integer r=Utils::IBEUtils::HashToZr(this->_sysparam.GetGroup1()->GetOrder(),hashSigmaM);
-     Element generator=this->_sysparam.GetGroup1()->GetGenerator();
-
-     if(U!=this->_sysparam.GetGroup1()->Exponentiate(generator,r)){
-         return NULL;
+    if(U!=this->_sysparam.GetGroup1()->Exponentiate(generator,r)){
+       return QByteArray();
      }
      return M;
-
 }
-
 
 QByteArray IBEPrivateKey::GetByteArray() const
 {
@@ -138,7 +112,6 @@ QDataStream &operator>>(QDataStream &in, IBEPrivateKey &PrivateKey)
     PrivateKey=IBEPrivateKey(tempPrivateKey,Param);
     return in;
 }
-
 
 }
 }

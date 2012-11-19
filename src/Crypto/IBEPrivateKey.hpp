@@ -23,7 +23,6 @@ namespace Crypto{
 
     public:
 
-
         /**
          *Read the IBEPrivate Key from file
          *@param file anme the file soring the key
@@ -110,8 +109,6 @@ namespace Crypto{
          bool InitPrivatekey(const QByteArray PrivateKey,const SystemParam Param);
          Element _privatekey;
          SystemParam _sysparam;
-
-
     };
 
     /**
@@ -119,13 +116,6 @@ namespace Crypto{
      */
     QDataStream &operator<<(QDataStream &out, const IBEPrivateKey &PrivateKey);
     QDataStream &operator>>(QDataStream &in, IBEPrivateKey &PrivateKey);
-
-
-
-
-
-
-
 }
 }
 

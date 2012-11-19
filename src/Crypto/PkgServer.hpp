@@ -19,7 +19,6 @@ namespace Crypto{
     class PkgServer{
 
     public:
-
         /**
          *Read  parameter from the file and set up system
          *@param filename the file storing the system parameter
@@ -53,17 +52,10 @@ namespace Crypto{
          */
         void SetMasterKey();
 
-
-
-
-
-
      private:
-
         SystemParam _sysparam;
         PairingGroup::GroupSize _s;
         Integer _masterkey;
-
     };
 
 }
